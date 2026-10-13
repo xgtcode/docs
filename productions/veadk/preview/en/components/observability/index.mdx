@@ -130,3 +130,20 @@ print(f"trace written to {path}")
 ```
 
 The exported JSON contains, for each span, its name, `span_id`, `trace_id`, start/end times, attributes, and parent span. See [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory) for details.
+
+## Local cache limits
+
+The in-memory exporter retains the most recent 1024 spans by default, with an estimated data cap of 16 MiB. When either limit is reached, the oldest span is evicted. Adjust these limits with the following environment variables:
+
+| Environment variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED` | `bool` | `true` | Whether to retain local span history. |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_MAX_SPANS` | `int` (non-negative) | `1024` | Maximum number of spans to retain. |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_MAX_BYTES` | `int` (non-negative) | `16777216` | Estimated data size limit in bytes. |
+
+```bash lines
+# Disable local cache and use cloud observability only
+export OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED=false
+```
+
+When local caching is disabled, span annotation, Trace IDs in logs, and configured cloud export remain available; `tracer.dump()` writes an empty array. Multiple tracers under the same `TracerProvider` share one local cache budget. See [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory#local-cache-limits) for details.

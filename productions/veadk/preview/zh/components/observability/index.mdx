@@ -130,3 +130,20 @@ print(f"trace 已写入 {path}")
 ```
 
 导出的 JSON 包含每个 span 的名称、`span_id`、`trace_id`、起止时间、属性以及父 span 关系。更多细节参见[内存导出器](/productions/veadk/preview/zh/components/observability/inmemory)。
+
+## 本地缓存限制
+
+内存导出器默认保留最近的 1024 个 span，估算数据总量上限为 16 MiB，达到任一上限时淘汰最早的 span。可通过以下环境变量调整：
+
+| 环境变量 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED` | `bool` | `true` | 是否保留本地 span 历史。 |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_MAX_SPANS` | `int`（非负） | `1024` | 最多保留的 span 数量。 |
+| `OBSERVABILITY_OPENTELEMETRY_INMEMORY_MAX_BYTES` | `int`（非负） | `16777216` | 估算数据量上限，单位为字节。 |
+
+```bash lines
+# 关闭本地缓存，仅使用云端观测
+export OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED=false
+```
+
+关闭本地缓存后，span 标注、日志中的 Trace ID 和已配置的云端上报保持可用，`tracer.dump()` 写入空数组。同一个 `TracerProvider` 下的多个追踪器共享一份本地缓存额度。更多细节参见[内存导出器](/productions/veadk/preview/zh/components/observability/inmemory#本地缓存限制)。
