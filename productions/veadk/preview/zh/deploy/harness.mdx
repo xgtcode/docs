@@ -198,7 +198,7 @@ short_term_memory:
 | 字段 | 环境变量 | 说明 |
 | :--- | :--- | :--- |
 | `builtin_tools` | `TOOLS` + 工具级环境变量 | 结构化内置工具列表，每个条目包含 `id` 和可选 `config` |
-| `selected_skills` | `SELECTED_SKILLS_JSON` | 结构化技能列表，每个条目包含 `source`、`slug` 或 `skill_space_id`；`skillspace` 来源可选 `skill_space_policy` 按空间筛选技能 |
+| `selected_skills` | `SELECTED_SKILLS_JSON` | 结构化技能列表，每个条目包含 `source`、`slug` 或 `skill_space_id` 或 `tos_url` 或 `tos_public_url`；`skillspace` 来源可选 `skill_space_policy` 按空间筛选技能；`tos` 来源支持从 TOS 对象存储加载技能 |
 | `mcp` | `MCP_SERVERS_JSON` | 可流式传输的 HTTP MCP 服务器列表，每个条目包含 `name`、`server_url` 和可选 `bear_token` |
 | `mcp_router_id` | `MCP_ROUTER_ID` | AgentKit MCP 工具集 ID |
 | `temperature` | `MODEL_AGENT_TEMPERATURE` | 模型温度 |
@@ -225,6 +225,9 @@ harness:
   selected_skills:
     - source: skillhub
       slug: team/reporting
+    - source: tos
+      tos_url: tos://my-bucket/skills/reporting/
+      region: cn-beijing
   mcp:
     - name: db
       server_url: https://db.example.com/mcp

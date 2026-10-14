@@ -275,6 +275,43 @@ harness:
       slug: team/reporting
 ```
 
+### Harness TOS skills
+
+`selected_skills` supports `source: tos` to load skills directly from TOS object storage without going through SkillHub or skill spaces. TOS skills can be loaded in two ways:
+
+- **Private TOS directory**: Specify a `tos://<bucket>/<prefix>/` address via `tos_url`. The skill directory is downloaded using the current account's cloud credentials (AK/SK or the IAM Role bound to the runtime environment). The directory root must contain `SKILL.md` or `skill.md`
+- **Public TOS zip archive**: Specify an HTTPS address pointing to a `.zip` file via `tos_public_url`. No AK/SK is required. The address must target a TOS public endpoint (hostname containing `tos-` and ending with `.volces.com` or `.bytepluses.com`) and must not include userinfo or signature query parameters
+
+<Warning>
+Public TOS zip URLs must not contain any credentials (userinfo or TOS signature query parameters). When loading fails, the error message redacts the TOS reference to avoid exposing parameters from the address
+</Warning>
+
+Each `tos` entry loads one skill. To load multiple TOS skills, add a separate `selected_skills` entry for each
+
+| Field | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `source` | `Literal["tos"]` | — | Must be `tos` |
+| `tos_url` | `str \| None` | `None` | Private TOS directory address in `tos://<bucket>/<prefix>/` format; mutually exclusive with `tos_public_url` |
+| `tos_public_url` | `str \| None` | `None` | Public TOS zip HTTPS URL ending in `.zip`; mutually exclusive with `tos_url` |
+| `region` | `str \| None` | `None` | TOS service region for private TOS directory access |
+| `version` | `str \| None` | `None` | Skill version identifier for cache control |
+
+<Note>
+Exactly one of `tos_url` and `tos_public_url` must be set; they are mutually exclusive. Private TOS directory downloads are limited to 1024 files and 64 MiB total size; public TOS zip archives have the same limits on extracted file count, uncompressed total size, and download size. Loading fails when any limit is exceeded
+</Note>
+
+```yaml title="harness.yaml" lines
+harness:
+  selected_skills:
+    - source: tos
+      tos_url: tos://my-bucket/skills/reporting/
+      region: cn-beijing
+    - source: tos
+      tos_public_url: https://my-bucket.tos-cn-beijing.volces.com/skills/reporting.zip
+    - source: skillhub
+      slug: team/reporting
+```
+
 ## Skill directory layout
 
 Each skill has its own directory containing at least `SKILL.md`. Its `name` should match the directory name, and its `description` should explain its purpose
