@@ -198,7 +198,7 @@ Beyond the basic fields written by `veadk harness add`, `harness.yaml` supports 
 | Field | Environment variable | Description |
 | :--- | :--- | :--- |
 | `builtin_tools` | `TOOLS` + tool-level env vars | Structured built-in tool list; each entry has an `id` and optional `config` |
-| `selected_skills` | `SELECTED_SKILLS_JSON` | Structured skill list; each entry has a `source` and a `slug` or `skill_space_id`; `skillspace` entries optionally set `skill_space_policy` to filter skills per space |
+| `selected_skills` | `SELECTED_SKILLS_JSON` | Structured skill list; each entry has a `source` and a `slug` or `skill_space_id` or `tos_url` or `tos_public_url`; `skillspace` entries optionally set `skill_space_policy` to filter skills per space; `tos` entries load skills from TOS object storage |
 | `mcp` | `MCP_SERVERS_JSON` | Streamable HTTP MCP server list; each entry has a `name`, `server_url`, and optional `bear_token` |
 | `mcp_router_id` | `MCP_ROUTER_ID` | AgentKit MCP toolset id |
 | `temperature` | `MODEL_AGENT_TEMPERATURE` | Model temperature |
@@ -225,6 +225,9 @@ harness:
   selected_skills:
     - source: skillhub
       slug: team/reporting
+    - source: tos
+      tos_url: tos://my-bucket/skills/reporting/
+      region: cn-beijing
   mcp:
     - name: db
       server_url: https://db.example.com/mcp

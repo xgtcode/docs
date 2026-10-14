@@ -275,6 +275,43 @@ harness:
       slug: team/reporting
 ```
 
+### Harness TOS 技能
+
+`selected_skills` 支持 `source: tos`，直接从 TOS 对象存储加载技能，无需经过 SkillHub 或技能空间。TOS 技能有两种加载方式：
+
+- **私有 TOS 目录**：通过 `tos_url` 指定 `tos://<bucket>/<prefix>/` 格式的地址，使用当前账号的云凭证（AK/SK 或运行环境绑定的 IAM Role）下载目录中的全部文件。目录根级别必须包含 `SKILL.md` 或 `skill.md`
+- **公开 TOS 压缩包**：通过 `tos_public_url` 指定指向 `.zip` 文件的 HTTPS 地址，无需 AK/SK 即可下载。该地址必须是 TOS 公开端点（主机名包含 `tos-` 且以 `.volces.com` 或 `.bytepluses.com` 结尾），且不能包含用户信息或签名查询参数
+
+<Warning>
+公开 TOS 压缩包地址中不得包含任何凭证信息（用户名密码或 TOS 签名查询参数）。加载失败时的错误信息会对 TOS 引用做脱敏处理，避免泄露地址中的参数
+</Warning>
+
+每个 `tos` 条目加载一个技能；需要加载多个 TOS 技能时，为每个技能添加独立的 `selected_skills` 条目
+
+| 字段 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `source` | `Literal["tos"]` | — | 固定为 `tos` |
+| `tos_url` | `str \| None` | `None` | 私有 TOS 目录地址，格式为 `tos://<bucket>/<prefix>/`；与 `tos_public_url` 互斥 |
+| `tos_public_url` | `str \| None` | `None` | 公开 TOS 压缩包 HTTPS 地址，须以 `.zip` 结尾；与 `tos_url` 互斥 |
+| `region` | `str \| None` | `None` | TOS 服务地域，用于私有 TOS 目录访问 |
+| `version` | `str \| None` | `None` | 技能版本标识，用于缓存控制 |
+
+<Note>
+`tos_url` 和 `tos_public_url` 必须二选一，不能同时设置或同时留空。私有 TOS 目录下载的文件数量上限为 1024，总大小上限为 64 MiB；公开 TOS 压缩包的解压文件数量、未压缩总大小和下载大小均有同样上限，超过时加载失败
+</Note>
+
+```yaml title="harness.yaml" lines
+harness:
+  selected_skills:
+    - source: tos
+      tos_url: tos://my-bucket/skills/reporting/
+      region: cn-beijing
+    - source: tos
+      tos_public_url: https://my-bucket.tos-cn-beijing.volces.com/skills/reporting.zip
+    - source: skillhub
+      slug: team/reporting
+```
+
 ## 技能目录结构
 
 每个技能使用独立目录，至少包含 `SKILL.md`；`name` 应与目录名一致，并填写说明用途的 `description`
