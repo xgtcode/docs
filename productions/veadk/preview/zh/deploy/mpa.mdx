@@ -114,11 +114,13 @@ veadk mpa create \
 | `--openviking-url` | `str` | — | OpenViking 服务地址。 |
 | `--openviking-resource-id` | `str` | — | OpenViking 资源 ID。 |
 | `--openviking-api-key` | `str` | — | OpenViking API Key。 |
-| `--tos-bucket` | `str` | — | TOS 存储桶，挂载到 `/data/output`。需同时提供 `--tos-access-key` 和 `--tos-secret-key`。 |
+| `--tos-bucket` | `str` | — | TOS 存储桶，挂载到 `/data/output`。使用 IAM Role 模式时仅提供存储桶名称；使用 AK/SK 模式时需同时提供 `--tos-access-key` 和 `--tos-secret-key`。 |
 | `--dry-run` | 标志 | 关闭 | 解析并输出资源计划，密钥脱敏，不执行云或数据库写入。 |
 
 <Note>
   `compute-plane` 为 `runtime` 时，须提供 `--tool-image` 以创建专用 Tool，或通过 `--agentkit-tool-id` 指定已有 Tool。TOS 挂载设置要求创建新 Tool，不能与 `--agentkit-tool-id` 同时使用。
+
+Studio 创建 MPA 智能体时，TOS 输出存储使用 IAM Role 模式：仅选择以 `agentkit-platform-` 开头的已有存储桶，不要求 TOS AK/SK。创建流程会为 Worker Tool 角色增量绑定存储桶专属策略，保留已有策略。YAML 配置中通过 `managed.worker.tos-credential-type: iam_role` 和 `managed.worker.tos-bucket` 启用。历史 AK/SK 模式保持兼容。
 </Note>
 
 ## 初始化管理数据库
@@ -294,13 +296,17 @@ veadk mpa control delete-preview \
   --runtime-id "r-abc123"
 ```
 
-预览授权清理影响，不删除实际资源。
+预览授权清理影响，不删除实际资源。删除 MPA Runtime 时，Studio 会先清理该智能体拥有的独占云资源（如 Worker 模板），再删除 Runtime 本身。资源归属通过注册库记录与运行时环境变量交叉校验，避免误删非本实例资源。删除过程中会校验活跃操作和会话绑定，存在活跃操作时拒绝删除。
 
 ## 在 Studio 中使用
 
 部署 Studio 后，Studio 自动复用已部署 Studio 的 UserPool、客户端、Identity 地域和 `/oauth/callback` 进行 MPA 智能体托管创建。Studio 无需创建 YAML，直接使用代码内置的北京地域配置。
 
-选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程：填写基础信息、PostgreSQL 自动准备说明，以及可选的 OpenViking 配置。填写 Runtime 名称（4–64 个 ASCII 字母、数字、下划线或连字符），服务端生成智能体 ID 并注入 Agent 和 Worker。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。成功后刷新列表查看。
+选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程：填写基础信息、PostgreSQL 自动准备说明，以及 OpenViking 准备说明。填写 Runtime 名称（4–64 个 ASCII 字母、数字、下划线或连字符），服务端生成智能体 ID 并注入 Agent 和 Worker。北京地域新请求自动使用默认 VLM 和 Embedding 模型创建独立 OpenViking 库，无需手动填写服务地址和 API Key；BytePlus 和已提交的手动请求仍需填写 OpenViking 服务地址、资源 ID 和 API Key。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。成功后刷新列表查看。
+
+<Note>
+  新创建的 MPA 智能体默认使用独立业务 Workspace：每个智能体使用独立的业务数据库，通过 `managed.postgres.business-workspace-mode: per-agent` 和 `managed.postgres.business-database-name: aidb` 配置。省略这两项则沿用共享业务库布局。运行时名称在创建前会进行可用性预检，避免与已存在的 Runtime 或 Worker 模板重名。
+</Note>
 
 <Note>
   Studio 内置配置使用北京地域的默认镜像和模型。模型 API Key 从 `VEADK_MPA_CONFIG_MODEL_AGENT_API_KEY` 环境变量读取。选择其他地域时 Studio 会返回配置错误。
