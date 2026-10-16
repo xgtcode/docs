@@ -152,7 +152,7 @@ Studio 支持简体中文（`zh-CN`）和英文（`en-US`）两种界面语言�
 </Note>
 
 <Note>
-  Studio 支持 MPA 智能体托管创建模式：选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程，依次填写基础信息、PostgreSQL 自动准备说明和可选的 OpenViking 配置。Studio 自动复用已部署 Studio 的用户池、客户端和回调地址，使用代码内置的北京地域默认镜像和模型，无需创建 YAML 配置文件。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。详见[部署 MPA 智能体](/productions/veadk/preview/zh/deploy/mpa)。
+  Studio 支持 MPA 智能体托管创建模式：选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程，依次填写基础信息、PostgreSQL 自动准备说明和 OpenViking 准备说明。Studio 自动复用已部署 Studio 的用户池、客户端和回调地址，使用代码内置的北京地域默认镜像和模型，无需创建 YAML 配置文件。北京地域新请求自动使用默认 VLM 和 Embedding 模型创建独立 OpenViking 库，无需手动填写服务地址和 API Key；BytePlus 和已提交的手动请求仍需填写 OpenViking 配置。新创建的 MPA 智能体默认使用独立业务 Workspace，每个智能体拥有独立的业务数据库，并在创建前校验 Runtime 名称可用性。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。详见[部署 MPA 智能体](/productions/veadk/preview/zh/deploy/mpa)。
 </Note>
 
 <Note>
@@ -1286,6 +1286,10 @@ Studio 不会在浏览器中保存 Runtime API Key，因此管理页只显示 Ru
 <Warning>
   删除操作会永久删除对应的 AgentKit Runtime。确认该 Runtime 不再承载业务流量，并完成必要的数据和配置备份后再操作。
 </Warning>
+
+<Note>
+  删除 MPA 智能体时，Studio 会先清理该智能体拥有的独占云资源（如 Worker 模板），再删除 Runtime 本身。资源归属通过注册库记录与运行时环境变量交叉校验，避免误删非本实例资源。删除过程中会校验活跃操作和会话绑定，存在活跃操作时拒绝删除。
+</Note>
 
 <Note>
   处于待审核状态的智能体必须先撤回申请，已公开的智能体必须先取消公开，才能修改或删除。详见[智能体公开审核](#智能体公开审核)。

@@ -152,7 +152,7 @@ Your language choice is persisted in browser local storage, so subsequent visits
 </Note>
 
 <Note>
-  Studio supports an MPA agent managed creation mode: select **Agents → MPA Agents → Create MPA Agent** to enter a three-step creation flow with basic information, PostgreSQL auto-provisioning details, and optional OpenViking configuration. Studio automatically reuses the deployed Studio's user pool, client, and callback URL, using code-built-in Beijing region default images and models without a YAML config file. After submission, it sequentially prepares account network, APIG, Worker, independent business database, and Skill Space, then deploys and checks Runtime readiness. See [Deploy MPA Agents](/productions/veadk/preview/en/deploy/mpa).
+  Studio supports an MPA agent managed creation mode: select **Agents → MPA Agents → Create MPA Agent** to enter a three-step creation flow with basic information, PostgreSQL auto-provisioning details, and OpenViking preparation. Studio automatically reuses the deployed Studio's user pool, client, and callback URL, using code-built-in Beijing region default images and models without a YAML config file. New Beijing-region requests automatically create an independent OpenViking collection using default VLM and Embedding models, without requiring manual service URL and API Key entry; BytePlus and already-submitted manual requests still require OpenViking configuration. New MPA agents default to an independent business Workspace, with each agent using a dedicated business database, and the Runtime name availability is pre-checked before creation. After submission, it sequentially prepares account network, APIG, Worker, independent business database, and Skill Space, then deploys and checks Runtime readiness. See [Deploy MPA Agents](/productions/veadk/preview/en/deploy/mpa).
 </Note>
 
 <Note>
@@ -1286,6 +1286,10 @@ Studio does not store the Runtime API key in the browser. The management page th
 <Warning>
   Delete permanently removes the corresponding AgentKit runtime. Confirm that it no longer serves traffic and back up required data and configuration before proceeding.
 </Warning>
+
+<Note>
+  When deleting an MPA agent, Studio first cleans up the agent's exclusive cloud resources (such as Worker templates) before deleting the Runtime itself. Resource ownership is verified through registry records and runtime environment variables to prevent deleting resources not owned by the instance. Active operations and session bindings are checked before deletion; active operations block deletion.
+</Note>
 
 <Note>
   An agent with a pending review application must be withdrawn first, and a published agent must be unpublished first, before it can be modified or deleted. See [Agent publication review](#agent-publication-review).
