@@ -72,3 +72,14 @@ html[lang=en] .hero h1{font-size:clamp(34px,3.5vw,54px);line-height:1.15}
 @media(min-width:761px){.products{gap:20px}.product h2{white-space:normal}.product-links{gap:12px}}
 
 @media(max-width:760px){.actions{flex-wrap:wrap}}
+
+.survey-banner{display:flex;align-items:center;gap:28px;flex:0 0 auto;padding:18px 40px;border-bottom:1px solid #383329;background:#1a1813}
+.survey-copy{flex:1;min-width:0}
+.survey-copy h2{font-size:14px;font-weight:600;line-height:1.6;color:#f2e4c8}
+.survey-copy p{margin-top:5px;font-size:13px;line-height:1.8;color:#b8b3a8}
+.survey-copy strong{color:#f2e4c8;font-weight:500}
+.survey-cta{display:inline-flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0;min-height:40px;padding:0 16px;border:1px solid #66573d;border-radius:7px;background:#30291e;color:#f2e4c8;font-size:13px;font-weight:500;white-space:nowrap;transition:background .2s,border-color .2s}
+.survey-cta:hover{background:#403522;border-color:#9b8257}
+.survey-cta svg{width:13px;height:13px}
+@media(max-width:1100px){.survey-banner{padding:16px 28px;gap:20px}}
+@media(max-width:760px){.survey-banner{align-items:flex-start;flex-direction:column;gap:14px;padding:18px 20px}.survey-copy p{margin-top:6px}.survey-cta{min-height:42px}}

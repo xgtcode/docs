@@ -135,6 +135,10 @@ languageToggle.addEventListener('click',()=>{const open=languageMenu.hidden;clos
 document.addEventListener('click',event=>{if(!event.target.closest('.language-picker'))closeLanguages();});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!languageMenu.hidden){closeLanguages();languageToggle.focus();}});
 const translations={
+'🎉 AgentKit 调研有礼！':'🎉 AgentKit survey rewards!',
+'5分钟聊聊您的真实使用体验，告诉我们哪里好用、哪里卡壳，审核通过可得':'Share your honest experience in 5 minutes: what works well and where you get stuck. Approved submissions receive a',
+'火山引擎 AgentKit ¥100 代金券':'¥100 Volcengine AgentKit voucher',
+'填写问卷':'Take the survey',
 'AgentKit 产品文档':'AgentKit product docs',
 'Python 开发工具包':'Python SDK','构建应用并接入 AgentKit 服务':'Build apps and connect to AgentKit services',
 '产品文档':'Product docs','开发者文档':'Developer docs','AgentKit 控制台':'AgentKit Console','产品介绍':'Overview','查看产品':'Explore products','产品':'Products','文档':'Docs','开始使用':'Get started','AgentKit 生态':'AgentKit ecosystem','从本地开发，到云上运行与真实业务':'From local development to production',
