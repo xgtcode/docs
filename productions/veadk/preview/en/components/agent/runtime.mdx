@@ -72,6 +72,7 @@ Run `python parallel_tools.py` to query both products. The model decides whether
 | `adk` | Standard agent execution; default | No additional runtime installation |
 | `codex` | Coding tasks through the Codex SDK | Install `veadk-python[codex]` |
 | `piagent` | Execution through PiAgent RPC | Supply a binary or allow installation on first use |
+| `dsh` | Execution through the DeepSeek Harness SDK | Install `veadk-python[dsh]` |
 
 ### Use the Codex runtime
 
@@ -266,9 +267,106 @@ Run `python piagent_runtime.py`. VeADK checks `PIAGENT_BINARY`, then its managed
 | `PIAGENT_ENABLE_SKILL_DISCOVERY` | Unset | Enables discovery unless the matching `DISABLE` variable is set |
 | `PIAGENT_PROJECT_TRUST` | `deny` | Project trust policy: `deny`, `approve`, or Pi's `default` |
 
+### Use the DeepSeek Harness runtime
+
+The DeepSeek Harness runtime delegates the agent inner loop to the DeepSeek Harness SDK. The binary is acquired at install time through a Python extra, and the subprocess starts lazily at runtime without a first-run download
+
+Install the optional SDK and matching binary dependencies:
+
+```bash lines
+pip install "veadk-python[dsh]"
+```
+
+`veadk-python[dsh]` depends on `deepseek-harness-sdk`, which in turn depends on a matching `deepseek-harness-runtime-bin`. The `dsh` executable arrives with the wheel; VeADK does not download a binary at runtime. Importing VeADK or constructing an `Agent` does not start DSH; the SDK starts the subprocess when execution first reaches the runtime entry point
+
+One effective configuration reuses one SDK object and DSH subprocess. The same VeADK app/user/session/agent maps to a stable DSH session identifier. VeADK session history remains the source of truth for short-term memory and is serialized into the prompt as structured conversation data; the DSH session identifier stays stable but is not the sole memory source
+
+ADK function tools and MCP tools are expanded before the DSH run and executed through generated tool plugins and an authenticated local callback server. `sub_agents` use the same injected transfer path as other external runtimes. ADK `SkillToolset` and legacy skills are materialized into an isolated directory and registered as DSH native skill plugins. Root-session DSH streaming output maps to ADK partial events, and DSH native tool events map to ADK function call/response events
+
+Model settings remain `model_name`, `model_api_base`, and `model_api_key`. The following example uses a Volcengine Ark endpoint:
+
+```python dsh_runtime.py lines
+import os
+from veadk import Agent, Runner
+from veadk.runtime.deepseek_harness import DeepSeekHarnessRuntimeConfig
+
+agent = Agent(
+    name="assistant",
+    runtime="dsh",
+    model_name="doubao-seed-2-1-pro-260628",
+    model_api_base="https://ark.cn-beijing.volces.com/api/v3",
+    model_api_key=os.environ["MODEL_AGENT_API_KEY"],
+    deepseek_harness_runtime_config=DeepSeekHarnessRuntimeConfig(
+        provider="volcengine",
+        profile="sdk-minimal",
+    ),
+)
+
+async def main():
+    print(await Runner(agent=agent).run(
+        messages='Explain what an agent runtime does.', session_id="runtime-demo"
+    ))
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+```
+
+Run `python dsh_runtime.py` to print the final response
+
+`provider` is the user-facing provider name, defaulting to `deepseek-official`. `openai`, `volcengine`, `volcengine-ark`, `ark`, `openai-compatible`, and `third-party` all map to the current DSH `deepseek-official` adapter; unknown provider names are passed through for future DSH native adapters. When `base_url` and `api_key` are not set in the config, they fall back to `Agent.model_api_base` and `Agent.model_api_key`
+
+When `dsh_home` is not configured, VeADK generates an isolated process-owned directory and passes it to the SDK instead of implicitly using `~/.dsh`. Configure a persistent `dsh_home` when DSH sessions must survive process restarts
+
+### DSH configuration
+
+`Agent.deepseek_harness_runtime_config` accepts `DeepSeekHarnessRuntimeConfig` or a matching dictionary
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `provider` | `str` | `"deepseek-official"` | User-facing provider name; empty values normalize to `deepseek-official`. `openai`, `volcengine`, `volcengine-ark`, `ark`, `openai-compatible`, and `third-party` map to `deepseek-official` |
+| `model` | `str \| None` | `None` | Overrides `Agent.model_name`; when unset, uses the first entry of `Agent.model_name` |
+| `reasoning_effort` | `str \| None` | `None` | Reasoning effort; actual support depends on the model |
+| `max_tokens` | `int \| None` | `None` | Maximum output tokens; must be positive |
+| `cwd` | `str \| None` | `None` | Working directory; expanded and resolved to an absolute path before use |
+| `runtime_cwd` | `str \| None` | `None` | Runtime working directory; expanded and resolved to an absolute path before use |
+| `dsh_bin` | `str \| None` | `None` | Path to the `dsh` executable; expanded and resolved to an absolute path before use |
+| `profile` | `str` | `"sdk-minimal"` | DSH profile name. `sdk-minimal` lets VeADK inject its own tool and skill plugins; `sdk` uses DSH's fuller profile, and VeADK patches existing skill plugin configuration instead of inserting duplicate plugin groups |
+| `patches` | `tuple[str, ...]` | `()` | Additional DSH plugin patch file paths; expanded and resolved to absolute paths before use |
+| `dsh_home` | `str \| None` | `None` | DSH home directory; when unset, an isolated process-owned directory is generated. Expanded and resolved to an absolute path before use |
+| `env` | `dict[str, str]` | `{}` | Extra environment variables passed to the DSH subprocess |
+| `initialize_timeout_seconds` | `float` | `30.0` | SDK initialization timeout in seconds; must be positive |
+| `request_timeout_seconds` | `float \| None` | `None` | Timeout for a single DSH run in seconds; `None` removes the limit. Set explicitly in production when a hard deadline is needed |
+| `shutdown_timeout_seconds` | `float \| None` | `1.0` | Timeout for shutting down the DSH SDK in seconds; `None` omits this timeout |
+| `base_url` | `str \| None` | `None` | Model API endpoint; falls back to `Agent.model_api_base` when unset |
+| `api_key` | `str \| None` | `None` | Model API Key; falls back to `Agent.model_api_key` when unset |
+
+These environment variables override constructor settings:
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `VEADK_DEEPSEEK_HARNESS_PROVIDER` | Unset | Overrides `provider` |
+| `VEADK_DEEPSEEK_HARNESS_MODEL` | Unset | Overrides `model` |
+| `VEADK_DEEPSEEK_HARNESS_REASONING_EFFORT` | Unset | Overrides `reasoning_effort` |
+| `VEADK_DEEPSEEK_HARNESS_MAX_TOKENS` | Unset | Overrides `max_tokens` |
+| `VEADK_DEEPSEEK_HARNESS_CWD` | Unset | Overrides `cwd` |
+| `VEADK_DEEPSEEK_HARNESS_RUNTIME_CWD` | Unset | Overrides `runtime_cwd` |
+| `VEADK_DEEPSEEK_HARNESS_DSH_BIN` | Unset | Overrides `dsh_bin` |
+| `VEADK_DEEPSEEK_HARNESS_PROFILE` | Unset | Overrides `profile` |
+| `VEADK_DEEPSEEK_HARNESS_DSH_HOME` | Unset | Overrides `dsh_home` |
+| `VEADK_DEEPSEEK_HARNESS_INITIALIZE_TIMEOUT_SECONDS` | Unset | Overrides `initialize_timeout_seconds` |
+| `VEADK_DEEPSEEK_HARNESS_REQUEST_TIMEOUT_SECONDS` | Unset | Overrides `request_timeout_seconds` |
+| `VEADK_DEEPSEEK_HARNESS_SHUTDOWN_TIMEOUT_SECONDS` | Unset | Overrides `shutdown_timeout_seconds` |
+| `VEADK_DEEPSEEK_HARNESS_BASE_URL` | Unset | Overrides `base_url` |
+| `VEADK_DEEPSEEK_HARNESS_API_KEY` | Unset | Overrides `api_key` |
+
+<Note>
+`enable_skills_checklist` is not enforced inside DSH's native skill loader. Descendant DSH subagent session notifications are not yet projected as first-class child-session events. These differences from `codex` and `piagent` are listed in the compatibility table below
+</Note>
+
 ### Runtime compatibility
 
-Check these settings when switching to `codex` or `piagent`:
+Check these settings when switching to `codex`, `piagent`, or `dsh`:
 
 | Setting | External-runtime behavior |
 | :--- | :--- |
@@ -278,15 +376,15 @@ Check these settings when switching to `codex` or `piagent`:
 | `model_name` list, `model_fallbacks` | Uses only the primary model; ignores fallbacks |
 | `model_provider` | Does not select a LiteLLM provider; requires a compatible endpoint |
 | `enable_responses`, `enable_responses_cache` | Do not enable ADK's Ark Responses features |
-| `model_extra_config` | Forwarded by Codex; unused by PiAgent |
+| `model_extra_config` | Forwarded by Codex; unused by PiAgent and DSH |
 | `knowledgebase`, `example_store` | Do not supply content automatically; use ADK or retrieve content and add it to instructions |
-| Legacy `skills_mode`, `enable_skills_checklist` | Do not provide the full legacy toolset behavior; use ADK or an adapted native skill entry |
+| Legacy `skills_mode`, `enable_skills_checklist` | `codex` and `piagent` do not provide the full legacy toolset behavior; `dsh` materializes `SkillToolset` and legacy skills into DSH native skill plugins but does not enforce `enable_skills_checklist` inside that loader |
 | `after_model_callback`, model traces | Operate on turn results; do not assume per-model-call callbacks and traces |
-| `RunConfig.max_llm_calls` | Codex checks before calls; PiAgent counts completed calls and may stop one call beyond the limit |
+| `RunConfig.max_llm_calls` | Codex checks before calls; PiAgent and DSH count completed calls and may stop one call beyond the limit |
 
 ## Agent transfer
 
-`transfer_to_agent` lets the model delegate to another agent in the tree, which continues execution and returns results. ADK, Codex, and PiAgent support transfers
+`transfer_to_agent` lets the model delegate to another agent in the tree, which continues execution and returns results. ADK, Codex, PiAgent, and DSH support transfers
 
 | Target | Condition |
 | :--- | :--- |
@@ -323,7 +421,7 @@ Run `python transfer.py` to obtain an announcement. Transfers require `Runner`; 
 
 ## Output persistence
 
-`output_key` stores the final response in session state under ADK, Codex, and PiAgent. It does not independently persist data to disk; survival across processes depends on [session storage](/productions/veadk/preview/en/components/session/index)
+`output_key` stores the final response in session state under ADK, Codex, PiAgent, and DSH. It does not independently persist data to disk; survival across processes depends on [session storage](/productions/veadk/preview/en/components/session/index)
 
 ```python pipeline.py lines
 import asyncio
