@@ -1,0 +1,154 @@
+---
+title: "Quickstart"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/get-started/quickstart"
+---
+
+This tutorial creates a minimal VeADK Go `v1.0.1` agent and runs it through the ADK launcher or ADK runner.
+
+## Configure the Model
+
+Create `config.yaml` at the project root:
+
+```yaml
+model:
+  agent:
+    provider: openai
+    name: doubao-seed-1-6-250615
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+```
+
+Export the model API key:
+
+```bash
+export MODEL_AGENT_API_KEY="your-ark-api-key"
+```
+
+## Create the Agent
+
+```go
+package main
+
+import (
+	"context"
+	"os"
+
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"github.com/volcengine/veadk-go/log"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/cmd/launcher"
+	"google.golang.org/adk/cmd/launcher/full"
+	"google.golang.org/adk/session"
+)
+
+func main() {
+	ctx := context.Background()
+
+	a, err := veagent.New(&veagent.Config{})
+	if err != nil {
+		log.Errorf("NewLLMAgent failed: %v", err)
+		return
+	}
+
+	config := &launcher.Config{
+		AgentLoader:    agent.NewSingleLoader(a),
+		SessionService: session.InMemoryService(),
+	}
+
+	l := full.NewLauncher()
+	if err = l.Execute(ctx, config, os.Args[1:]); err != nil {
+		log.Errorf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+	}
+}
+```
+
+## Run It
+
+```bash
+go run .
+```
+
+Open the Web UI:
+
+```bash
+go run . web api webui
+```
+
+For long-running agents, increase read and write timeouts:
+
+```bash
+go run . web -read-timeout 3m -write-timeout 3m api webui
+```
+
+## Call Runner Directly
+
+V1 uses the ADK runner. Create the session first, then consume the event stream returned by `Run`:
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/runner"
+	"google.golang.org/adk/session"
+	"google.golang.org/genai"
+)
+
+func main() {
+	ctx := context.Background()
+	appName := "demo"
+	userID := "user-1"
+	sessionID := "session-1"
+
+	a, err := veagent.New(&veagent.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	sessionService := session.InMemoryService()
+	_, err = sessionService.Create(ctx, &session.CreateRequest{
+		AppName:   appName,
+		UserID:    userID,
+		SessionID: sessionID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	r, err := runner.New(runner.Config{
+		AppName:        appName,
+		Agent:          a,
+		SessionService: sessionService,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	input := genai.NewContentFromText("hello", "user")
+	var chunks []string
+	for event, err := range r.Run(ctx, userID, sessionID, input, agent.RunConfig{}) {
+		if err != nil {
+			panic(err)
+		}
+		if event.Content == nil || event.Partial {
+			continue
+		}
+		for _, part := range event.Content.Parts {
+			chunks = append(chunks, part.Text)
+		}
+	}
+	fmt.Println(strings.Join(chunks, ""))
+}
+```
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| `runner` cannot be imported | V1 uses `google.golang.org/adk/runner`, not `github.com/volcengine/veadk-go/runner`. |
+| Follow-up turns lose context | Create the session and reuse the same `appName`, `userID`, and `sessionID`. |
+| Model does not respond | Check `MODEL_AGENT_API_KEY`, model name, and `api_base`. |

@@ -1,0 +1,21 @@
+---
+title: "Changelog"
+zh_link: "/productions/veadk-go/preview/zh/changelog"
+---
+
+This changelog records public user-facing changes covered by the VeADK Go Preview documentation. The current Preview targets the V2 module. Published V1 releases remain on the V1 maintenance line.
+
+## Current
+
+| Module | Change | Link |
+| --- | --- | --- |
+| Version lines | The mainline module path is now `github.com/volcengine/veadk-go/v2` and depends on `google.golang.org/adk/v2`. New projects should use V2. The V1 maintenance branch continues to use `github.com/volcengine/veadk-go` with ADK v1. | [Overview](/productions/veadk-go/preview/en) |
+| Installation | Preview installation now distinguishes the V2 mainline from the V1 maintenance line. Use `@main` or a pinned commit for V2 before a stable V2 tag is released. Existing V1 projects can pin `v1.0.1`. | [Installation](/productions/veadk-go/preview/en/get-started/installation) |
+| Runner | Initial documentation now covers `runner.RunText`, `runner.Run`, `runner.UserParts`, `runner.UserBytes`, and `runner.UserURI` for plain text, multi-part, multimodal, and event-stream invocation paths. | [Quickstart](/productions/veadk-go/preview/en/get-started/quickstart) |
+
+## V1
+
+| Module | Change | Link |
+| --- | --- | --- |
+| V1 maintenance line | Visible V1 releases currently include `v1.0.0` and `v1.0.1`. Existing V1 projects continue to use the module path without `/v2`. | [Installation](/productions/veadk-go/preview/en/get-started/installation) |
+

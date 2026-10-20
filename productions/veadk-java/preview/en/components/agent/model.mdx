@@ -1,0 +1,225 @@
+---
+title: "Models and Agents"
+zh_link: "/productions/veadk-java/preview/zh/components/agent/model"
+---
+
+The main VeADK Java entry point is `com.volcengine.veadk.Agent.builder()`. It builds on ADK Java's `LlmAgent` and adds VeADK-style model defaults, metadata, tools, skills, memory, knowledge bases, and runtime integrations.
+
+## Minimal agent
+
+```java
+import com.volcengine.veadk.Agent;
+
+Agent agent = Agent.builder()
+    .name("quickstart-agent")
+    .description("Answers user questions.")
+    .instruction("You are a helpful assistant.")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+```
+
+`Agent.builder()` sets a default agent name, description, instruction, and model name. For real applications, configure `name`, `instruction`, and the model explicitly so behavior does not depend on local defaults.
+
+There are three common model entry points:
+
+- `modelName("...")`: the VeADK semantic model-name entry point.
+- `model("...")`: the inherited ADK Java model-name entry point.
+- `model(BaseLlm)`: an explicitly configured model object.
+
+After construction, call the agent with `new Runner(agent).run(...)`, connect it to ADK Web, or expose it through AgentKit Runtime. If the model or tools hold network resources, close the agent with `agent.close().blockingAwait()` when finished.
+
+## Model selection
+
+If `modelProvider(...)` is not set, VeADK Java resolves the provider from the model-name prefix. Supported prefixes are `ark/`, `openai/`, `openai-compatible/`, and `openai_compatible/`. Without a prefix, the builder creates an OpenAI-compatible client.
+
+OpenAI-compatible example:
+
+```java
+Agent agent = Agent.builder()
+    .name("openai-agent")
+    .instruction("You are a helpful assistant.")
+    .modelProvider("openai")
+    .modelName("gpt-4o")
+    .modelApiKey(System.getenv("OPENAI_API_KEY"))
+    .modelBaseUrl("https://api.openai.com/v1")
+    .build();
+```
+
+Ark example:
+
+```java
+Agent agent = Agent.builder()
+    .name("ark-agent")
+    .modelProvider("ark")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .modelApiBase("https://ark.cn-beijing.volces.com/api/v3")
+    .modelThinking("disabled")
+    .build();
+```
+
+You can also encode the provider in the model name:
+
+```java
+Agent agent = Agent.builder()
+    .name("prefixed-agent")
+    .modelName("ark/doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+```
+
+`modelBaseUrl(...)` is an alias of `modelApiBase(...)`. It is often clearer for OpenAI-compatible endpoints, while Ark examples usually use `modelApiBase(...)`.
+
+## Explicit model object
+
+Create the model yourself when you need protocol-level Ark options, want to reuse a model instance, or need to plug in a custom ADK `BaseLlm`.
+
+```java
+import com.google.adk.models.BaseLlm;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+
+BaseLlm model = new ArkLlm(ArkLlmConfig.builder()
+    .modelName("doubao-seed-2-1-pro-260628")
+    .apiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .apiBase("https://ark.cn-beijing.volces.com/api/v3")
+    .thinking("disabled")
+    .build());
+
+Agent agent = Agent.builder()
+    .name("custom-model-agent")
+    .instruction("You are a helpful assistant.")
+    .model(model)
+    .build();
+```
+
+Explicit models are a good fit for shared configuration factories. Do not hard-code API keys in source files or docs examples.
+
+## Responses API and structured output
+
+The Ark adapter uses Chat Completions by default. Select `ArkLlmConfig.Api.RESPONSES` explicitly when you need response continuation, JSON Schema output, or other Responses API behavior. Register both `ArkResponsesSession` model callbacks to persist continuation state in the ADK session.
+
+```java
+import com.google.genai.types.GenerateContentConfig;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+import com.volcengine.veadk.model.ArkResponsesSession;
+import java.util.List;
+import java.util.Map;
+
+var model = new ArkLlm(ArkLlmConfig.builder()
+    .modelName("doubao-seed-2-1-pro-260628")
+    .api(ArkLlmConfig.Api.RESPONSES)
+    .thinking("disabled")
+    .build());
+
+var session = new ArkResponsesSession();
+
+var generation = GenerateContentConfig.builder()
+    .responseMimeType("application/json")
+    .responseJsonSchema(Map.of(
+        "type", "object",
+        "properties", Map.of("value", Map.of("type", "integer")),
+        "required", List.of("value"),
+        "additionalProperties", false))
+    .maxOutputTokens(256)
+    .build();
+
+Agent agent = Agent.builder()
+    .name("structured-agent")
+    .model(model)
+    .beforeModelCallback(session.beforeModel())
+    .afterModelCallback(session.afterModel())
+    .generateContentConfig(generation)
+    .build();
+```
+
+After the callbacks are registered, the Responses ID is stored in ADK Session State under the session and agent name. A later request uses `previous_response_id` only when the history prefix, model, system instruction, tool declarations, and generation config match. If history is compacted, configuration changes, or the remote response expires, the adapter falls back to a full-history request.
+
+## Model fallback
+
+Use `modelFallbacks(...)` to configure backup model endpoints for the same agent. Each generation starts with the primary model and attempts the next model only if an exception occurs before any model response is emitted.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+
+var primary = new ArkLlm(ArkLlmConfig.builder()
+    .modelName(System.getenv("PRIMARY_MODEL"))
+    .apiKey(System.getenv("PRIMARY_API_KEY"))
+    .build());
+
+var backup = new ArkLlm(ArkLlmConfig.builder()
+    .modelName(System.getenv("BACKUP_MODEL"))
+    .apiKey(System.getenv("BACKUP_API_KEY"))
+    .apiBase(System.getenv("BACKUP_API_BASE"))
+    .build());
+
+var agent = Agent.builder()
+    .name("assistant")
+    .model(primary)
+    .modelFallbacks(backup)
+    .build();
+
+try {
+    String answer = new Runner(agent).run("Complete the task with the available information.");
+} finally {
+    agent.close().blockingAwait();
+}
+```
+
+Fallback does not replay a response that has already started, and it does not retry tool execution. Backup models should support the same input formats, tool-calling behavior, and output constraints as the primary model.
+
+## Metadata
+
+VeADK Java records model, tool, component, and search-source metadata during agent construction. Use `AgentMetadataExtractor` to read a snapshot for runtime registration, debugging, or documentation.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.AgentMetadata;
+import com.volcengine.veadk.AgentMetadataExtractor;
+
+Agent agent = Agent.builder()
+    .name("metadata-agent")
+    .modelName("ark/doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+
+AgentMetadata metadata = AgentMetadataExtractor.extract(agent);
+
+System.out.println(metadata.modelName());
+System.out.println(metadata.tools());
+System.out.println(metadata.components());
+System.out.println(metadata.searchSources());
+```
+
+Explicit tools are marked as explicit. Tools injected by knowledge bases, long-term memory, Skills, and similar components are marked as auto.
+
+## Environment variables
+
+| Variable | Purpose |
+|---|---|
+| `MODEL_AGENT_API_KEY` | Default model API key. Ark and OpenAI-compatible configs use an explicit key first, then fall back to this variable. |
+| `MODEL_AGENT_API_BASE` | Default model endpoint. Used when `modelApiBase(...)` / `modelBaseUrl(...)` is not set explicitly. |
+| `MODEL_AGENT_API_KEY_ID` | Ark API key lookup by ID. |
+| `MODEL_AGENT_API_KEY_NAME` | Ark API key lookup by name. |
+| `MODEL_AGENT_PROJECT_NAME` | Ark key-management project name. Defaults to `default`. |
+| `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` | Volcengine credentials used to resolve an Ark API key when `MODEL_AGENT_API_KEY` is not provided directly. |
+
+Explicit `modelApiKey(...)`, `ArkLlmConfig.apiKey(...)`, or `OpenAiCompatibleLlmConfig.apiKey(...)` values take highest priority. In production, inject secrets through a secret manager, CI/CD secret, or runtime environment variable.
+
+## Troubleshooting
+
+| Symptom | What to check |
+|---|---|
+| Startup fails with a missing API key | Set `modelApiKey(...)` or `MODEL_AGENT_API_KEY`. Ark key auto-discovery also needs Volcengine AK/SK and a key ID/name. |
+| The model name is correct but requests go to the wrong endpoint | Check `modelProvider(...)`, model-name prefixes, and `MODEL_AGENT_API_BASE`. Without a prefix, the default provider is OpenAI-compatible. |
+| Responses continuation is not used | Confirm `ArkLlmConfig.Api.RESPONSES` is selected and both `beforeModelCallback` and `afterModelCallback` are registered. |
+| Fallback does not switch to the backup model | Fallback only triggers on exceptions before any `LlmResponse` is emitted. Errors after output starts are propagated to the caller. |
+| Structured output fails | Confirm the model supports JSON Schema and that `responseMimeType`, `responseJsonSchema`, or `responseSchema` matches the model capability. |
+

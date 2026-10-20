@@ -1,0 +1,25 @@
+---
+title: "短期会话"
+en_link: "/productions/veadk-java/archives/0.0.2/en/components/session"
+---
+
+短期会话用于保存同一个用户和会话下的事件历史。VeADK Java 通过 `ShortTermMemory` 封装会话服务，并在 `Runner` 中使用它解析或创建会话。
+
+## 多轮对话
+
+多轮对话时，应复用相同的 `userId` 和 `sessionId`：
+
+```java
+Runner runner = new Runner(agent, "memory_demo");
+runner.run("user_1", "session_1", "My name is Ming.");
+runner.run("user_1", "session_1", "What is my name?");
+```
+
+## 上下文窗口
+
+短期会话可以配合上下文窗口和工具结果压缩策略使用，避免过大的历史或工具结果把模型上下文撑满。
+
+## 生产建议
+
+本地内存适合示例。生产环境应接入稳定的 session service，并明确会话生命周期、清理策略和用户隔离策略。
+

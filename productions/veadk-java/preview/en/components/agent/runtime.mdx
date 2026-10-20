@@ -1,0 +1,102 @@
+---
+title: "Runner and Execution"
+zh_link: "/productions/veadk-java/preview/zh/components/agent/runtime"
+---
+
+`com.volcengine.veadk.Runner` is the convenient execution entry point for VeADK Java. It wraps ADK Java Runner, exposes direct `run(...)` calls, and connects short-term sessions and long-term memory.
+
+## Minimal Call
+
+After creating an agent with `Agent.builder()`, pass it to `Runner`. `run(String)` uses the default user `default_user`, creates a fresh session, and returns the final text response.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+
+Agent agent = Agent.builder()
+    .name("assistant")
+    .instruction("You are a helpful assistant.")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .build();
+
+String answer = new Runner(agent).run("Hello");
+System.out.println(answer);
+```
+
+`Runner` extracts text from ADK events. It prefers final response text; if there is no final response, it returns the last non-empty model text. If no text is available, it raises a clear error.
+
+## Multi-Turn Sessions
+
+Pass a stable `userId` and `sessionId` when you need conversation context. Reusing the same IDs keeps the same short-term session history.
+
+```java
+Runner runner = new Runner(agent, "memory_demo");
+
+String first = runner.run("user_1", "session_1", "My name is Ming.");
+String second = runner.run("user_1", "session_1", "What is my name?");
+```
+
+When no short-term session is configured, `Runner` uses local in-memory sessions. For production persistence, configure short-term memory through `Agent.builder().shortTermMemory(...)` or `new Runner(agent, appName, shortTermMemory)`.
+
+## Session resolution
+
+The default `RunConfig` used by `Runner` is `autoCreateSession(true)`.
+
+| Call | Session behavior |
+| --- | --- |
+| `run("Hello")` | Uses `default_user` and creates a new session. |
+| `run(userId, null, message, config)` | Creates a new session for the user. |
+| `run(userId, sessionId, message)` | Creates or reuses that `sessionId` by default. |
+| `run(userId, sessionId, message, RunConfig.builder().autoCreateSession(false).build())` | Reads only an existing session; a missing session is an error. |
+
+```java
+import com.google.adk.agents.RunConfig;
+
+RunConfig existingOnly = RunConfig.builder()
+    .autoCreateSession(false)
+    .build();
+
+String answer = runner.run("user_1", "session_1", "Continue.", existingOnly);
+```
+
+When `autoCreateSession(false)` is set and the session does not exist, `Runner` throws an `IllegalArgumentException` that includes the missing `sessionId` and `userId`.
+
+## Constructors
+
+Choose the constructor that matches the runtime dependency you need:
+
+| Constructor | Use case |
+| --- | --- |
+| `new Runner(agent)` | Minimal local calls; `appName` comes from `agent.name()`. |
+| `new Runner(agent, "app_name")` | Fixed application name for session namespace isolation. |
+| `new Runner(agent, shortTermMemory)` | Explicit short-term session service and context policy. |
+| `new Runner(agent, appName, shortTermMemory)` | Fixed app name plus explicit short-term memory. |
+| `new Runner(agent, appName, sessionService, memoryService)` | Direct integration with ADK Java session and memory services. |
+
+When the agent is a VeADK Java `Agent`, `Runner` reads its configured `shortTermMemory` and `longTermMemory`. An explicitly supplied `ShortTermMemory` constructor argument takes precedence.
+
+## Relationship to ADK Java Runner
+
+VeADK Java `Runner` extends ADK Java `Runner`. Its convenience `run(...)` methods convert text into `Content`, call the underlying `runAsync(...)`, collect events, and return a text result.
+
+If you need complete event handling, native ADK Web routes, or server-side streaming, choose one of these paths:
+
+- Use the underlying ADK Java Runner / `runAsync(...)` event stream.
+- Use the ADK Web example for native `/run`, `/run_sse`, and session APIs.
+- Use the AgentKit Runtime example for `/invoke`, with `AGENTKIT_STREAMING=true` when SSE is needed.
+
+## Use cases
+
+- **Direct Runner**: synchronous agent calls inside Java services, CLIs, tests, or scripts.
+- **ADK Web**: native ADK Web APIs, session CRUD, or `/run_sse`.
+- **AgentKit Runtime**: HTTP contract, container runtime, gateway integration, or managed deployment.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Multi-turn context is missing | Confirm both calls use the same `appName`, `userId`, and `sessionId`. |
+| Missing-session error | Check whether `RunConfig.autoCreateSession(false)` is set; use the default or set it to `true` when sessions should be created automatically. |
+| Sessions disappear after restart | Default local memory is not persistent; configure SQLite, MySQL, PostgreSQL, or a custom session service for production. |
+| No text response | Confirm the agent emits model text or a final response; tool-only flows may need direct event handling. |
+

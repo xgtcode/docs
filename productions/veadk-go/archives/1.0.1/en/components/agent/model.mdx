@@ -1,0 +1,75 @@
+---
+title: "Agent and Model"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/components/agent/model"
+---
+
+The VeADK Go `v1.0.1` agent entry point is `github.com/volcengine/veadk-go/agent/llmagent`. `llmagent.New` extends ADK `llmagent.Config` with model defaults, config loading, PromptManager, Skills discovery, and knowledge-base tool injection.
+
+## Minimal Agent
+
+```go
+import (
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+)
+
+func newAssistant() (agent.Agent, error) {
+	return veagent.New(&veagent.Config{
+		Config: llmagent.Config{
+			Name:        "assistant",
+			Description: "Answer product and engineering questions.",
+			Instruction: "You are a concise engineering assistant.",
+		},
+		ModelName:     "doubao-seed-1-6-250615",
+		ModelProvider: "openai",
+	})
+}
+```
+
+If model fields are not set explicitly, VeADK Go reads `MODEL_AGENT_NAME`, `MODEL_AGENT_PROVIDER`, `MODEL_AGENT_API_BASE`, and `MODEL_AGENT_API_KEY` from environment variables or global config. For Ark paths without an API key, the source attempts to use an Ark token provider.
+
+## Agent with Tools
+
+```go
+import (
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"github.com/volcengine/veadk-go/tool/builtin_tools/web_search"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+	"google.golang.org/adk/tool"
+)
+
+func newSearchAgent() (agent.Agent, error) {
+	searchTool, err := web_search.NewWebSearchTool(&web_search.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	return veagent.New(&veagent.Config{
+		Config: llmagent.Config{
+			Name:        "search_agent",
+			Instruction: "Use web search when fresh information is needed.",
+			Tools:       []tool.Tool{searchTool},
+		},
+	})
+}
+```
+
+## Key Configuration
+
+| Field | Purpose |
+| --- | --- |
+| `Config` | Embedded ADK `llmagent.Config` for name, description, instruction, tools, and callbacks. |
+| `ModelName` / `ModelProvider` | Model name and provider. Defaults come from environment variables or global config. |
+| `ModelAPIBase` / `ModelAPIKey` | Model endpoint and credential. |
+| `ModelAPIKeyProvider` | Custom API key provider, such as the Ark token provider. |
+| `ModelExtraConfig` / `ModelExtraHeaders` | Extra body/header fields passed to the model client. |
+| `KnowledgeBase` | Automatically appends a knowledge-base retrieval tool. |
+| `PromptManager` | Supplies the instruction when `Instruction` is not set explicitly. |
+| `Skills` | Local skills root directories discovered during agent creation. |
+| `DisableThought` | Adds extra config to disable reasoning content for supported models. |
+
+<Note>
+  VeADK Go `v1.0.1` configures long-term memory through the ADK runner `MemoryService` and mounts `LoadLongMemoryTool` when needed.
+</Note>

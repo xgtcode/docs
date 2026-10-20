@@ -9,6 +9,8 @@
 编写、改进或审查文档时，先读取本规范，再读取对应产品规范，按任务使用技能中的参考：
 
 - [VeADK 文档规范](./productions/veadk/veadk_SPEC.md)
+- [VeADK Go 文档规范](./productions/veadk-go/veadk-go_SPEC.md)
+- [VeADK Java 文档规范](./productions/veadk-java/veadk-java_SPEC.md)
 - [AgentKit CLI 文档规范](./productions/agentkit-cli/agentkit-cli_SPEC.md)
 - [API Reference 文档规范](./productions/api-reference/api-reference_SPEC.md)
 

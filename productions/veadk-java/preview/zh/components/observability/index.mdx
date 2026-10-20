@@ -1,0 +1,130 @@
+---
+title: "可观测"
+en_link: "/productions/veadk-java/preview/en/components/observability"
+---
+
+VeADK Java 通过 OpenTelemetry 采集智能体执行链路，并把 ADK Java 的模型、工具、Runner 会话等 span 导出到外部观测系统。当前源码提供 `OpenTelemetry.initOpenTelemetry(...)` 入口，以及 APMPlus 和 TLS 两类 exporter。
+
+## 何时接入
+
+- 需要观察模型调用、工具调用、知识库检索、记忆检索和 Runner 会话链路。
+- 需要把 Java 智能体的 trace 与业务请求 ID、用户 ID 或会话 ID 关联。
+- 需要把数据上报到火山引擎 APMPlus 或日志服务 TLS。
+- 需要在进程退出前主动 flush 已排队的 trace 或 metric。
+
+## 初始化 OpenTelemetry
+
+在创建 `Agent` 或执行 `Runner` 之前初始化 OpenTelemetry。`OpenTelemetry.initOpenTelemetry(...)` 接收 `ExporterFactory` 列表；列表为空时不会注册全局 provider。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.APMPlusExporter;
+import java.util.List;
+
+OpenTelemetry.initOpenTelemetry(List.of(new APMPlusExporter()));
+
+Agent agent = Agent.builder()
+    .name("support_agent")
+    .instruction("Answer with product documentation and keep responses concise.")
+    .modelName("deepseek-v4-flash-ga-260731")
+    .build();
+
+String answer = new Runner(agent, "support_app")
+    .run("user_1", "session_1", "如何查看一次工具调用的链路？");
+```
+
+初始化后，VeADK Java 会把全局 OpenTelemetry tracer 交给 ADK Java telemetry 使用。服务退出时，SDK 会注册 shutdown hook 关闭 tracer provider 和 meter provider；如果进程退出很快，仍建议显式调用 exporter 的 `forceFlush()`。
+
+## APMPlus
+
+`APMPlusExporter` 使用 OTLP/gRPC 同时导出 trace 和 metric。最小配置是显式提供 APMPlus AppKey：
+
+```bash
+export OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY="${APMPLUS_APP_KEY}"
+export OBSERVABILITY_OPENTELEMETRY_APMPLUS_SERVICE_NAME="veadk-java-agent"
+```
+
+```java
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.APMPlusExporter;
+import java.util.List;
+
+APMPlusExporter exporter = new APMPlusExporter();
+OpenTelemetry.initOpenTelemetry(List.of(exporter));
+
+// Optional: flush queued trace and metric data before a short-lived process exits.
+exporter.forceFlush();
+```
+
+未配置 `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY` 时，`APMPlusExporter` 会通过 APMPlus `GetAppKey` OpenAPI 自动解析 AppKey。火山引擎模式需要 `VOLCENGINE_ACCESS_KEY` 和 `VOLCENGINE_SECRET_KEY`；`CLOUD_PROVIDER=byteplus` 时优先使用 `BYTEPLUS_ACCESS_KEY` 和 `BYTEPLUS_SECRET_KEY`，未设置时回退到火山引擎凭证。
+
+| 环境变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_ENDPOINT` | `http://apmplus-<region>.volces.com:4317` | APMPlus OTLP/gRPC endpoint。 |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY` | 空 | APMPlus AppKey。为空时通过云凭证自动获取。 |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_SERVICE_NAME` | `veadk_tracing` | 写入 OpenTelemetry resource 的服务名。 |
+| `REGION` | `cn-beijing` | 火山引擎地域，用于默认 endpoint 和自动获取 AppKey。 |
+| `CLOUD_PROVIDER` | 空 | 设置为 `byteplus` 时使用 BytePlus endpoint 和 region 规则。 |
+| `BYTEPLUS_REGION` | `ap-southeast-1` | BytePlus 模式下的默认地域。 |
+| `APMPLUS_OPENAPI_HOST` | 根据云服务商选择 | 自动获取 AppKey 时调用的 OpenAPI host。 |
+
+## TLS 日志服务
+
+`TLSExporter` 把 trace 通过 OTLP/gRPC 上报到火山引擎日志服务 TLS。它会从环境变量读取 endpoint、topic 和地域，并使用火山引擎 AK/SK 构造认证 header。
+
+```bash
+export OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME="${TLS_TRACE_TOPIC_ID}"
+export OBSERVABILITY_OPENTELEMETRY_TLS_REGION="cn-beijing"
+export VOLCENGINE_ACCESS_KEY="${VOLCENGINE_ACCESS_KEY}"
+export VOLCENGINE_SECRET_KEY="${VOLCENGINE_SECRET_KEY}"
+```
+
+```java
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.TLSExporter;
+import java.util.List;
+
+OpenTelemetry.initOpenTelemetry(List.of(new TLSExporter()));
+```
+
+| 环境变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_ENDPOINT` | `https://tls-cn-beijing.volces.com:4317` | TLS OTLP/gRPC endpoint。 |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME` | 无 | TLS trace 日志主题 ID；未设置会初始化失败。 |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_REGION` | `cn-beijing` | TLS 服务地域。 |
+| `VOLCENGINE_ACCESS_KEY` | 无 | TLS 上报认证使用的 Access Key。 |
+| `VOLCENGINE_SECRET_KEY` | 无 | TLS 上报认证使用的 Secret Key。 |
+
+## 同时导出到多个后端
+
+`OpenTelemetry.initOpenTelemetry(...)` 会把多个 exporter 组合成一个 composite exporter。需要同时上报到 APMPlus 和 TLS 时，可以传入多个 exporter：
+
+```java
+OpenTelemetry.initOpenTelemetry(List.of(
+    new APMPlusExporter(),
+    new TLSExporter()
+));
+```
+
+APMPlus exporter 会额外注册 metric reader；TLS exporter 当前只导出 trace。
+
+## 采集内容与隐私
+
+OpenTelemetry span 可能包含模型、工具、知识库和记忆链路的属性。生产环境接入前，应确认以下内容：
+
+- 不把 API Key、AK/SK、Token、Cookie 或用户隐私写入 prompt、工具参数、metadata 或日志字段。
+- 使用稳定的 `Agent` 名称、Runner `appName`、`userId` 和 `sessionId`，便于跨系统定位。
+- 对需要长期留存的平台，提前确认数据保留周期、访问权限和删除策略。
+- 短生命周期进程在退出前调用 `forceFlush()` 或确保 shutdown hook 有足够时间完成导出。
+
+## 常见问题
+
+| 现象 | 排查方向 |
+| --- | --- |
+| APMPlus 初始化报错 `Unable to resolve APMPlus app key` | 设置 `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY`，或确认云凭证、`REGION`、`CLOUD_PROVIDER` 和 `APMPLUS_OPENAPI_HOST` 可用。 |
+| TLS 初始化失败 | 确认 `OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME`、`VOLCENGINE_ACCESS_KEY` 和 `VOLCENGINE_SECRET_KEY` 已注入。 |
+| 控制台没有 trace | 确认初始化发生在 Runner 调用之前，endpoint、地域和服务名正确，并检查进程退出前是否完成 flush。 |
+| trace 与业务请求难以关联 | 在业务日志中记录同一轮调用的 `appName`、`userId`、`sessionId`，并保持智能体名称稳定。 |
+

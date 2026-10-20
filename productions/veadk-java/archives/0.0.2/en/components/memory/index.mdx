@@ -1,0 +1,181 @@
+---
+title: "Long-Term Memory"
+zh_link: "/productions/veadk-java/archives/0.0.2/zh/components/memory"
+---
+
+Long-term memory stores user preferences, task conclusions, or reusable facts across sessions. VeADK Java can configure a memory service through the builder and expose the `loadMemory` retrieval tool when needed.
+
+## Wiring
+
+Configure `longTermMemory(...)` on `Agent.builder()` to attach a memory service to the agent. `Runner` reads that service from the VeADK Java agent. If you did not already define a custom tool named `loadMemory`, VeADK Java automatically injects the official `loadMemory` tool so the model can retrieve past memories before answering.
+
+Turn on `autoSaveSession(true)` when the agent should write new session content back to long-term memory. VeADK Java adds the session-saving callback and writes new user messages into the configured memory service.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.memory.mem0.Mem0MemoryService;
+
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .topK(5)
+    .build();
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .instruction("""
+        Remember stable user preferences. Use memory only for facts that may
+        have been mentioned in previous sessions.
+        """)
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveSession(true)
+    .build();
+
+Runner runner = new Runner(agent, "memory_demo");
+runner.run("user_1", "session_1", "I prefer reports in Chinese.");
+runner.run("user_1", "session_2", "What report language do I prefer?");
+```
+
+## Mem0 Memory
+
+`Mem0MemoryService` is the managed long-term memory backend for Mem0. It extracts user messages from session events when saving, and `loadMemory` searches Mem0 by `userId` and query text when the model needs context.
+
+```java
+import com.volcengine.veadk.memory.mem0.Mem0MemoryService;
+
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .defaultUserId("default_user")
+    .topK(5)
+    .writeMode(Mem0MemoryService.WriteMode.SYNCHRONOUS)
+    .build();
+```
+
+Common options:
+
+| Option | Description |
+| --- | --- |
+| `appName(String)` | Memory application name. The default is `default_app`. It must start with an English letter and contain only letters, numbers, and underscores. |
+| `defaultUserId(String)` / `userId(String)` | Default user used when no explicit user is provided. The default is `default_user`. |
+| `topK(int)` | Number of memories returned for each search. The default is `5`. |
+| `writeMode(...)` | Save completion mode. The default is `ASYNC`; use `SYNCHRONOUS` when the next step must wait for Mem0 processing. |
+| `config(Mem0Config)` | Explicit Mem0 credential configuration. If omitted, VeADK Java reads environment variables. |
+
+Use a direct Mem0 API key:
+
+```bash
+export DATABASE_MEM0_API_KEY="..."
+export DATABASE_MEM0_BASE_URL="https://api.mem0.ai"
+```
+
+Or let VeADK Java resolve the Mem0 API key through Volcengine credentials:
+
+```bash
+export VOLCENGINE_ACCESS_KEY="..."
+export VOLCENGINE_SECRET_KEY="..."
+export DATABASE_MEM0_PROJECT_ID="..."
+export DATABASE_MEM0_API_KEY_ID="..." # optional
+export DATABASE_MEM0_REGION="cn-beijing"
+```
+
+If `DATABASE_MEM0_BASE_URL` is not set, VeADK Java uses `https://api.mem0.ai`. If `DATABASE_MEM0_REGION` is not set, it uses `cn-beijing`.
+
+## Viking Memory
+
+`VikingMemoryService` uses Volcengine Viking Memory as the long-term memory backend. It implements ADK Java's `BaseMemoryService`, so it can be passed directly to `Agent.builder().longTermMemory(...)`.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.memory.viking.VikingMemoryService;
+
+VikingMemoryService memoryService = new VikingMemoryService("memory_agent");
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveSession(true)
+    .build();
+```
+
+Viking Memory can use either an API key or Volcengine AK/SK:
+
+```bash
+export DATABASE_VIKINGMEM_API_KEY="..."
+
+# Or
+export VOLCENGINE_ACCESS_KEY="..."
+export VOLCENGINE_SECRET_KEY="..."
+```
+
+The API key covers Memory search and add-session data-plane calls. Collection management still needs AK/SK or IAM credentials; if you only configure an API key, prepare the matching collection in the cloud first. To override the built-in event type list, set:
+
+```bash
+export DATABASE_VIKINGMEM_MEMORY_TYPE="sys_event_v1"
+```
+
+## Async vs. Sync Writes
+
+Mem0 uses `ASYNC` write mode by default. A successful save means Mem0 accepted the request, but the new memory may not be immediately searchable. This is usually the lower-latency choice for chat flows.
+
+Use synchronous mode when the next operation must depend on the memory that was just written:
+
+```java
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .writeMode(Mem0MemoryService.WriteMode.SYNCHRONOUS)
+    .build();
+```
+
+Synchronous mode asks Mem0 to finish processing before returning, while final search visibility still follows the configured backend's consistency behavior.
+
+## Auto-save Policy
+
+The default policy avoids saving after every single event. It saves when there is saveable content first, then skips later saves until the new-event or elapsed-time thresholds are reached. The defaults are `10` new events and `60` seconds, and they can be overridden with environment variables:
+
+```bash
+export MIN_MESSAGES_THRESHOLD="10"
+export MIN_TIME_THRESHOLD="60"
+```
+
+To configure the policy in code, pass `autoSaveMemoryPolicy(...)`:
+
+```java
+import com.volcengine.veadk.memory.SaveSessionToMemoryCallback;
+import java.time.Duration;
+
+SaveSessionToMemoryCallback.AutoSavePolicy policy =
+    SaveSessionToMemoryCallback.AutoSavePolicy.builder()
+        .minEventsThreshold(5)
+        .minTimeThreshold(Duration.ofSeconds(30))
+        .build();
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveMemoryPolicy(policy)
+    .autoSaveSession(true)
+    .build();
+```
+
+## What to Store
+
+Good long-term memory candidates:
+
+- Explicit, reusable user preferences such as language, format, or notification style.
+- Confirmed long-lived facts such as project roles, common systems, or stable business constraints.
+- Reusable task conclusions such as a default integration setting or a verified troubleshooting result.
+
+Do not store:
+
+- Passwords, tokens, SSH keys, API keys, or other credentials.
+- Unmasked sensitive personal data, regulated data, or raw customer content.
+- Temporary reasoning, raw tool output, one-off drafts, or unverified guesses.
+- Complete chat transcripts. Long-term memory should store reusable facts, not act as a full session backup.
+
+## Notes
+
+If expected memories are not retrieved, first check that `longTermMemory(...)` is configured, the same user ID is used, the session has been saved, and the current write mode allows the next turn to search newly written content. For Viking Memory, also confirm that the collection exists or that the configured credentials can manage collections.
+

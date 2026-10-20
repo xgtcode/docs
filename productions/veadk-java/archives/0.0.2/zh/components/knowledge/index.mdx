@@ -1,0 +1,156 @@
+---
+title: "知识库"
+en_link: "/productions/veadk-java/archives/0.0.2/en/components/knowledge"
+---
+
+知识库用于把企业资料、产品文档、支持策略等外部知识接入智能体。VeADK Java 的推荐入口是 `KnowledgeBase` 和 `Agent.builder().knowledgebase(...)`：你把知识库服务挂到 Agent 上，VeADK 会在构建 Agent 时自动注入 `loadKnowledgebase` 工具，模型需要查资料时就可以先检索再回答。
+
+## 工作流程
+
+1. 选择知识库后端：`opensearch` 或 `viking`。
+2. 用 `KnowledgeBase.builder()` 配置索引、集合和召回数量。
+3. 通过 `addFromText(...)`、`addFromFiles(...)`、`addFromDirectory(...)` 或 `addDoc(...)` 导入资料。
+4. 在 `Agent.builder()` 中配置 `knowledgebase(knowledgeBase)`。
+5. 使用 `Runner` 执行对话；模型会在需要外部资料时调用自动注入的 `loadKnowledgebase`。
+
+## OpenSearch 示例
+
+OpenSearch 适合把本地文本、文件或目录切分成向量片段后存入自己的 OpenSearch 索引。它会使用 Ark embedding 模型生成向量，因此至少要配置模型 API Key。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.knowledgebase.KnowledgeBase;
+import java.util.List;
+
+public class DocsKnowledgeAgent {
+    public static void main(String[] args) throws Exception {
+        try (KnowledgeBase knowledgeBase =
+                KnowledgeBase.builder()
+                        .backend("opensearch")
+                        .index("veadk_java_docs")
+                        .topK(5)
+                        .build()) {
+            knowledgeBase.addFromText(
+                    List.of(
+                            "VeADK Java uses Agent.builder() as the main entry point.",
+                            "KnowledgeBase can inject loadKnowledgebase into the agent."));
+
+            Agent agent =
+                    Agent.builder()
+                            .name("docs_agent")
+                            .instruction(
+                                    "Answer with the knowledge base before using general knowledge.")
+                            .modelName("deepseek-v4-flash-260425")
+                            .knowledgebase(knowledgeBase)
+                            .build();
+
+            String answer = new Runner(agent).run("How does VeADK Java use a knowledge base?");
+            System.out.println(answer);
+        }
+    }
+}
+```
+
+常用环境变量：
+
+| 变量 | 作用 |
+| --- | --- |
+| `DATABASE_OPENSEARCH_HOST` | OpenSearch 地址，未配置时为空字符串 |
+| `DATABASE_OPENSEARCH_PORT` | OpenSearch 端口，默认 `9200` |
+| `DATABASE_OPENSEARCH_USERNAME` | OpenSearch 用户名 |
+| `DATABASE_OPENSEARCH_PASSWORD` | OpenSearch 密码 |
+| `DATABASE_OPENSEARCH_USE_SSL` | 是否使用 SSL，默认 `true` |
+| `DATABASE_OPENSEARCH_CERT_PATH` | OpenSearch 证书路径 |
+| `MODEL_EMBEDDING_API_KEY` | Ark embedding API Key；未配置时会回退到 `MODEL_AGENT_API_KEY` |
+| `MODEL_EMBEDDING_NAME` | embedding 模型名，默认 `doubao-embedding-vision-250615` |
+| `MODEL_EMBEDDING_DIM` | embedding 维度，默认 `2048` |
+| `MODEL_EMBEDDING_API_BASE` | embedding 服务地址，默认火山方舟北京地域地址 |
+
+## Viking 示例
+
+Viking 知识库适合使用火山引擎侧的知识库集合。Java SDK 中通过 `appName(...)` 指定集合名，搜索可以使用 `DATABASE_VIKING_API_KEY`；如果要创建集合、导入文档或使用 TOS 文档 URI，仍然需要 AK/SK 或 IAM 凭证。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.knowledgebase.KnowledgeBase;
+
+public class VikingDocsKnowledgeAgent {
+    public static void main(String[] args) throws Exception {
+        String appName =
+                System.getenv()
+                        .getOrDefault(
+                                "DATABASE_VIKING_KNOWLEDGEBASE_APP_NAME", "veadk_java_docs");
+
+        try (KnowledgeBase knowledgeBase =
+                KnowledgeBase.builder()
+                        .backend("viking")
+                        .appName(appName)
+                        .topK(5)
+                        .build()) {
+            knowledgeBase.addDoc("tos://your-bucket/path/to/document.md");
+
+            Agent agent =
+                    Agent.builder()
+                            .name("viking_docs_agent")
+                            .instruction("Use the knowledge base first for document questions.")
+                            .modelName("deepseek-v4-flash-260425")
+                            .knowledgebase(knowledgeBase)
+                            .build();
+
+            String answer = new Runner(agent).run("Summarize the uploaded document.");
+            System.out.println(answer);
+        }
+    }
+}
+```
+
+常用环境变量：
+
+| 变量 | 作用 |
+| --- | --- |
+| `DATABASE_VIKING_KNOWLEDGEBASE_APP_NAME` | Viking 知识库集合名；示例会在未配置时使用默认集合名 |
+| `DATABASE_VIKING_API_KEY` | Viking Knowledgebase 搜索 API Key |
+| `VOLCENGINE_ACCESS_KEY` | 火山引擎 AK；集合管理、文档导入、TOS `addDoc` 需要 |
+| `VOLCENGINE_SECRET_KEY` | 火山引擎 SK；集合管理、文档导入、TOS `addDoc` 需要 |
+
+也可以在代码里通过 `vikingApiKey(...)` 显式传入搜索 API Key，显式参数优先于环境变量。
+
+## 后端与导入方式
+
+| 能力 | OpenSearch | Viking |
+| --- | --- | --- |
+| 构建方式 | `KnowledgeBase.builder().backend("opensearch").index("...").build()` | `KnowledgeBase.builder().backend("viking").appName("...").build()` |
+| 简写方式 | `KnowledgeBase.opensearch("index")` | `KnowledgeBase.viking("appName")` |
+| 本地文本导入 | `addFromText(String)` / `addFromText(List<String>)` | 取决于后端服务能力 |
+| 文件导入 | `addFromFiles(...)` / `addFromDirectory(...)` | 取决于后端服务能力 |
+| 远程文档导入 | 不推荐作为主路径 | `addDoc("tos://...")` |
+| 检索 | `search(query)` 或自动工具 `loadKnowledgebase` | `search(query)` 或自动工具 `loadKnowledgebase` |
+| 召回数量 | `topK(...)`，默认 `10` | `topK(...)`，默认 `10` |
+
+`KnowledgeBase` 同时提供异步方法，例如 `addFromTextAsync(...)`、`addFromFilesAsync(...)`、`addDocAsync(...)` 和 `searchAsync(...)`，适合在已有 RxJava 流程中组合。
+
+## 自动工具注入
+
+`Agent.builder().knowledgebase(service)` 接收任何实现 `BaseKnowledgebaseService` 的服务。构建 Agent 时，如果工具列表中还没有名为 `loadKnowledgebase` 的工具，VeADK 会自动创建 `LoadKnowledgebaseTool` 并加入工具列表。这个工具会把模型传入的 `query` 转成 `searchKnowledgebase(query)` 调用，并把召回片段返回给模型。
+
+如果你直接使用 ADK Java 的 `LlmAgent.builder()`，则需要手动配置：
+
+```java
+.tools(new LoadKnowledgebaseTool(knowledgeBase))
+```
+
+使用 VeADK Java 的 `Agent.builder().knowledgebase(...)` 时通常不需要手动添加这个工具。
+
+## 排查问题
+
+| 现象 | 检查项 |
+| --- | --- |
+| 构建 `KnowledgeBase` 时报 `Either index or appName must be provided.` | OpenSearch 需要 `index(...)`，Viking 需要 `appName(...)` |
+| OpenSearch 检索为空 | 确认已经执行 `addFromText(...)`、`addFromFiles(...)` 或 `addFromDirectory(...)`，并检查索引名是否一致 |
+| OpenSearch 启动时报 embedding 配置缺失 | 配置 `MODEL_EMBEDDING_API_KEY`，或让它回退使用 `MODEL_AGENT_API_KEY` |
+| Viking 搜索鉴权失败 | 配置 `DATABASE_VIKING_API_KEY`，或在 builder 中调用 `vikingApiKey(...)` |
+| Viking 导入 TOS 文档失败 | 搜索 API Key 不覆盖文档导入；需要配置 `VOLCENGINE_ACCESS_KEY` 和 `VOLCENGINE_SECRET_KEY`，或使用可用的 IAM 凭证 |
+| 模型没有使用知识库 | 检查 Agent 是否通过 `knowledgebase(...)` 挂载服务；也可以在 instruction 中明确要求回答前优先检索知识库 |
+

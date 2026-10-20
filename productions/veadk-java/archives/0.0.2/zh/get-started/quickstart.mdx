@@ -1,0 +1,118 @@
+---
+title: "快速开始"
+en_link: "/productions/veadk-java/archives/0.0.2/en/get-started/quickstart"
+---
+
+本教程介绍如何创建一个最小 VeADK Java 智能体，并通过 `Runner` 执行一次对话。
+
+## 前置条件
+
+- 已完成[安装](/productions/veadk-java/archives/0.0.2/zh/get-started/installation)，并在项目中添加 `com.volcengine.veadk:veadk-java`
+- 已准备火山方舟或 OpenAI 兼容模型服务的 API Key，并拥有所选模型的调用权限
+- 以下命令使用 Bash 或 zsh；配置与运行命令应在同一终端执行
+
+## 配置模型凭证
+
+在当前终端导出模型 API Key：
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+```
+
+如果不显式配置 provider，VeADK Java 默认使用 OpenAI-compatible 路径。默认 base URL 是火山方舟 OpenAI-compatible endpoint；需要使用 OpenAI 官方、LiteLLM Proxy 或内部兼容网关时，可以通过 `modelApiBase(...)` 或 `modelBaseUrl(...)` 覆盖。
+
+## 编写最小智能体
+
+在你的 Maven 项目中创建 `Main.java`：
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+
+public class Main {
+    public static void main(String[] args) {
+        Agent agent = Agent.builder()
+                .name("quickstart-agent")
+                .description("Answers user questions.")
+                .instruction("You are a helpful assistant.")
+                .model("doubao-seed-2-1-pro-260628")
+                .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+                .build();
+
+        String answer = new Runner(agent).run("用一句话介绍火山引擎。");
+        System.out.println(answer);
+    }
+}
+```
+
+`Agent.builder()` 是 VeADK Java 的主要入口。`new Runner(agent).run(...)` 会创建默认用户与会话，执行一次阻塞式调用，并返回最终文本。
+
+## 使用 Ark 专用适配器
+
+只有需要 Ark 专用 `ArkLlm` 适配器时，才显式指定 `modelProvider("ark")`：
+
+```java
+Agent agent = Agent.builder()
+        .name("ark-agent")
+        .modelProvider("ark")
+        .model("doubao-seed-2-1-pro-260628")
+        .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+        .modelApiBase("https://ark.cn-beijing.volces.com/api/v3")
+        .build();
+```
+
+如果使用 OpenAI 官方、LiteLLM Proxy 或内部 OpenAI-compatible 网关，则把 base URL 指向对应 endpoint：
+
+```java
+Agent agent = Agent.builder()
+        .name("openai-compatible-agent")
+        .modelProvider("openai")
+        .model("openai/gpt-4o")
+        .modelApiKey(System.getenv("OPENAI_API_KEY"))
+        .modelBaseUrl("https://api.openai.com/v1")
+        .build();
+```
+
+## 运行仓库示例
+
+在 `veadk-java` 源码仓根目录运行基础 Agent 示例：
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+./mvnw -pl example -am -q compile exec:java -Dexec.mainClass=com.volcengine.veadk.example.basic.AgentExample
+```
+
+该示例会创建一个 Ark 模型驱动的 `Agent`，注册 Java 函数工具，并调用 `Runner.run(...)`。
+
+启动 ADK Web 示例：
+
+```bash
+./mvnw -pl example -am -q compile exec:java \
+    -Dexec.mainClass=com.volcengine.veadk.example.web.AdkWeb
+```
+
+默认访问地址是 `http://localhost:8000`。
+
+## 使用会话继续对话
+
+需要在多轮对话中延续上下文时，复用相同的 `userId` 和 `sessionId`：
+
+```java
+Runner runner = new Runner(agent);
+
+runner.run("user_1", "session_1", "我叫小明。");
+String answer = runner.run("user_1", "session_1", "我叫什么？");
+System.out.println(answer);
+```
+
+默认情况下，`Runner.run(String)` 使用默认用户并自动创建会话；显式传入 `userId` 和 `sessionId` 可以控制会话归属和复用。
+
+## 排查首次运行问题
+
+| 现象 | 检查与处理 |
+| --- | --- |
+| 找不到 `veadk-java` 依赖 | 确认 Maven 仓库可访问该版本；如果暂时无法解析，先从源码执行 `./mvnw clean install -DskipTests`。 |
+| 模型认证或权限失败 | 确认 `MODEL_AGENT_API_KEY` 已在当前终端导出，并与模型名称、base URL 和账号权限匹配。 |
+| 使用 IDE 运行时环境变量缺失 | 在 IDE Run Configuration 中配置环境变量，或从已经导出变量的 shell 启动 IDE。 |
+| `8000` 端口被占用 | 调整 ADK Web 启动参数中的端口，或释放当前占用端口的进程。 |
+

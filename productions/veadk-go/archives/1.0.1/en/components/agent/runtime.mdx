@@ -1,0 +1,77 @@
+---
+title: "Runner and Execution"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/components/agent/runtime"
+---
+
+VeADK Go `v1.0.1` uses the ADK `google.golang.org/adk/runner` package for direct execution. The Runner loads conversation history for the same `appName`, `userID`, and `sessionID`, then returns an event stream.
+
+## Minimal Call
+
+```go
+sessionService := session.InMemoryService()
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+
+r, err := runner.New(runner.Config{
+	AppName:        "demo",
+	Agent:          a,
+	SessionService: sessionService,
+})
+if err != nil {
+	return err
+}
+
+input := genai.NewContentFromText("hello", "user")
+for event, err := range r.Run(ctx, "user-1", "session-1", input, agent.RunConfig{}) {
+	if err != nil {
+		return err
+	}
+	// handle event
+}
+```
+
+VeADK Go `v1.0.1` executes agents through the ADK `runner` package. Explicitly create the session before calling `Run`.
+
+## Consume the Event Stream
+
+```go
+var chunks []string
+for event, err := range r.Run(ctx, userID, sessionID, input, agent.RunConfig{}) {
+	if err != nil {
+		return err
+	}
+	if event.Content == nil || event.Partial {
+		continue
+	}
+	for _, part := range event.Content.Parts {
+		chunks = append(chunks, part.Text)
+	}
+}
+answer := strings.Join(chunks, "")
+```
+
+## Runner Configuration
+
+| Field | Purpose |
+| --- | --- |
+| `AppName` | Application name and part of the session/memory namespace. |
+| `Agent` | Root agent, required. |
+| `SessionService` | Short-term session service. |
+| `MemoryService` | Long-term memory service. |
+| `PluginConfig` | ADK runner plugins, such as observability or LLM Shield. |
+| `ArtifactService` | Artifact storage service. |
+
+## Direct Runner vs App
+
+| Option | Use case |
+| --- | --- |
+| ADK `runner.New` | You control request entry, auth, session creation, and response format. |
+| `apps/simple_app` | Quickly expose a local HTTP API. |
+| `apps/a2a_app` | Serve the A2A protocol. |
+| `apps/agentkit_server_app` | Deploy to AgentKit Runtime or a hosted platform. |

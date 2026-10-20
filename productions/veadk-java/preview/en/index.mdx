@@ -1,0 +1,42 @@
+---
+title: "Overview"
+zh_link: "/productions/veadk-java/preview/zh"
+---
+
+VeADK Java is an agent development toolkit for Java developers. It reuses ADK Java's `LlmAgent`, `Runner`, session, and tool execution paths, then adds VeADK-style `Agent.builder()`, model defaults, metadata, tools, skills, memory, knowledge bases, observability, and AgentKit Runtime integration.
+
+The current Preview uses Maven coordinates `com.volcengine.veadk:veadk-java:0.0.2` and requires JDK 17 or later.
+
+## Use Cases
+
+- Build Java agents that call models, function tools, Skills, knowledge bases, or memory.
+- Run one conversation directly in Java services with `new Runner(agent).run(...)`.
+- Wrap ADK Java tools, SkillToolset, session services, and event-stream behavior behind VeADK Java entry points.
+- Run Java agents through ADK Web, a local CLI, AgentKit Runtime, or containerized services.
+- Add enterprise capabilities such as OpenTelemetry, APMPlus, TLS, LLM Shield, and identity authorization.
+
+## Core Modules
+
+| Module | Purpose |
+| --- | --- |
+| `com.volcengine.veadk.Agent` | Main VeADK Java entry point. `Agent.builder()` adds model, tool, skill, memory, knowledge base, and metadata wiring on top of ADK Java `LlmAgent`. |
+| `com.volcengine.veadk.Runner` | Convenience execution entry point with `run(String)`, user/session-scoped conversations, and `RunConfig` support. |
+| `model` | Provides Ark-specific and OpenAI-compatible adapters, while allowing callers to pass a custom ADK `BaseLlm`. |
+| `tools` | Provides built-in tools and toolsets beyond Java function tools, including MCP Router, Skills Sandbox, Web Search, and media generation. |
+| `memory` | Provides short-term memory, persistent sessions, and long-term memory capabilities. |
+| `knowledgebase` | Connects to Viking, OpenSearch, and related knowledge backends, exposing retrieval to agents through tools. |
+| `trace` | Integrates OpenTelemetry and supports exporters such as APMPlus and TLS. |
+| `a2a` / `integration/agentkit` | Supports A2A, AgentKit Runtime, and service-oriented execution paths. |
+
+## Current Scope
+
+VeADK Java aligns with the Python version for core entry points such as `Agent.builder()`, models, tools, sub-agents, memory, and knowledge base metadata. The current README explicitly lists some Python-side capabilities that are not supported yet, including `runtime=codex/piagent`, `enableResponses`, `aio_sandbox`, `enableA2ui`, `enableTunnel`, YAML, and dynamic tool discovery.
+
+## Usage Paths
+
+| Goal | Documentation |
+| --- | --- |
+| Add the Maven dependency and configure model credentials | [Installation](/productions/veadk-java/preview/en/get-started/installation) |
+| Create and run your first Java agent | [Quickstart](/productions/veadk-java/preview/en/get-started/quickstart) |
+| Review Preview version changes | [Changelog](/productions/veadk-java/preview/en/changelog) |
+

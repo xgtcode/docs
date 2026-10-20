@@ -1,0 +1,21 @@
+---
+title: "更新日志"
+en_link: "/productions/veadk-go/preview/en/changelog"
+---
+
+本更新日志记录 VeADK Go Preview 文档覆盖的公开用户能力变化。当前 Preview 面向 V2 模块；V1 已发布版本仍保留在 V1 维护线。
+
+## 当前版本
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| 版本线 | 主线模块路径升级为 `github.com/volcengine/veadk-go/v2`，并依赖 `google.golang.org/adk/v2`。新项目应使用 V2；V1 维护分支继续使用 `github.com/volcengine/veadk-go` 与 ADK v1。 | [概述](/productions/veadk-go/preview/zh) |
+| 安装 | Preview 安装说明区分 V2 主线和 V1 维护线：V2 在稳定 tag 发布前使用 `@main` 或明确提交验证，V1 存量项目可固定 `v1.0.1`。 | [安装](/productions/veadk-go/preview/zh/get-started/installation) |
+| Runner | 文档新增 `runner.RunText`、`runner.Run`、`runner.UserParts`、`runner.UserBytes` 和 `runner.UserURI` 的首版说明，覆盖纯文本、多 part、多模态和事件流调用路径。 | [快速开始](/productions/veadk-go/preview/zh/get-started/quickstart) |
+
+## V1
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| V1 维护线 | 当前可见 V1 发布版本包括 `v1.0.0` 和 `v1.0.1`。存量 V1 项目继续使用不带 `/v2` 的模块路径。 | [安装](/productions/veadk-go/preview/zh/get-started/installation) |
+

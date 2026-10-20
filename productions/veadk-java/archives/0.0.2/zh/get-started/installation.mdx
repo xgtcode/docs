@@ -1,0 +1,78 @@
+---
+title: "安装"
+en_link: "/productions/veadk-java/archives/0.0.2/en/get-started/installation"
+---
+
+安装 VeADK Java 后，可以在 Maven 项目中创建和运行智能体。`0.0.2` 的公开 Maven 坐标为 `com.volcengine.veadk:veadk-java:0.0.2`。
+
+## 前置条件
+
+- JDK 17 或更高版本。
+- Maven 3.8 或更高版本，或使用源码仓随附的 `./mvnw`。
+- 调用模型时需要可用的模型和 API Key；添加 Maven 依赖本身不需要模型凭证。
+
+## 添加 Maven 依赖
+
+在你的项目 `pom.xml` 中添加依赖：
+
+```xml
+<dependency>
+    <groupId>com.volcengine.veadk</groupId>
+    <artifactId>veadk-java</artifactId>
+    <version>0.0.2</version>
+</dependency>
+```
+
+如果 Maven Central 暂时无法获取该版本，可以从源码构建并安装到本地 Maven 仓库：
+
+```bash
+git clone https://github.com/volcengine/veadk-java.git
+cd veadk-java
+./mvnw clean install -DskipTests
+```
+
+源码仓是 Maven 多模块工程，包含 `core` 和 `example` 两个模块。根 `pom.xml` 中的当前版本为 `0.0.2`。
+
+## 配置模型凭证
+
+最短路径是通过环境变量提供火山方舟 API Key：
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+```
+
+`Agent.builder()` 自动创建模型适配器时，模型凭证按以下顺序解析：
+
+| 来源 | 说明 |
+| --- | --- |
+| `modelApiKey(...)` | 在 builder 上显式传入的 API Key，优先级最高。 |
+| `MODEL_AGENT_API_KEY` | 环境变量中的模型原始 API Key。 |
+| `MODEL_AGENT_API_KEY_ID` | Ark API Key ID。配置后，VeADK 通过 Ark OpenAPI 解析原始 key。 |
+| `MODEL_AGENT_API_KEY_NAME` | Ark API Key 名称。配置后，VeADK 通过 Ark OpenAPI 解析原始 key。 |
+| 火山 AK/SK fallback | 未配置 key 值或 key 名称时，VeADK 可通过 Ark OpenAPI 解析账号下的第一个 Ark API Key。 |
+
+使用 Ark OpenAPI fallback 时，还需要配置：
+
+| 环境变量 | 说明 |
+| --- | --- |
+| `VOLCENGINE_ACCESS_KEY` | 火山引擎 AccessKey。 |
+| `VOLCENGINE_SECRET_KEY` | 火山引擎 SecretKey。 |
+| `VOLCENGINE_SESSION_TOKEN` 或 `VOLC_SESSIONTOKEN` | 可选，会话 Token。 |
+| `REGION` | 可选，默认 `cn-beijing`。 |
+| `MODEL_AGENT_PROJECT_NAME` | 可选，默认 `default`。 |
+| `CLOUD_PROVIDER=byteplus` | 可选，用于 BytePlus 控制面路由。 |
+
+<Warning>
+  不要把真实 API Key、AK/SK 或 Token 写入源码、示例配置或版本库。运行示例会向所选模型服务发送提示词，并可能产生模型调用费用。
+</Warning>
+
+## 验证源码构建
+
+在源码仓根目录执行：
+
+```bash
+./mvnw clean -DskipTests package
+```
+
+构建完成后，`example/target` 会生成示例所需的编译产物。需要运行示例时，先在同一终端设置 `MODEL_AGENT_API_KEY` 或其他凭证。
+

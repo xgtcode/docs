@@ -1,0 +1,118 @@
+---
+title: "Quickstart"
+zh_link: "/productions/veadk-java/preview/zh/get-started/quickstart"
+---
+
+This tutorial shows how to create a minimal VeADK Java agent and run one conversation through `Runner`.
+
+## Prerequisites
+
+- You have completed [Installation](/productions/veadk-java/preview/en/get-started/installation) and added `com.volcengine.veadk:veadk-java` to your project.
+- You have an API Key for Volcengine Ark or another OpenAI-compatible model service, and permission to call the selected model.
+- The following commands use Bash or zsh. Run configuration and execution commands in the same terminal.
+
+## Configure Model Credentials
+
+Export the model API Key in the current terminal:
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+```
+
+If no provider is configured explicitly, VeADK Java uses the OpenAI-compatible path by default. The default base URL is Ark's OpenAI-compatible endpoint. To use OpenAI official, LiteLLM Proxy, or an internal compatible gateway, override it with `modelApiBase(...)` or `modelBaseUrl(...)`.
+
+## Write the Minimal Agent
+
+Create `Main.java` in your Maven project:
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+
+public class Main {
+    public static void main(String[] args) {
+        Agent agent = Agent.builder()
+                .name("quickstart-agent")
+                .description("Answers user questions.")
+                .instruction("You are a helpful assistant.")
+                .model("doubao-seed-2-1-pro-260628")
+                .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+                .build();
+
+        String answer = new Runner(agent).run("Introduce Volcengine in one sentence.");
+        System.out.println(answer);
+    }
+}
+```
+
+`Agent.builder()` is the main VeADK Java entry point. `new Runner(agent).run(...)` creates the default user and session, performs one blocking call, and returns the final text.
+
+## Use the Ark-Specific Adapter
+
+Use `modelProvider("ark")` only when you want the Ark-specific `ArkLlm` adapter:
+
+```java
+Agent agent = Agent.builder()
+        .name("ark-agent")
+        .modelProvider("ark")
+        .model("doubao-seed-2-1-pro-260628")
+        .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+        .modelApiBase("https://ark.cn-beijing.volces.com/api/v3")
+        .build();
+```
+
+For OpenAI official, LiteLLM Proxy, or an internal OpenAI-compatible gateway, point the base URL to that endpoint:
+
+```java
+Agent agent = Agent.builder()
+        .name("openai-compatible-agent")
+        .modelProvider("openai")
+        .model("openai/gpt-4o")
+        .modelApiKey(System.getenv("OPENAI_API_KEY"))
+        .modelBaseUrl("https://api.openai.com/v1")
+        .build();
+```
+
+## Run Repository Examples
+
+In the `veadk-java` source repository root, run the basic Agent example:
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+./mvnw -pl example -am -q compile exec:java -Dexec.mainClass=com.volcengine.veadk.example.basic.AgentExample
+```
+
+This example creates an Ark-backed `Agent`, registers a Java function tool, and calls `Runner.run(...)`.
+
+Start the ADK Web example:
+
+```bash
+./mvnw -pl example -am -q compile exec:java \
+    -Dexec.mainClass=com.volcengine.veadk.example.web.AdkWeb
+```
+
+The default access URL is `http://localhost:8000`.
+
+## Continue a Session
+
+To continue context across turns, reuse the same `userId` and `sessionId`:
+
+```java
+Runner runner = new Runner(agent);
+
+runner.run("user_1", "session_1", "My name is Ming.");
+String answer = runner.run("user_1", "session_1", "What is my name?");
+System.out.println(answer);
+```
+
+By default, `Runner.run(String)` uses the default user and auto-creates a session. Passing `userId` and `sessionId` explicitly lets you control session ownership and reuse.
+
+## Troubleshooting the First Run
+
+| Symptom | Check and fix |
+| --- | --- |
+| Maven cannot find `veadk-java` | Confirm that the Maven repository can access the version. If it cannot resolve the version yet, run `./mvnw clean install -DskipTests` from source first. |
+| Model authentication or permission fails | Confirm that `MODEL_AGENT_API_KEY` is exported in the current terminal and matches the model name, base URL, and account permissions. |
+| Environment variables are missing in the IDE | Configure environment variables in the IDE Run Configuration, or launch the IDE from a shell where they are already exported. |
+| Port `8000` is already in use | Change the ADK Web startup port or stop the process currently using that port. |
+

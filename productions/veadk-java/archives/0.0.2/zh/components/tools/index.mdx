@@ -1,0 +1,224 @@
+---
+title: "工具"
+en_link: "/productions/veadk-java/archives/0.0.2/en/components/tools"
+---
+
+VeADK Java 复用 ADK Java 的工具体系，并补充了火山引擎常用的内置工具和 Toolset。你可以把普通 Java 函数、Web 检索、网页读取、MCP Router、Skills、Skills Sandbox、Code Sandbox 等能力挂到同一个 Agent 上，由模型在运行时选择调用。
+
+## 接入入口
+
+工具通常通过 `Agent.builder().tools(...)` 传入。可以混用 `BaseTool`、`Toolset` 和 ADK Java 的 `FunctionTool`。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.tools.builtin.mcp.McpRouterToolset;
+import com.volcengine.veadk.tools.builtin.webfetch.WebFetchTool;
+import com.volcengine.veadk.tools.builtin.websearch.ParallelWebSearchTool;
+
+Agent agent = Agent.builder()
+        .name("research_assistant")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("回答前优先使用工具获取最新资料，并说明信息来源。")
+        .tools(
+                new WebFetchTool(),
+                new ParallelWebSearchTool(),
+                McpRouterToolset.create())
+        .build();
+
+try {
+    String answer = new Runner(agent).run("调研 VeADK Java 的工具能力。");
+    System.out.println(answer);
+} finally {
+    agent.close().blockingAwait();
+}
+```
+
+当 Agent 使用 MCP 或远端 Toolset 时，建议在任务结束后调用 `agent.close().blockingAwait()`，让底层会话和连接按预期释放。
+
+## 内置工具速览
+
+| 场景 | Java 入口 | 工具名 | 典型用途 |
+| --- | --- | --- | --- |
+| Web Search | `new WebSearchTool()` | `web_search` | 单个查询的实时网络检索 |
+| Parallel Web Search | `new ParallelWebSearchTool()` | `parallel_web_search` | 并行执行多个查询并汇总结果 |
+| Web Fetch | `new WebFetchTool()` | `web_fetch` | 读取公开网页或 PDF 内容 |
+| MCP Router | `McpRouterToolset.create(...)` | 由远端 MCP 返回 | 复用平台统一托管的工具集合 |
+| Skills | `new SkillToolset(...)` | 由 Skill 定义返回 | 把本地或远端 Skill 暴露成可调用工具 |
+| Skills Sandbox | `new ExecuteSkillsTool()` | `execute_skills` | 把完整任务委托给远端技能沙箱执行 |
+| Skills Sandbox 异步 | `new InvokeSkillTool()`、`new PollSkillTool()` | `invoke_skill`、`poll_skill` | 创建远端任务并轮询结果 |
+| Code Sandbox | `new RunCodeTool()` | `run_code` | 在 AgentKit Code Sandbox 中执行代码 |
+| Code Sandbox Toolset | `CodeSandboxToolset.create(...)` | 由 Sandbox MCP 返回 | 连接已有 Code Sandbox MCP 服务 |
+| Sandbox 会话客户端 | `new SandboxClient()` | 非模型工具 | 在业务代码中创建会话、上传文件、运行代码、读取产物 |
+| TTS | `new TextToSpeechTool()` | `text_to_speech` | 文本转语音 |
+| PPT | `new PptGenerateTool()` | `ppt_generate` | 生成演示文稿 |
+| Lark | `LarkToolset.create()` | 由 Lark MCP 返回 | 接入飞书 MCP 工具 |
+| Mobile Use | `new MobileUseTool(systemPrompt)` | `mobile_use` | 操作云手机环境 |
+| Vanna + ClickHouse | `new VannaToolset(...)` | `run_sql`、`summarize_data`、`visualize_data` | 查询、汇总和可视化结构化数据 |
+
+## Web Search 和 Web Fetch
+
+`WebSearchTool` 适合单次搜索，`ParallelWebSearchTool` 适合把一个问题拆成多个查询并发执行。`WebFetchTool` 负责读取明确 URL 的正文内容，可以处理公开 HTML 和 PDF。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.webfetch.WebFetchTool;
+import com.volcengine.veadk.tools.builtin.websearch.ParallelWebSearchTool;
+import com.volcengine.veadk.tools.builtin.websearch.WebSearchTool;
+
+Agent agent = Agent.builder()
+        .name("web_researcher")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("""
+                需要最新信息时使用 web_search 或 parallel_web_search。
+                用户给出链接时先用 web_fetch 读取内容，再基于内容回答。
+                """)
+        .tools(
+                new WebSearchTool(),
+                new ParallelWebSearchTool(),
+                new WebFetchTool())
+        .build();
+```
+
+`web_fetch` 的参数包括 `url`、`extract_mode` 和 `max_chars`。`extract_mode` 默认为 `markdown`，也可以使用 `text`。工具会限制私网、回环地址、保留地址、重定向跳数和响应大小，适合读取公开资料，不适合访问需要登录的后台页面。
+
+## MCP Router
+
+如果工具已经由平台统一注册到 MCP Router，可以直接把 Router 暴露为一个 Toolset。默认构造会读取环境变量，也可以显式传入 URL、API Key 和允许调用的工具名。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.mcp.McpRouterToolset;
+import java.util.List;
+
+Agent agent = Agent.builder()
+        .name("mcp_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("优先使用 MCP Router 中的授权工具处理外部系统请求。")
+        .tools(McpRouterToolset.create(
+                System.getenv("TOOL_MCP_ROUTER_URL"),
+                System.getenv("TOOL_MCP_ROUTER_API_KEY"),
+                List.of("weather.query", "calendar.search")))
+        .build();
+```
+
+当不传参数时，`McpRouterToolset.create()` 会读取 `TOOL_MCP_ROUTER_URL` 和可选的 `TOOL_MCP_ROUTER_API_KEY`。如果配置了 API Key，客户端会为请求附加 Bearer 鉴权。
+
+## Skills
+
+Skills 有两种常见接法。第一种是把 Skill Source 暴露成普通工具，让模型像调用其他工具一样调用技能。
+
+```java
+import com.google.adk.tools.skills.SkillToolset;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.skills.VeSkillSource;
+
+String skillSourceId = System.getenv("SKILL_SOURCE_ID");
+
+Agent agent = Agent.builder()
+        .name("skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("根据用户请求选择合适的技能处理任务。")
+        .tools(new SkillToolset(new VeSkillSource(skillSourceId)))
+        .build();
+```
+
+第二种是通过 Skills Sandbox 执行远端技能任务。同步场景使用 `ExecuteSkillsTool`，它会把 `workflow_prompt` 交给远端技能空间处理并等待结果。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.ExecuteSkillsTool;
+
+Agent agent = Agent.builder()
+        .name("remote_skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("需要执行技能时，调用 execute_skills 并传入完整用户请求。")
+        .skills(System.getenv("SKILL_SPACE_ID"))
+        .skillsMode("skills_sandbox")
+        .tools(new ExecuteSkillsTool())
+        .build();
+```
+
+异步场景可以组合 `InvokeSkillTool` 和 `PollSkillTool`。模型先调用 `invoke_skill` 创建远端任务，再使用 `poll_skill` 根据 `task_id` 查询执行状态，适合耗时较长的审批、检索、生成类流程。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.InvokeSkillTool;
+import com.volcengine.veadk.tools.builtin.sandbox.PollSkillTool;
+
+Agent agent = Agent.builder()
+        .name("async_skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("远端任务先 invoke_skill，再 poll_skill，直到获得明确结果。")
+        .tools(new InvokeSkillTool(), new PollSkillTool())
+        .build();
+```
+
+## Code Sandbox
+
+`RunCodeTool` 让模型在 AgentKit Code Sandbox 中执行代码，适合数据处理、临时代码验证和产物生成。工具参数包括 `code`、`language` 和可选的 `timeout`。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.RunCodeTool;
+
+Agent agent = Agent.builder()
+        .name("code_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("需要计算、解析文件或生成小型产物时，可以使用 run_code。")
+        .tools(new RunCodeTool())
+        .build();
+```
+
+如果你已经有 Code Sandbox MCP 服务，可以通过 `CodeSandboxToolset` 接入。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.CodeSandboxToolset;
+
+Agent agent = Agent.builder()
+        .name("sandbox_mcp_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .tools(CodeSandboxToolset.create(System.getenv("TOOL_CODE_SANDBOX_URL")))
+        .build();
+```
+
+如果业务代码需要直接管理远端沙箱会话，可以使用 `SandboxClient`。路径都以远端 `/workspace` 为根，客户端会拒绝路径穿越和不安全的绝对路径。
+
+```java
+import com.volcengine.veadk.tools.builtin.sandbox.SandboxClient;
+
+try (SandboxClient client = new SandboxClient()) {
+    var session = client.createSession("order-analysis", 1800);
+    session.writeFile("input/orders.csv", csvBytes);
+    String result = session.runCode(
+            "import pandas as pd; print(pd.read_csv('/workspace/input/orders.csv').sum())",
+            "python3",
+            60);
+    byte[] report = session.readFile("output/report.json");
+    session.close();
+}
+```
+
+## 常用环境变量
+
+| 能力 | 环境变量 |
+| --- | --- |
+| 火山引擎鉴权 | `VOLCENGINE_ACCESS_KEY`、`VOLCENGINE_SECRET_KEY`、可选 `VOLCENGINE_SESSION_TOKEN` |
+| Web Search | `WebSearchTool` 使用 `VOLCENGINE_ACCESS_KEY` 和 `VOLCENGINE_SECRET_KEY`；`ParallelWebSearchTool` 可使用 `TOOL_WEB_SEARCH_ACCESS_KEY` / `TOOL_WEB_SEARCH_SECRET_KEY`，未配置时回退到火山引擎 AK/SK |
+| MCP Router | `TOOL_MCP_ROUTER_URL`、可选 `TOOL_MCP_ROUTER_API_KEY` |
+| Skills | `SKILL_SOURCE_ID` 或 `SKILL_SPACE_ID`，以及技能空间相关策略配置 |
+| AgentKit Code Sandbox | `AGENTKIT_TOOL_ID`、AgentKit host/region 和火山引擎 AK/SK |
+| Code Sandbox MCP | `TOOL_CODE_SANDBOX_URL` |
+| TTS | `TOOL_VESPEECH_APP_ID`、`TOOL_VESPEECH_API_KEY`、可选 `TOOL_VESPEECH_SPEAKER` |
+| Lark | `TOOL_LARK_ENDPOINT`、`TOOL_LARK_API_KEY` 和 `TOOL_LARK_TOKEN` |
+| Mobile Use | `TOOL_MOBILE_USE_TOOL_ID` 和火山引擎 AK/SK |
+
+## 自动工具
+
+当 Agent 配置了知识库或长期记忆时，VeADK Java 会自动补充对应检索工具，例如 `loadKnowledgebase` 和 `loadMemory`。当使用本地 Skills 且没有显式传入 `SkillToolset` 时，框架也会根据 Skills 配置准备对应工具。对于 `skills_sandbox` 模式，需要显式传入 `ExecuteSkillsTool`。
+
+## 安全建议
+
+工具让模型具备访问外部系统、执行代码或触发业务流程的能力，建议按最小权限配置凭据和允许调用的工具名。对于会产生写入、审批、付款、删除、发布、通知等副作用的工具，应在业务层增加确认、审计和幂等保护。Code Sandbox 与 Skills Sandbox 适合隔离执行，但仍应限制输入文件、超时时间、网络权限和可读取的密钥范围。
+

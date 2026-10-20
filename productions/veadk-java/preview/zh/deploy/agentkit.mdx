@@ -1,0 +1,186 @@
+---
+title: "部署到 AgentKit"
+en_link: "/productions/veadk-java/preview/en/deploy/agentkit"
+---
+
+VeADK Java 可以用两种方式接入 AgentKit：
+
+- **AgentKit Runtime HTTP 示例**：启动一个轻量 HTTP 进程，对外暴露 `/invoke`、`/ping`、`/health`、`/readiness` 和 `/liveness`。适合先验证 Agent 能否作为 AgentKit Runtime 被调用。
+- **AgentKit Server 示例**：基于 ADK Web 暴露 `/run`、`/run_sse`、`/list-apps` 和会话管理接口。适合需要复用 ADK Web 原生会话和执行语义的场景。
+
+部署前，应先在本地确认模型、工具、知识库、记忆和观测链路已经能通过 `Agent.builder()` 与 `Runner` 正常工作。
+
+## 部署前准备
+
+- 使用 JDK 17 或更高版本。
+- 固定 VeADK Java 的 Maven 版本、源码提交或发布版本。
+- 将模型、AgentKit、知识库、记忆、工具和观测凭证放入平台 Secret，不要写入代码仓或镜像。
+- 确认运行镜像可以访问模型服务、AgentKit 工具服务、检索后端和观测后端。
+- 在接入云上 Runtime 前，先用本地 HTTP 调用验证入口类和环境变量。
+
+## 本地运行 Runtime
+
+先构建示例模块并复制运行依赖：
+
+```bash
+./mvnw -B -ntp -DskipTests install
+./mvnw -B -ntp -pl example dependency:copy-dependencies -DincludeScope=runtime
+```
+
+最小运行只需要一个可访问的模型名称和模型凭证。模型凭证应通过 Secret 注入，这里只展示变量名：
+
+```bash
+export MODEL_AGENT_NAME=your-model-id
+export MODEL_AGENT_API_KEY=your-model-api-key
+
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+默认监听 `127.0.0.1:8000`。开启流式返回时设置 `AGENTKIT_STREAMING=true`：
+
+```bash
+AGENTKIT_STREAMING=true \
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+如果要运行 ADK Web 形态的 AgentKit Server，入口类换成：
+
+```bash
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitServerExample
+```
+
+## 调用 HTTP 接口
+
+基础 Runtime 的健康检查和调用接口如下：
+
+| 接口 | 说明 |
+| --- | --- |
+| `GET /ping` | 返回 `{"status":"pong!"}`，用于快速探活。 |
+| `GET /health` | 检查 HTTP 进程是否可用。 |
+| `GET /readiness` | 检查进程是否准备好接收流量。 |
+| `GET /liveness` | 检查进程是否仍然存活。 |
+| `POST /invoke` | 接收 `{"prompt":"Hello"}` 并调用 Agent。 |
+
+可以用 AgentKit CLI 调用本地 Runtime：
+
+```bash
+agentkit invoke run --endpoint http://127.0.0.1:8000 --apikey local-placeholder \
+  --headers '{"user_id":"alice","session_id":"demo"}' "Hello"
+```
+
+`local-placeholder` 只用于本地验证。部署到云上后，请使用网关或平台分发的凭证。
+
+## 会话与并发
+
+`/invoke` 通过请求头选择会话：
+
+| Header | 说明 |
+| --- | --- |
+| `user_id` | 用户标识。未传时使用 `agentkit_user`。 |
+| `session_id` | 会话标识。未传时创建新的临时会话。 |
+
+`user_id` 和 `session_id` 只用于选择对话上下文，不等同于已认证身份。生产环境应在可信网关完成鉴权，并只把可信的用户和会话信息转发给 Runtime。
+
+基础 Runtime 的会话保存在内存中，进程重启后会丢失。需要长期保留对话历史时，应在 Agent 侧显式配置稳定的会话服务或记忆后端。并发行为也需要提前压测：同一个 `user_id` / `session_id` 的重叠请求会返回 `409 SessionBusy`，工作线程满时会返回 `503`。
+
+## 容器入口
+
+示例镜像使用 `eclipse-temurin:17-jre`，将 jar 放到 `/app/app.jar`，依赖放到 `/app/lib/`，默认入口为：
+
+```bash
+java -cp /app/app.jar:/app/lib/* \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+容器默认设置 `AGENTKIT_BIND_HOST=0.0.0.0` 和 `PORT=8000`，并以 `10001:10001` 运行。示例构建命令如下：
+
+```bash
+docker build -f example/agentkit/Dockerfile -t veadk-agentkit-java:local example/target
+docker run --rm -p 127.0.0.1:8000:8000 \
+  --env MODEL_AGENT_NAME \
+  --env MODEL_AGENT_API_KEY \
+  --env AGENTKIT_STREAMING \
+  veadk-agentkit-java:local
+```
+
+如果要用同一个镜像运行 AgentKit Server，可以覆盖入口类：
+
+```bash
+docker run --rm -p 127.0.0.1:8000:8000 \
+  --entrypoint java \
+  veadk-agentkit-java:local \
+  -cp '/app/app.jar:/app/lib/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitServerExample
+```
+
+## 自定义 Agent
+
+不设置 `AGENTKIT_AGENT_CLASS` 时，示例 Runtime 会根据环境变量创建一个内置 Agent。需要复用业务代码里的 Agent 时，可以提供一个包含 `public static BaseAgent ROOT_AGENT` 的类，并把完整类名注入给 Runtime：
+
+```bash
+export AGENTKIT_AGENT_CLASS=com.example.agent.MyAgent
+```
+
+此时模型、工具、指令、知识库、记忆和回调应在 `ROOT_AGENT` 的 Java 代码中配置。Runtime 只负责加载该 Agent、承接 HTTP 请求并在进程退出时关闭 Agent。
+
+## 环境变量
+
+| 环境变量 | 说明 |
+| --- | --- |
+| `MODEL_AGENT_NAME` | 内置 Agent 使用的 Ark 模型 ID。未使用 `AGENTKIT_AGENT_CLASS` 时必填。 |
+| `MODEL_AGENT_API_KEY` | 模型 API Key。应通过 Secret 注入。 |
+| `MODEL_AGENT_API_BASE` | 可选的模型服务地址。 |
+| `AGENT_NAME` | 内置 Agent 名称。 |
+| `AGENT_DESCRIPTION` | 内置 Agent 描述。 |
+| `MODEL_AGENT_INSTRUCTION` | 内置 Agent 指令。 |
+| `AGENTKIT_TOOLS` | 内置 Agent 启用的工具，支持逗号分隔的 `web_search`、`web_fetch`、`run_code`。 |
+| `AGENTKIT_STREAMING` | 设置为 `true` 时，基础 Runtime 以 SSE 返回 ADK 事件。 |
+| `AGENTKIT_AGENT_CLASS` | 业务 Agent 类名，类中需要包含 `public static BaseAgent ROOT_AGENT`。 |
+| `AGENTKIT_BIND_HOST` | HTTP 监听地址。本地默认 `127.0.0.1`，容器默认 `0.0.0.0`。 |
+| `PORT` | HTTP 监听端口，默认 `8000`。 |
+
+工具相关凭证也应通过 Secret 注入：
+
+| 能力 | 需要关注的配置 |
+| --- | --- |
+| Web Search | `VOLCENGINE_ACCESS_KEY`、`VOLCENGINE_SECRET_KEY`，并确保账号具备 Web Search 服务权限。 |
+| Code Sandbox | `AGENTKIT_TOOL_ID`、`VOLCENGINE_ACCESS_KEY`、`VOLCENGINE_SECRET_KEY`，并确保 Runtime 可以访问 AgentKit Code Sandbox 工具服务。只有在业务代码通过 `CodeSandboxToolset` 连接已有 Sandbox MCP endpoint 时，才使用 `TOOL_CODE_SANDBOX_URL`。 |
+| Skills Sandbox | `AGENTKIT_TOOL_ID_SKILLS` 或 `AGENTKIT_TOOL_ID`，以及 AgentKit 工具服务访问凭证。 |
+| AgentKit 工具服务 | `AGENTKIT_TOOL_REGION`、`AGENTKIT_TOOL_HOST`、`VOLCENGINE_AGENTKIT_HOST` 可按部署环境覆盖。 |
+
+只在 `AGENTKIT_TOOLS` 中写入工具名不会自动开通后端服务。部署前应单独确认服务权限、网络连通性和 Secret 注入方式。
+
+## AgentKit CLI 模板
+
+AgentKit CLI 提供 Java 生命周期模板，可用于生成或包装 Runtime 项目。常见模板包括：
+
+| 模板 | 用途 |
+| --- | --- |
+| `basic_java` | 生成基础 Java Runtime。 |
+| `basic_stream_java` | 生成开启 SSE 的 Java Runtime。 |
+| `agent_server_java` | 生成 ADK Web 形态的 Java Server。 |
+| Java `--from-agent` | 基于已有 Agent 类包装 Runtime。 |
+
+模板能力随 CLI 版本变化。使用前先执行：
+
+```bash
+agentkit init --list-templates
+```
+
+## 生产建议
+
+部署到云上时，建议至少检查以下事项：
+
+| 项目 | 说明 |
+| --- | --- |
+| 入口 | 明确使用 `AgentKitRuntimeExample`、`AgentKitServerExample`，还是业务自定义入口。 |
+| 镜像 | 只包含 jar、依赖和运行时文件，不包含本地凭证、`.ssh`、调试 token 或临时产物。 |
+| Secret | 通过平台 Secret 注入模型、AgentKit、检索、记忆和观测凭证。 |
+| 鉴权 | 在网关层校验调用方身份，Runtime 内部只接收可信 header。 |
+| 会话 | 明确 `user_id` / `session_id` 的来源、复用规则和持久化策略。 |
+| 观测 | 接入 OpenTelemetry、APMPlus 或平台日志，排查模型、工具、检索和沙箱链路。 |
+| 限流 | 针对单会话并发、全局工作线程和上游模型限流设置重试与降级策略。 |
+

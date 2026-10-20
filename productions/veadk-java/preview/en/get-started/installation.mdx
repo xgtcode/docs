@@ -1,0 +1,78 @@
+---
+title: "Installation"
+zh_link: "/productions/veadk-java/preview/zh/get-started/installation"
+---
+
+After installing VeADK Java, you can create and run agents in Maven projects. The current Preview uses the public Maven coordinates `com.volcengine.veadk:veadk-java:0.0.2`.
+
+## Prerequisites
+
+- JDK 17 or later.
+- Maven 3.8 or later, or the `./mvnw` wrapper included in the source repository.
+- A model and API Key are required when you call a model. Adding the Maven dependency itself does not require model credentials.
+
+## Add the Maven Dependency
+
+Add the dependency to your project `pom.xml`:
+
+```xml
+<dependency>
+    <groupId>com.volcengine.veadk</groupId>
+    <artifactId>veadk-java</artifactId>
+    <version>0.0.2</version>
+</dependency>
+```
+
+If Maven Central cannot resolve this version yet, build and install the source repository locally:
+
+```bash
+git clone https://github.com/volcengine/veadk-java.git
+cd veadk-java
+./mvnw clean install -DskipTests
+```
+
+The source repository is a multi-module Maven project with `core` and `example` modules. The current version in the root `pom.xml` is `0.0.2`.
+
+## Configure Model Credentials
+
+The shortest path is to provide the Volcengine Ark API Key through an environment variable:
+
+```bash
+export MODEL_AGENT_API_KEY="<your-ark-api-key>"
+```
+
+When `Agent.builder()` auto-creates a model adapter, model credentials are resolved in this order:
+
+| Source | Description |
+| --- | --- |
+| `modelApiKey(...)` | Explicit API Key passed on the builder. This has the highest priority. |
+| `MODEL_AGENT_API_KEY` | Raw model API Key from the environment. |
+| `MODEL_AGENT_API_KEY_ID` | Ark API Key ID. VeADK resolves the raw key through Ark OpenAPI. |
+| `MODEL_AGENT_API_KEY_NAME` | Ark API Key name. VeADK resolves the raw key through Ark OpenAPI. |
+| Volcengine AK/SK fallback | If no key value or key name is configured, VeADK can resolve the first Ark API Key in the account through Ark OpenAPI. |
+
+Ark OpenAPI fallback also requires:
+
+| Environment variable | Description |
+| --- | --- |
+| `VOLCENGINE_ACCESS_KEY` | Volcengine AccessKey. |
+| `VOLCENGINE_SECRET_KEY` | Volcengine SecretKey. |
+| `VOLCENGINE_SESSION_TOKEN` or `VOLC_SESSIONTOKEN` | Optional session token. |
+| `REGION` | Optional, defaults to `cn-beijing`. |
+| `MODEL_AGENT_PROJECT_NAME` | Optional, defaults to `default`. |
+| `CLOUD_PROVIDER=byteplus` | Optional, for BytePlus control-plane routing. |
+
+<Warning>
+  Do not commit real API Keys, AK/SK pairs, or tokens to source code, example configuration, or version control. Running examples sends prompts to the selected model service and may incur model usage charges.
+</Warning>
+
+## Verify from Source
+
+In the source repository root, run:
+
+```bash
+./mvnw clean -DskipTests package
+```
+
+After the build completes, `example/target` contains the compiled artifacts needed by examples. To run examples, configure `MODEL_AGENT_API_KEY` or other credentials in the same terminal first.
+

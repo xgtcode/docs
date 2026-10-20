@@ -1,0 +1,118 @@
+---
+title: "Tools"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/components/tools"
+---
+
+VeADK Go `v1.0.1` supports ADK function tools, ADK Toolsets, and VeADK built-in tools. V1 tool APIs are based on `google.golang.org/adk/tool`.
+
+## Function Tool
+
+```go
+import (
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/functiontool"
+)
+
+type AddArgs struct {
+	A float64 `json:"a" jsonschema:"first number"`
+	B float64 `json:"b" jsonschema:"second number"`
+}
+
+func AddTool() (tool.Tool, error) {
+	handler := func(ctx agent.Context, args AddArgs) (map[string]any, error) {
+		return map[string]any{"result": args.A + args.B}, nil
+	}
+	return functiontool.New(functiontool.Config{
+		Name:        "calculator_add",
+		Description: "Add two numbers.",
+	}, handler)
+}
+```
+
+Attach the tool to an agent:
+
+```go
+addTool, err := AddTool()
+if err != nil {
+	return nil, err
+}
+
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name:  "tool_agent",
+		Tools: []tool.Tool{addTool},
+	},
+})
+```
+
+## Web Tools
+
+| Tool | Constructor | Description |
+| --- | --- | --- |
+| Web Search | `web_search.NewWebSearchTool(&web_search.Config{})` | Search open web sources. |
+| Parallel Web Search | `web_search.NewParallelWebSearchTool(&web_search.Config{})` | Search multiple queries in parallel. |
+| Web Fetch | `builtin_tools.NewWebFetchTool(...)` | Fetch a specified page. |
+| Link Reader | `builtin_tools.NewLinkReaderTool(...)` | Read URLs, PDFs, or video links. |
+| Web Scraper | `builtin_tools.NewWebScraperTool(...)` | Stronger web scraping behavior. |
+
+Web Search uses Volcengine signing credentials or configured tool credentials. Inject credentials through environment variables or Secrets in production.
+
+## MCP Router
+
+The V1 MCP Router constructor is `NewMcpRouter()` and returns an ADK `tool.Toolset`:
+
+```go
+mcpSet := builtin_tools.NewMcpRouter()
+
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name:     "mcp_agent",
+		Toolsets: []tool.Toolset{mcpSet},
+	},
+})
+```
+
+Required configuration:
+
+```bash
+export TOOL_MCP_ROUTER_URL="https://your-mcp-router-endpoint/mcp"
+export TOOL_MCP_ROUTER_API_KEY="your-api-key"
+```
+
+## Run Code Sandbox
+
+`NewRunCodeSandboxTool()` creates the `run_code` tool and delegates execution to AgentKit Code Sandbox:
+
+```go
+runCode, err := builtin_tools.NewRunCodeSandboxTool()
+if err != nil {
+	return nil, err
+}
+```
+
+V1 reads the generic tool ID:
+
+```bash
+export AGENTKIT_TOOL_ID="your-code-sandbox-tool-id"
+```
+
+## Skills Toolset
+
+VeADK Go `v1.0.1` provides local Skills toolsets. Common entry points include:
+
+| Entry | Description |
+| --- | --- |
+| `skilltool.NewReadOnlySkillToolset(skills)` | Load skill metadata and resources without running scripts. |
+| `skilltool.NewSkillToolset(skills, executor)` | Load skills and execute scripts through the provided executor. |
+| `skilltool.NewLocalSkillToolset(skills, config)` | Explicitly enable local runtime workspace capabilities. |
+| `skilltool.NewRegistrySkillToolset(snapshot)` | Lazily load skills from a pinned registry snapshot. |
+
+When running local scripts, constrain workspace access, timeouts, output, and file permissions.
+
+## Guidance
+
+- Keep tool names and descriptions stable, and describe inputs, outputs, and side effects clearly.
+- Add confirmation and audit for tools that write, delete, approve, send messages, or incur cost.
+- Inject credentials through environment variables, Secrets, or runtime state. Do not put them in prompts, examples, or docs.
+- Set timeouts for long-running tools and return diagnostic errors to callers.

@@ -1,0 +1,77 @@
+---
+title: "Runner 与执行"
+en_link: "/productions/veadk-go/archives/1.0.1/en/components/agent/runtime"
+---
+
+VeADK Go `v1.0.1` 直接执行智能体时使用 ADK 的 `google.golang.org/adk/runner`。Runner 负责读取同一个 `appName`、`userID`、`sessionID` 下的会话历史，并返回事件流。
+
+## 最小调用
+
+```go
+sessionService := session.InMemoryService()
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+
+r, err := runner.New(runner.Config{
+	AppName:        "demo",
+	Agent:          a,
+	SessionService: sessionService,
+})
+if err != nil {
+	return err
+}
+
+input := genai.NewContentFromText("hello", "user")
+for event, err := range r.Run(ctx, "user-1", "session-1", input, agent.RunConfig{}) {
+	if err != nil {
+		return err
+	}
+	// handle event
+}
+```
+
+VeADK Go `v1.0.1` 通过 ADK `runner` 包执行智能体。调用前显式创建 session 是最稳妥的写法。
+
+## 消费事件流
+
+```go
+var chunks []string
+for event, err := range r.Run(ctx, userID, sessionID, input, agent.RunConfig{}) {
+	if err != nil {
+		return err
+	}
+	if event.Content == nil || event.Partial {
+		continue
+	}
+	for _, part := range event.Content.Parts {
+		chunks = append(chunks, part.Text)
+	}
+}
+answer := strings.Join(chunks, "")
+```
+
+## Runner 配置
+
+| 配置 | 作用 |
+| --- | --- |
+| `AppName` | 应用名，也是 session 和 memory 的命名空间之一。 |
+| `Agent` | root agent，必填。 |
+| `SessionService` | 短期会话服务。 |
+| `MemoryService` | 长期记忆服务。 |
+| `PluginConfig` | ADK runner 插件，例如可观测插件或 LLM Shield 插件。 |
+| `ArtifactService` | artifact 存储服务。 |
+
+## 直接 Runner 与 App
+
+| 方式 | 适合场景 |
+| --- | --- |
+| ADK `runner.New` | 自己控制请求入口、鉴权、session 创建和响应格式。 |
+| `apps/simple_app` | 快速暴露本地 HTTP 调用面。 |
+| `apps/a2a_app` | 对接 A2A 协议。 |
+| `apps/agentkit_server_app` | 部署到 AgentKit Runtime 或平台托管环境。 |

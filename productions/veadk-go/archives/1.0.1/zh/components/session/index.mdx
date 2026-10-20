@@ -1,0 +1,51 @@
+---
+title: "短期会话"
+en_link: "/productions/veadk-go/archives/1.0.1/en/components/session"
+---
+
+短期会话保存同一个 `appName`、`userID` 和 `sessionID` 下的对话事件。VeADK Go `v1.0.1` 复用 ADK `session.Service`，并提供 `memory.NewShortTermMemoryService` 作为持久化后端入口。
+
+## 本地内存会话
+
+```go
+sessionService := session.InMemoryService()
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "support_app",
+	UserID: "user-1",
+	SessionID: "case-1001",
+})
+```
+
+同一段多轮对话要复用相同的 `appName`、`userID` 和 `sessionID`。
+
+## 持久化后端
+
+```go
+sessionService, err := vem.NewShortTermMemoryService(vem.BackendShortTermPostgreSQL, nil)
+if err != nil {
+	return err
+}
+```
+
+可选后端：
+
+| 后端 | 常量 | 场景 |
+| --- | --- | --- |
+| 本地内存 | `BackendShortTermLocal` | 本地调试、demo。 |
+| SQLite | `BackendShortTermSQLite` | 单机持久化、小规模测试。 |
+| PostgreSQL | `BackendShortTermPostgreSQL` | 生产服务、共享数据库。 |
+| MySQL | `BackendShortTermMySQL` | 已有 MySQL 基础设施。 |
+
+当 `config` 为 `nil` 时，会读取全局配置里的数据库配置；也可以传入对应 backend 的配置结构体。
+
+## App 集成
+
+```go
+app := agentkit_server_app.NewAgentkitServerApp(apps.DefaultApiConfig())
+err := app.Run(ctx, &apps.RunConfig{
+	AgentLoader: agent.NewSingleLoader(a),
+	SessionService: sessionService,
+})
+```
+
+`apps.RunConfig.SessionService` 会被 simple app、A2A app 和 AgentKit server app 使用。

@@ -1,0 +1,87 @@
+---
+title: "Long-Term Memory"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/components/memory"
+---
+
+Long-term memory preserves user preferences, task conclusions, or reusable facts across sessions. VeADK Go `v1.0.1` creates an ADK `memory.Service` through `memory.NewLongTermMemoryService`, then passes it to the ADK runner as `MemoryService`.
+
+## Minimal Flow
+
+```go
+sessionService := session.InMemoryService()
+memoryService := memory.InMemoryService()
+
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "memory_demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+
+r, err := runner.New(runner.Config{
+	AppName:        "memory_demo",
+	Agent:          a,
+	SessionService: sessionService,
+	MemoryService:  memoryService,
+})
+if err != nil {
+	return err
+}
+```
+
+If the agent should actively retrieve long-term memory, mount `LoadLongMemoryTool`:
+
+```go
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name: "personal_assistant",
+		Instruction: "Before answering personal questions, retrieve relevant memory first.",
+		Tools: []tool.Tool{utils.Must(builtin_tools.LoadLongMemoryTool())},
+	},
+})
+```
+
+After a conversation is complete, write the session into the memory service:
+
+```go
+resp, err := sessionService.Get(ctx, &session.GetRequest{
+	AppName: "memory_demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+return memoryService.AddSessionToMemory(ctx, resp.Session)
+```
+
+## VeADK Backends
+
+```go
+memoryService, err := vem.NewLongTermMemoryService(vem.BackendLongTermMem0, nil)
+if err != nil {
+	return err
+}
+```
+
+Available backends:
+
+| Backend | Constant | Scenario |
+| --- | --- | --- |
+| In memory | `BackendLongTermLocal` | Local debugging and unit validation. |
+| Viking | `BackendLongTermViking` | Volcengine Viking memory backend. |
+| Mem0 | `BackendLongTermMem0` | Mem0 memory service. |
+| Redis | `BackendLongTermRedis` | Redis vector retrieval or lightweight memory. |
+| OpenSearch | `BackendLongTermOpenSearch` | OpenSearch vector retrieval backend. |
+
+The optional third argument to `NewLongTermMemoryService(backend, config, topK...)` controls how many memories are retrieved. The default is `5`.
+
+## Good Memory Candidates
+
+- Stable user preferences, such as language, format, and business constraints.
+- Confirmed project background, terminology, and common resources.
+- Reusable troubleshooting conclusions or task experience.
+
+Do not write tokens, AK/SK, API keys, or unauthorized private data into long-term memory.

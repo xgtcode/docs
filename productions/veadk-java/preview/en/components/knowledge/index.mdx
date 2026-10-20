@@ -1,0 +1,156 @@
+---
+title: "Knowledge Base"
+zh_link: "/productions/veadk-java/preview/zh/components/knowledge"
+---
+
+Knowledge bases connect an agent to external material such as enterprise documents, product guides, and support policies. In VeADK Java, the recommended path is `KnowledgeBase` plus `Agent.builder().knowledgebase(...)`: attach the service to the agent, and VeADK automatically injects the `loadKnowledgebase` tool so the model can retrieve grounded material before answering.
+
+## Flow
+
+1. Choose a backend: `opensearch` or `viking`.
+2. Configure the index, collection, and recall size with `KnowledgeBase.builder()`.
+3. Ingest material with `addFromText(...)`, `addFromFiles(...)`, `addFromDirectory(...)`, or `addDoc(...)`.
+4. Attach the service with `Agent.builder().knowledgebase(knowledgeBase)`.
+5. Run the conversation with `Runner`; the model can call the auto-injected `loadKnowledgebase` tool when it needs external material.
+
+## OpenSearch Example
+
+OpenSearch is useful when you want to chunk local text, files, or directories into vectors and store them in your own OpenSearch index. It uses an Ark embedding model to generate vectors, so an embedding API key is required.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.knowledgebase.KnowledgeBase;
+import java.util.List;
+
+public class DocsKnowledgeAgent {
+    public static void main(String[] args) throws Exception {
+        try (KnowledgeBase knowledgeBase =
+                KnowledgeBase.builder()
+                        .backend("opensearch")
+                        .index("veadk_java_docs")
+                        .topK(5)
+                        .build()) {
+            knowledgeBase.addFromText(
+                    List.of(
+                            "VeADK Java uses Agent.builder() as the main entry point.",
+                            "KnowledgeBase can inject loadKnowledgebase into the agent."));
+
+            Agent agent =
+                    Agent.builder()
+                            .name("docs_agent")
+                            .instruction(
+                                    "Answer with the knowledge base before using general knowledge.")
+                            .modelName("deepseek-v4-flash-260425")
+                            .knowledgebase(knowledgeBase)
+                            .build();
+
+            String answer = new Runner(agent).run("How does VeADK Java use a knowledge base?");
+            System.out.println(answer);
+        }
+    }
+}
+```
+
+Common environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_OPENSEARCH_HOST` | OpenSearch host; defaults to an empty string |
+| `DATABASE_OPENSEARCH_PORT` | OpenSearch port; defaults to `9200` |
+| `DATABASE_OPENSEARCH_USERNAME` | OpenSearch username |
+| `DATABASE_OPENSEARCH_PASSWORD` | OpenSearch password |
+| `DATABASE_OPENSEARCH_USE_SSL` | Whether to use SSL; defaults to `true` |
+| `DATABASE_OPENSEARCH_CERT_PATH` | OpenSearch certificate path |
+| `MODEL_EMBEDDING_API_KEY` | Ark embedding API key; falls back to `MODEL_AGENT_API_KEY` when unset |
+| `MODEL_EMBEDDING_NAME` | Embedding model name; defaults to `doubao-embedding-vision-250615` |
+| `MODEL_EMBEDDING_DIM` | Embedding dimensions; defaults to `2048` |
+| `MODEL_EMBEDDING_API_BASE` | Embedding endpoint; defaults to the Ark Beijing endpoint |
+
+## Viking Example
+
+Viking Knowledgebase is useful when your documents live in a Volcengine-managed knowledge collection. Use `appName(...)` to select the collection. Search can use `DATABASE_VIKING_API_KEY`; collection management, document ingestion, and TOS-backed `addDoc` still require AK/SK or IAM credentials.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.knowledgebase.KnowledgeBase;
+
+public class VikingDocsKnowledgeAgent {
+    public static void main(String[] args) throws Exception {
+        String appName =
+                System.getenv()
+                        .getOrDefault(
+                                "DATABASE_VIKING_KNOWLEDGEBASE_APP_NAME", "veadk_java_docs");
+
+        try (KnowledgeBase knowledgeBase =
+                KnowledgeBase.builder()
+                        .backend("viking")
+                        .appName(appName)
+                        .topK(5)
+                        .build()) {
+            knowledgeBase.addDoc("tos://your-bucket/path/to/document.md");
+
+            Agent agent =
+                    Agent.builder()
+                            .name("viking_docs_agent")
+                            .instruction("Use the knowledge base first for document questions.")
+                            .modelName("deepseek-v4-flash-260425")
+                            .knowledgebase(knowledgeBase)
+                            .build();
+
+            String answer = new Runner(agent).run("Summarize the uploaded document.");
+            System.out.println(answer);
+        }
+    }
+}
+```
+
+Common environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_VIKING_KNOWLEDGEBASE_APP_NAME` | Viking knowledgebase collection name; the example falls back to a default when unset |
+| `DATABASE_VIKING_API_KEY` | Viking Knowledgebase search API key |
+| `VOLCENGINE_ACCESS_KEY` | Volcengine AK; required for collection management, document ingestion, and TOS `addDoc` |
+| `VOLCENGINE_SECRET_KEY` | Volcengine SK; required for collection management, document ingestion, and TOS `addDoc` |
+
+You can also pass the search API key directly with `vikingApiKey(...)`; explicit SDK parameters take precedence over matching environment variables.
+
+## Backends And Ingestion
+
+| Capability | OpenSearch | Viking |
+| --- | --- | --- |
+| Builder | `KnowledgeBase.builder().backend("opensearch").index("...").build()` | `KnowledgeBase.builder().backend("viking").appName("...").build()` |
+| Shortcut | `KnowledgeBase.opensearch("index")` | `KnowledgeBase.viking("appName")` |
+| Local text ingestion | `addFromText(String)` / `addFromText(List<String>)` | Depends on backend service capability |
+| File ingestion | `addFromFiles(...)` / `addFromDirectory(...)` | Depends on backend service capability |
+| Remote document ingestion | Not the primary path | `addDoc("tos://...")` |
+| Retrieval | `search(query)` or auto tool `loadKnowledgebase` | `search(query)` or auto tool `loadKnowledgebase` |
+| Recall size | `topK(...)`, default `10` | `topK(...)`, default `10` |
+
+`KnowledgeBase` also provides async methods such as `addFromTextAsync(...)`, `addFromFilesAsync(...)`, `addDocAsync(...)`, and `searchAsync(...)` for RxJava-based flows.
+
+## Auto Tool Injection
+
+`Agent.builder().knowledgebase(service)` accepts any service that implements `BaseKnowledgebaseService`. During agent construction, if the tool list does not already contain a tool named `loadKnowledgebase`, VeADK creates a `LoadKnowledgebaseTool` and adds it to the tool list. The tool converts the model's `query` argument into a `searchKnowledgebase(query)` call and returns the retrieved chunks to the model.
+
+If you use ADK Java's `LlmAgent.builder()` directly, configure the tool manually:
+
+```java
+.tools(new LoadKnowledgebaseTool(knowledgeBase))
+```
+
+When you use VeADK Java's `Agent.builder().knowledgebase(...)`, you usually do not need to add this tool yourself.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| `KnowledgeBase` fails with `Either index or appName must be provided.` | OpenSearch needs `index(...)`; Viking needs `appName(...)` |
+| OpenSearch returns empty results | Make sure ingestion ran with `addFromText(...)`, `addFromFiles(...)`, or `addFromDirectory(...)`, and confirm the index name matches |
+| OpenSearch startup reports missing embedding configuration | Configure `MODEL_EMBEDDING_API_KEY`, or let it fall back to `MODEL_AGENT_API_KEY` |
+| Viking search authentication fails | Configure `DATABASE_VIKING_API_KEY`, or call `vikingApiKey(...)` on the builder |
+| Viking TOS document ingestion fails | The search API key does not cover ingestion; configure `VOLCENGINE_ACCESS_KEY` and `VOLCENGINE_SECRET_KEY`, or use valid IAM credentials |
+| The model does not use the knowledge base | Check that the agent attaches the service with `knowledgebase(...)`; you can also state in the instruction that the agent should retrieve from the knowledge base first |
+

@@ -1,0 +1,67 @@
+---
+title: "Installation"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/get-started/installation"
+---
+
+This page explains how to install VeADK Go `v1.0.1`. It belongs to the V1 maintenance line, so the module path does not include `/v2`.
+
+## Prerequisites
+
+- Go 1.25.0 or later.
+- Access to `github.com/volcengine/veadk-go`.
+- Volcengine Ark or OpenAI-compatible model credentials.
+
+## Install the Release
+
+```bash
+go get github.com/volcengine/veadk-go@v1.0.1
+```
+
+Use V1 import paths in code:
+
+```go
+import veagent "github.com/volcengine/veadk-go/agent/llmagent"
+```
+
+The ADK import path also has no version suffix:
+
+```go
+import "google.golang.org/adk/agent"
+```
+
+## Model Configuration
+
+You can place `config.yaml` at the project root:
+
+```yaml
+model:
+  agent:
+    provider: openai
+    name: doubao-seed-1-6-250615
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+```
+
+Then inject the API key with an environment variable:
+
+```bash
+export MODEL_AGENT_API_KEY="your-ark-api-key"
+```
+
+You can also pass `ModelName`, `ModelProvider`, `ModelAPIBase`, and `ModelAPIKey` explicitly when creating the agent. Do not commit credentials into source code or docs.
+
+## Difference from V2
+
+| Item | V1 | V2 Preview |
+| --- | --- | --- |
+| Module path | `github.com/volcengine/veadk-go` | `github.com/volcengine/veadk-go/v2` |
+| ADK path | `google.golang.org/adk` | `google.golang.org/adk/v2` |
+| Direct execution | Use the ADK `runner` package | Use V2 runner capabilities from Preview docs |
+| Audience | Existing V1 projects | New projects and mainline validation |
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Import path not found | Make sure it is not written as `github.com/volcengine/veadk-go/v2`. |
+| ADK type mismatch | Make sure you are not mixing `google.golang.org/adk/v2`. |
+| Model authentication fails | Check `MODEL_AGENT_API_KEY`, model name, `api_base`, and account permissions. |
