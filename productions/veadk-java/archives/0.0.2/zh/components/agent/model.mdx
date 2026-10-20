@@ -1,0 +1,225 @@
+---
+title: "模型与智能体"
+en_link: "/productions/veadk-java/archives/0.0.2/en/components/agent/model"
+---
+
+VeADK Java 的主要入口是 `com.volcengine.veadk.Agent.builder()`。它在 ADK Java 的 `LlmAgent` 基础上补充 VeADK 风格的模型默认值、metadata、工具、技能、记忆、知识库和运行时集成。
+
+## 最小智能体
+
+```java
+import com.volcengine.veadk.Agent;
+
+Agent agent = Agent.builder()
+    .name("quickstart-agent")
+    .description("Answers user questions.")
+    .instruction("You are a helpful assistant.")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+```
+
+`Agent.builder()` 默认会设置一个可用的 Agent 名称、说明、系统指令和模型名，因此最小代码可以只调用 `build()`。实际项目建议显式设置 `name`、`instruction` 和模型配置，避免环境差异导致行为变化。
+
+模型字符串有三种入口：
+
+- `modelName("...")`：语义化入口，内部等价于设置模型名。
+- `model("...")`：继承自 ADK Java 的模型名入口。
+- `model(BaseLlm)`：直接传入已经配置好的模型对象。
+
+构建完成后，既可以使用 `new Runner(agent).run(...)` 直接调用，也可以接入 ADK Web 或 AgentKit Runtime。结束使用时，如果模型或工具持有连接资源，建议调用 `agent.close().blockingAwait()` 释放资源。
+
+## 模型选择
+
+如果没有显式设置 `modelProvider(...)`，VeADK Java 会按模型名前缀判断 provider。支持的前缀包括 `ark/`、`openai/`、`openai-compatible/` 和 `openai_compatible/`。没有前缀时，默认按 OpenAI-compatible 协议创建模型客户端。
+
+OpenAI-compatible 示例：
+
+```java
+Agent agent = Agent.builder()
+    .name("openai-agent")
+    .instruction("You are a helpful assistant.")
+    .modelProvider("openai")
+    .modelName("gpt-4o")
+    .modelApiKey(System.getenv("OPENAI_API_KEY"))
+    .modelBaseUrl("https://api.openai.com/v1")
+    .build();
+```
+
+Ark 示例：
+
+```java
+Agent agent = Agent.builder()
+    .name("ark-agent")
+    .modelProvider("ark")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .modelApiBase("https://ark.cn-beijing.volces.com/api/v3")
+    .modelThinking("disabled")
+    .build();
+```
+
+也可以把 provider 写进模型名：
+
+```java
+Agent agent = Agent.builder()
+    .name("prefixed-agent")
+    .modelName("ark/doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+```
+
+`modelBaseUrl(...)` 是 `modelApiBase(...)` 的别名，常用于 OpenAI-compatible endpoint；Ark 场景通常使用 `modelApiBase(...)`。
+
+## 显式模型对象
+
+当需要设置 Ark 协议细节、复用模型实例，或接入自定义 `BaseLlm` 时，可以先创建模型对象，再传给 Agent。
+
+```java
+import com.google.adk.models.BaseLlm;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+
+BaseLlm model = new ArkLlm(ArkLlmConfig.builder()
+    .modelName("doubao-seed-2-1-pro-260628")
+    .apiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .apiBase("https://ark.cn-beijing.volces.com/api/v3")
+    .thinking("disabled")
+    .build());
+
+Agent agent = Agent.builder()
+    .name("custom-model-agent")
+    .instruction("You are a helpful assistant.")
+    .model(model)
+    .build();
+```
+
+显式模型适合放在统一的配置工厂中管理。注意不要把 API key 写进源码或文档示例中的固定字符串。
+
+## Responses API 和结构化输出
+
+默认 Ark 适配器使用 Chat Completions。需要响应续接、JSON Schema 输出或 Responses 协议能力时，显式选择 `ArkLlmConfig.Api.RESPONSES`，并注册 `ArkResponsesSession` 的两个模型回调。
+
+```java
+import com.google.genai.types.GenerateContentConfig;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+import com.volcengine.veadk.model.ArkResponsesSession;
+import java.util.List;
+import java.util.Map;
+
+var model = new ArkLlm(ArkLlmConfig.builder()
+    .modelName("doubao-seed-2-1-pro-260628")
+    .api(ArkLlmConfig.Api.RESPONSES)
+    .thinking("disabled")
+    .build());
+
+var session = new ArkResponsesSession();
+
+var generation = GenerateContentConfig.builder()
+    .responseMimeType("application/json")
+    .responseJsonSchema(Map.of(
+        "type", "object",
+        "properties", Map.of("value", Map.of("type", "integer")),
+        "required", List.of("value"),
+        "additionalProperties", false))
+    .maxOutputTokens(256)
+    .build();
+
+Agent agent = Agent.builder()
+    .name("structured-agent")
+    .model(model)
+    .beforeModelCallback(session.beforeModel())
+    .afterModelCallback(session.afterModel())
+    .generateContentConfig(generation)
+    .build();
+```
+
+注册回调后，Responses 的响应 ID 会按会话和 Agent 名称写入 ADK Session State。只有当历史前缀、模型、系统指令、工具声明和生成配置匹配时，下一次调用才会携带 `previous_response_id` 续接；历史压缩、配置变化或远端响应过期时会回退到完整历史请求。
+
+## 模型降级
+
+`modelFallbacks(...)` 可以为同一个 Agent 配置多个备用模型端点。每次生成都从主模型开始，只有在尚未收到任何模型响应前发生异常，才会尝试下一个模型。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.model.ArkLlm;
+import com.volcengine.veadk.model.ArkLlmConfig;
+
+var primary = new ArkLlm(ArkLlmConfig.builder()
+    .modelName(System.getenv("PRIMARY_MODEL"))
+    .apiKey(System.getenv("PRIMARY_API_KEY"))
+    .build());
+
+var backup = new ArkLlm(ArkLlmConfig.builder()
+    .modelName(System.getenv("BACKUP_MODEL"))
+    .apiKey(System.getenv("BACKUP_API_KEY"))
+    .apiBase(System.getenv("BACKUP_API_BASE"))
+    .build());
+
+var agent = Agent.builder()
+    .name("assistant")
+    .model(primary)
+    .modelFallbacks(backup)
+    .build();
+
+try {
+    String answer = new Runner(agent).run("请根据可用信息完成任务");
+} finally {
+    agent.close().blockingAwait();
+}
+```
+
+降级不会自动重放已经开始输出的响应，也不会自动重试工具调用。备用模型需要支持相同的输入格式、工具调用方式和输出约束。
+
+## Metadata
+
+VeADK Java 会在构建时记录模型、工具、组件和搜索来源等 metadata。可以用 `AgentMetadataExtractor` 获取快照，供运行时注册、调试或文档化使用。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.AgentMetadata;
+import com.volcengine.veadk.AgentMetadataExtractor;
+
+Agent agent = Agent.builder()
+    .name("metadata-agent")
+    .modelName("ark/doubao-seed-2-1-pro-260628")
+    .modelApiKey(System.getenv("MODEL_AGENT_API_KEY"))
+    .build();
+
+AgentMetadata metadata = AgentMetadataExtractor.extract(agent);
+
+System.out.println(metadata.modelName());
+System.out.println(metadata.tools());
+System.out.println(metadata.components());
+System.out.println(metadata.searchSources());
+```
+
+显式传入的工具会标记为 explicit；由知识库、长期记忆、Skills 等组件自动注入的工具会标记为 auto。
+
+## 环境变量
+
+| 变量 | 用途 |
+|---|---|
+| `MODEL_AGENT_API_KEY` | 默认模型 API key。Ark 和 OpenAI-compatible 配置都会优先使用显式传入的 key，未传时再读取该变量。 |
+| `MODEL_AGENT_API_BASE` | 默认模型 endpoint。未显式设置 `modelApiBase(...)` / `modelBaseUrl(...)` 时读取。 |
+| `MODEL_AGENT_API_KEY_ID` | Ark 场景下用于按 ID 查找 API key。 |
+| `MODEL_AGENT_API_KEY_NAME` | Ark 场景下用于按名称查找 API key。 |
+| `MODEL_AGENT_PROJECT_NAME` | Ark key 管理相关的项目名，未设置时默认为 `default`。 |
+| `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` | 当没有直接提供 `MODEL_AGENT_API_KEY` 时，用于通过火山引擎凭证解析 Ark API key。 |
+
+显式配置的 `modelApiKey(...)`、`ArkLlmConfig.apiKey(...)` 或 `OpenAiCompatibleLlmConfig.apiKey(...)` 优先级最高。生产环境应通过 Secret Manager、CI/CD secret 或运行时环境变量注入凭证。
+
+## 常见问题
+
+| 现象 | 排查方向 |
+|---|---|
+| 启动时报缺少 API key | 检查是否设置了 `modelApiKey(...)` 或 `MODEL_AGENT_API_KEY`；Ark 自动取 key 还需要火山引擎 AK/SK 和 key ID/name。 |
+| 模型名看起来正确但请求到了错误 endpoint | 检查 `modelProvider(...)`、模型名前缀和 `MODEL_AGENT_API_BASE`，没有前缀时默认走 OpenAI-compatible。 |
+| Responses 续接没有生效 | 确认使用 `ArkLlmConfig.Api.RESPONSES`，并同时注册 `beforeModelCallback` 和 `afterModelCallback`。 |
+| fallback 没有切到备用模型 | fallback 只在尚未收到任何 `LlmResponse` 前的异常触发；模型已经开始输出后发生错误会直接向调用方传播。 |
+| 结构化输出失败 | 确认模型支持 JSON Schema，并检查 `responseMimeType`、`responseJsonSchema` 或 `responseSchema` 是否和模型能力匹配。 |
+

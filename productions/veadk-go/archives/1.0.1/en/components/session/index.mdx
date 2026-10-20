@@ -1,0 +1,51 @@
+---
+title: "Short-Term Sessions"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh/components/session"
+---
+
+Short-term sessions store conversation events for the same `appName`, `userID`, and `sessionID`. VeADK Go `v1.0.1` reuses ADK `session.Service` and provides `memory.NewShortTermMemoryService` for persistent backends.
+
+## In-Memory Session
+
+```go
+sessionService := session.InMemoryService()
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "support_app",
+	UserID: "user-1",
+	SessionID: "case-1001",
+})
+```
+
+Reuse the same `appName`, `userID`, and `sessionID` for a multi-turn conversation.
+
+## Persistent Backends
+
+```go
+sessionService, err := vem.NewShortTermMemoryService(vem.BackendShortTermPostgreSQL, nil)
+if err != nil {
+	return err
+}
+```
+
+Available backends:
+
+| Backend | Constant | Scenario |
+| --- | --- | --- |
+| In memory | `BackendShortTermLocal` | Local debugging and demos. |
+| SQLite | `BackendShortTermSQLite` | Single-node persistence and small tests. |
+| PostgreSQL | `BackendShortTermPostgreSQL` | Production services with shared databases. |
+| MySQL | `BackendShortTermMySQL` | Existing MySQL infrastructure. |
+
+When `config` is `nil`, VeADK reads database settings from global config. You can also pass the backend-specific config struct explicitly.
+
+## App Integration
+
+```go
+app := agentkit_server_app.NewAgentkitServerApp(apps.DefaultApiConfig())
+err := app.Run(ctx, &apps.RunConfig{
+	AgentLoader: agent.NewSingleLoader(a),
+	SessionService: sessionService,
+})
+```
+
+`apps.RunConfig.SessionService` is used by simple app, A2A app, and AgentKit server app.

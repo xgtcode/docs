@@ -1,0 +1,43 @@
+---
+title: "概述"
+en_link: "/productions/veadk-go/archives/1.0.1/en"
+---
+
+VeADK Go `v1.0.1` 是 `release/v1` 维护线的历史版本，模块路径为 `github.com/volcengine/veadk-go`，底层依赖 `google.golang.org/adk`。这份文档适用于存量 V1 项目；新项目如果要使用 V2 能力，应查看 VeADK Go Preview。
+
+## 适用场景
+
+- 存量 Go 项目已经依赖 `github.com/volcengine/veadk-go`，需要固定到 `v1.0.1`；
+- 使用 ADK v1 的 launcher、runner、session、memory 和 tool API；
+- 需要接入 VeADK Go v1 的模型默认配置、内置工具、知识库、短期会话、长期记忆、可观测和 AgentKit Server App；
+- 暂时不迁移到 `github.com/volcengine/veadk-go/v2`。
+
+## 版本线
+
+| 版本 | 模块路径 | ADK 依赖 | 发布版本 |
+| --- | --- | --- | --- |
+| 1.0.1 | `github.com/volcengine/veadk-go` | `google.golang.org/adk` | `v1.0.1` tag |
+
+<Note>
+  VeADK Go `v1.0.1` 使用不带 `/v2` 的模块路径和 ADK v1 API。使用 V2 能力时，请切换到 VeADK Go Preview 文档。
+</Note>
+
+## 核心模块
+
+| 模块 | 作用 |
+| --- | --- |
+| `agent/llmagent` | 创建 VeADK LLM 智能体，并补充模型默认配置、PromptManager、Skills 和知识库工具注入。 |
+| `google.golang.org/adk/runner` | 直接在 Go 代码中运行智能体；V1 使用 ADK runner，而不是 VeADK 独立 runner 包。 |
+| `apps` | 运行 simple app、A2A app 和 AgentKit Server App。 |
+| `tool/builtin_tools` | 提供 Web Search、Web Fetch、Link Reader、MCP Router、媒体生成、Code Sandbox、Skills 等内置工具。 |
+| `memory` | 创建短期会话服务和长期记忆服务。 |
+| `knowledgebase` | 创建 Local、Viking、OpenSearch、Redis 等知识库后端，并注入检索工具。 |
+| `observability` | 接入 OpenTelemetry 插件和导出配置。 |
+
+## 使用路径
+
+| 目标 | 文档 |
+| --- | --- |
+| 固定 `v1.0.1` 并配置模型 | [安装](/productions/veadk-go/archives/1.0.1/zh/get-started/installation) |
+| 运行第一个 V1 智能体 | [快速开始](/productions/veadk-go/archives/1.0.1/zh/get-started/quickstart) |
+| 查看版本变化 | [更新日志](/productions/veadk-go/archives/1.0.1/zh/changelog) |

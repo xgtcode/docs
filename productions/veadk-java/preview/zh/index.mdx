@@ -1,0 +1,42 @@
+---
+title: "概述"
+en_link: "/productions/veadk-java/preview/en"
+---
+
+VeADK Java 是面向 Java 开发者的智能体开发工具包。它复用 ADK Java 的 `LlmAgent`、`Runner`、会话和工具执行链路，并提供 VeADK 风格的 `Agent.builder()`、模型默认值、metadata、工具、技能、记忆、知识库、可观测和 AgentKit Runtime 集成。
+
+当前 Preview 的 Maven 坐标为 `com.volcengine.veadk:veadk-java:0.0.2`，要求 JDK 17 或更高版本。
+
+## 适用场景
+
+- 使用 Java 构建能够调用模型、函数工具、Skills、知识库或记忆的智能体；
+- 使用 `new Runner(agent).run(...)` 在 Java 服务中直接执行一次对话；
+- 将 ADK Java 的工具、SkillToolset、会话服务和事件流能力包装到 VeADK Java 的入口中；
+- 通过 ADK Web、本地 CLI、AgentKit Runtime 或容器方式运行 Java 智能体；
+- 接入 OpenTelemetry、APMPlus、TLS、LLM Shield、身份授权等企业能力。
+
+## 核心模块
+
+| 模块 | 作用 |
+| --- | --- |
+| `com.volcengine.veadk.Agent` | VeADK Java 的主要入口。`Agent.builder()` 在 ADK Java `LlmAgent` 基础上补充模型、工具、技能、记忆、知识库和 metadata。 |
+| `com.volcengine.veadk.Runner` | 便捷执行入口，支持 `run(String)`、指定 `userId` / `sessionId` 的对话和 `RunConfig`。 |
+| `model` | 提供 Ark 专用适配器和 OpenAI-compatible 适配器，也允许传入自定义 ADK `BaseLlm`。 |
+| `tools` | 提供函数工具之外的内置工具和工具集，例如 MCP Router、Skills Sandbox、Web Search、媒体生成等。 |
+| `memory` | 提供短期记忆、持久化会话和长期记忆能力。 |
+| `knowledgebase` | 接入 Viking、OpenSearch 等知识库后端，并通过工具向智能体暴露检索能力。 |
+| `trace` | 集成 OpenTelemetry，并支持 APMPlus、TLS 等导出方式。 |
+| `a2a` / `integration/agentkit` | 支持 A2A、AgentKit Runtime 和服务化运行路径。 |
+
+## 当前功能边界
+
+VeADK Java 对齐 Python 版本的核心入口，包括 `Agent.builder()`、模型、工具、子智能体、记忆和知识库 metadata。但当前 README 明确列出部分 Python 侧能力尚未支持，例如 `runtime=codex/piagent`、`enableResponses`、`aio_sandbox`、`enableA2ui`、`enableTunnel`、YAML 或动态工具发现。
+
+## 使用路径
+
+| 目标 | 文档 |
+| --- | --- |
+| 添加 Maven 依赖并配置模型凭证 | [安装](/productions/veadk-java/preview/zh/get-started/installation) |
+| 创建并运行第一个 Java 智能体 | [快速开始](/productions/veadk-java/preview/zh/get-started/quickstart) |
+| 查看 Preview 版本变化 | [更新日志](/productions/veadk-java/preview/zh/changelog) |
+

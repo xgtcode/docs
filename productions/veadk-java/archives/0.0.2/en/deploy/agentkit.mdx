@@ -1,0 +1,186 @@
+---
+title: "Deploy to AgentKit"
+zh_link: "/productions/veadk-java/archives/0.0.2/zh/deploy/agentkit"
+---
+
+VeADK Java can connect to AgentKit in two forms:
+
+- **AgentKit Runtime HTTP example**: starts a lightweight HTTP process with `/invoke`, `/ping`, `/health`, `/readiness`, and `/liveness`. Use it to verify that an Agent can be called as an AgentKit Runtime.
+- **AgentKit Server example**: uses ADK Web and exposes `/run`, `/run_sse`, `/list-apps`, and session-management APIs. Use it when you want ADK Web's native session and execution behavior.
+
+Before deployment, validate locally that the model, tools, knowledge base, memory, and observability paths work through `Agent.builder()` and `Runner`.
+
+## Before deployment
+
+- Use JDK 17 or later.
+- Pin a VeADK Java Maven version, source commit, or release version.
+- Put model, AgentKit, knowledge-base, memory, tool, and observability credentials in platform secrets. Do not store them in the repository or image.
+- Confirm that the runtime image can reach the model service, AgentKit tool service, retrieval backends, and observability backend.
+- Before connecting the cloud runtime, verify the entry class and environment variables with a local HTTP call.
+
+## Run locally
+
+Build the example module and copy runtime dependencies:
+
+```bash
+./mvnw -B -ntp -DskipTests install
+./mvnw -B -ntp -pl example dependency:copy-dependencies -DincludeScope=runtime
+```
+
+The minimal runtime needs an accessible model name and model credential. The credential should come from a secret; the command below only shows the variable name:
+
+```bash
+export MODEL_AGENT_NAME=your-model-id
+export MODEL_AGENT_API_KEY=your-model-api-key
+
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+The local process listens on `127.0.0.1:8000` by default. Set `AGENTKIT_STREAMING=true` to return Server-Sent Events:
+
+```bash
+AGENTKIT_STREAMING=true \
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+To run the ADK Web style AgentKit Server, use this entry class:
+
+```bash
+java -cp 'example/target/classes:example/target/dependency/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitServerExample
+```
+
+## Call the HTTP API
+
+The basic Runtime exposes these health and invocation APIs:
+
+| API | Description |
+| --- | --- |
+| `GET /ping` | Returns `{"status":"pong!"}` for a quick probe. |
+| `GET /health` | Checks that the HTTP process is available. |
+| `GET /readiness` | Checks that the process is ready to receive traffic. |
+| `GET /liveness` | Checks that the process is still alive. |
+| `POST /invoke` | Accepts `{"prompt":"Hello"}` and calls the Agent. |
+
+You can call the local Runtime with AgentKit CLI:
+
+```bash
+agentkit invoke run --endpoint http://127.0.0.1:8000 --apikey local-placeholder \
+  --headers '{"user_id":"alice","session_id":"demo"}' "Hello"
+```
+
+`local-placeholder` is only for local verification. In cloud deployments, use the credential issued by the gateway or platform.
+
+## Sessions and concurrency
+
+`/invoke` selects the conversation through request headers:
+
+| Header | Description |
+| --- | --- |
+| `user_id` | User identifier. Defaults to `agentkit_user` when omitted. |
+| `session_id` | Session identifier. A fresh temporary session is created when omitted. |
+
+`user_id` and `session_id` select conversation context; they are not authenticated identity. In production, authenticate requests at a trusted gateway and forward only trusted user and session information to the Runtime.
+
+The basic Runtime keeps sessions in memory, so conversation state is lost when the process restarts. Configure a stable session service or memory backend in the Agent when conversations must survive restarts. Also test concurrency before launch: overlapping requests for the same `user_id` / `session_id` return `409 SessionBusy`, and a full worker pool returns `503`.
+
+## Container entry point
+
+The example image uses `eclipse-temurin:17-jre`, places the jar at `/app/app.jar`, places dependencies under `/app/lib/`, and starts this default entry point:
+
+```bash
+java -cp /app/app.jar:/app/lib/* \
+  com.volcengine.veadk.example.agentkit.AgentKitRuntimeExample
+```
+
+The container sets `AGENTKIT_BIND_HOST=0.0.0.0` and `PORT=8000` by default, and runs as `10001:10001`. Example build and run commands:
+
+```bash
+docker build -f example/agentkit/Dockerfile -t veadk-agentkit-java:local example/target
+docker run --rm -p 127.0.0.1:8000:8000 \
+  --env MODEL_AGENT_NAME \
+  --env MODEL_AGENT_API_KEY \
+  --env AGENTKIT_STREAMING \
+  veadk-agentkit-java:local
+```
+
+To run AgentKit Server from the same image, override the entry class:
+
+```bash
+docker run --rm -p 127.0.0.1:8000:8000 \
+  --entrypoint java \
+  veadk-agentkit-java:local \
+  -cp '/app/app.jar:/app/lib/*' \
+  com.volcengine.veadk.example.agentkit.AgentKitServerExample
+```
+
+## Custom Agent
+
+When `AGENTKIT_AGENT_CLASS` is not set, the example Runtime creates a built-in Agent from environment variables. To reuse an Agent from your application code, provide a class that contains `public static BaseAgent ROOT_AGENT` and inject its fully qualified class name:
+
+```bash
+export AGENTKIT_AGENT_CLASS=com.example.agent.MyAgent
+```
+
+In this mode, configure the model, tools, instructions, knowledge base, memory, and callbacks in the Java code behind `ROOT_AGENT`. The Runtime loads that Agent, accepts HTTP requests, and closes the Agent when the process exits.
+
+## Environment variables
+
+| Environment variable | Description |
+| --- | --- |
+| `MODEL_AGENT_NAME` | Ark model ID used by the built-in Agent. Required when `AGENTKIT_AGENT_CLASS` is not used. |
+| `MODEL_AGENT_API_KEY` | Model API key. Inject it through a secret. |
+| `MODEL_AGENT_API_BASE` | Optional model service endpoint. |
+| `AGENT_NAME` | Built-in Agent name. |
+| `AGENT_DESCRIPTION` | Built-in Agent description. |
+| `MODEL_AGENT_INSTRUCTION` | Built-in Agent instruction. |
+| `AGENTKIT_TOOLS` | Tools enabled for the built-in Agent. Supports comma-separated `web_search`, `web_fetch`, and `run_code`. |
+| `AGENTKIT_STREAMING` | When set to `true`, the basic Runtime returns ADK events as SSE. |
+| `AGENTKIT_AGENT_CLASS` | Application Agent class name. The class must contain `public static BaseAgent ROOT_AGENT`. |
+| `AGENTKIT_BIND_HOST` | HTTP bind address. Local default is `127.0.0.1`; container default is `0.0.0.0`. |
+| `PORT` | HTTP port. Defaults to `8000`. |
+
+Tool credentials should also be injected as secrets:
+
+| Capability | Configuration to check |
+| --- | --- |
+| Web Search | `VOLCENGINE_ACCESS_KEY`, `VOLCENGINE_SECRET_KEY`, and Web Search service permission. |
+| Code Sandbox | `AGENTKIT_TOOL_ID`, `VOLCENGINE_ACCESS_KEY`, `VOLCENGINE_SECRET_KEY`, and access to the AgentKit Code Sandbox tool service. Use `TOOL_CODE_SANDBOX_URL` only when wiring `CodeSandboxToolset` to an existing Sandbox MCP endpoint in application code. |
+| Skills Sandbox | `AGENTKIT_TOOL_ID_SKILLS` or `AGENTKIT_TOOL_ID`, plus credentials for the AgentKit tool service. |
+| AgentKit tool service | `AGENTKIT_TOOL_REGION`, `AGENTKIT_TOOL_HOST`, and `VOLCENGINE_AGENTKIT_HOST` can override environment-specific endpoints. |
+
+Adding a tool name to `AGENTKIT_TOOLS` does not provision the backing service. Confirm service permission, network connectivity, and secret injection before deployment.
+
+## AgentKit CLI templates
+
+AgentKit CLI provides Java lifecycle templates for generating or wrapping Runtime projects:
+
+| Template | Use case |
+| --- | --- |
+| `basic_java` | Generates a basic Java Runtime. |
+| `basic_stream_java` | Generates a Java Runtime with SSE enabled. |
+| `agent_server_java` | Generates an ADK Web style Java Server. |
+| Java `--from-agent` | Wraps an existing Agent class as a Runtime. |
+
+Template availability depends on the installed CLI version. Check it before use:
+
+```bash
+agentkit init --list-templates
+```
+
+## Production checklist
+
+For cloud deployment, check at least these items:
+
+| Item | Notes |
+| --- | --- |
+| Entry point | Decide whether to use `AgentKitRuntimeExample`, `AgentKitServerExample`, or your own application entry point. |
+| Image | Include only the jar, dependencies, and runtime files. Do not include local credentials, `.ssh`, debug tokens, or temporary artifacts. |
+| Secrets | Inject model, AgentKit, retrieval, memory, and observability credentials through platform secrets. |
+| Authentication | Authenticate callers at the gateway and let the Runtime receive only trusted headers. |
+| Sessions | Define the source, reuse rules, and persistence strategy for `user_id` and `session_id`. |
+| Observability | Connect OpenTelemetry, APMPlus, or platform logs for model, tool, retrieval, and sandbox paths. |
+| Rate limits | Set retry and fallback policies for per-session concurrency, the global worker pool, and upstream model limits. |
+

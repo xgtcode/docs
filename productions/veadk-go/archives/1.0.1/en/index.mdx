@@ -1,0 +1,43 @@
+---
+title: "Overview"
+zh_link: "/productions/veadk-go/archives/1.0.1/zh"
+---
+
+VeADK Go `v1.0.1` is a historical release from the `release/v1` maintenance line. Its module path is `github.com/volcengine/veadk-go` and it depends on `google.golang.org/adk`. Use this documentation for existing V1 projects. New projects that need V2 capabilities should use the VeADK Go Preview documentation.
+
+## Use Cases
+
+- Existing Go projects already depend on `github.com/volcengine/veadk-go` and need to pin `v1.0.1`.
+- You use ADK v1 launcher, runner, session, memory, and tool APIs.
+- You need V1 model defaults, built-in tools, knowledge base, sessions, long-term memory, observability, or AgentKit Server App integration.
+- You are not ready to migrate to `github.com/volcengine/veadk-go/v2`.
+
+## Version Line
+
+| Version | Module path | ADK dependency | Release |
+| --- | --- | --- | --- |
+| 1.0.1 | `github.com/volcengine/veadk-go` | `google.golang.org/adk` | `v1.0.1` tag |
+
+<Note>
+  VeADK Go `v1.0.1` uses the module path without `/v2` and ADK v1 APIs. For V2 capabilities, switch to the VeADK Go Preview documentation.
+</Note>
+
+## Core Modules
+
+| Module | Purpose |
+| --- | --- |
+| `agent/llmagent` | Creates VeADK LLM agents and adds model defaults, PromptManager, Skills discovery, and knowledge-base tool injection. |
+| `google.golang.org/adk/runner` | Runs agents directly in Go code. V1 uses the ADK runner rather than a separate VeADK runner package. |
+| `apps` | Runs simple app, A2A app, and AgentKit Server App entry points. |
+| `tool/builtin_tools` | Provides Web Search, Web Fetch, Link Reader, MCP Router, media generation, Code Sandbox, Skills, and other built-in tools. |
+| `memory` | Creates short-term session services and long-term memory services. |
+| `knowledgebase` | Creates Local, Viking, OpenSearch, Redis, and other knowledge-base backends and injects retrieval tools. |
+| `observability` | Integrates OpenTelemetry plugins and exporter configuration. |
+
+## Reading Path
+
+| Goal | Page |
+| --- | --- |
+| Pin `v1.0.1` and configure a model | [Installation](/productions/veadk-go/archives/1.0.1/en/get-started/installation) |
+| Run your first V1 agent | [Quickstart](/productions/veadk-go/archives/1.0.1/en/get-started/quickstart) |
+| Review version changes | [Changelog](/productions/veadk-go/archives/1.0.1/en/changelog) |

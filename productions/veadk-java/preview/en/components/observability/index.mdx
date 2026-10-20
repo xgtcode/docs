@@ -1,0 +1,130 @@
+---
+title: "Observability"
+zh_link: "/productions/veadk-java/preview/zh/components/observability"
+---
+
+VeADK Java uses OpenTelemetry to collect agent execution traces and export ADK Java model, tool, Runner session, and related spans to external observability systems. The current source provides `OpenTelemetry.initOpenTelemetry(...)`, plus APMPlus and TLS exporters.
+
+## When to Use It
+
+- Observe model calls, tool calls, knowledge retrieval, memory retrieval, and Runner sessions.
+- Correlate Java agent traces with business request IDs, user IDs, or session IDs.
+- Export data to Volcengine APMPlus or TLS.
+- Flush queued traces or metrics before a short-lived process exits.
+
+## Initialize OpenTelemetry
+
+Initialize OpenTelemetry before creating the `Agent` or running the `Runner`. `OpenTelemetry.initOpenTelemetry(...)` receives a list of `ExporterFactory` instances. If the list is empty, no global provider is registered.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.APMPlusExporter;
+import java.util.List;
+
+OpenTelemetry.initOpenTelemetry(List.of(new APMPlusExporter()));
+
+Agent agent = Agent.builder()
+    .name("support_agent")
+    .instruction("Answer with product documentation and keep responses concise.")
+    .modelName("deepseek-v4-flash-ga-260731")
+    .build();
+
+String answer = new Runner(agent, "support_app")
+    .run("user_1", "session_1", "How can I inspect a tool-call trace?");
+```
+
+After initialization, VeADK Java gives ADK Java telemetry the global OpenTelemetry tracer. The SDK also registers a shutdown hook to close the tracer provider and meter provider. For short-lived processes, explicitly call `forceFlush()` on the exporter when needed.
+
+## APMPlus
+
+`APMPlusExporter` exports traces and metrics through OTLP/gRPC. The shortest setup is to provide an APMPlus AppKey explicitly:
+
+```bash
+export OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY="${APMPLUS_APP_KEY}"
+export OBSERVABILITY_OPENTELEMETRY_APMPLUS_SERVICE_NAME="veadk-java-agent"
+```
+
+```java
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.APMPlusExporter;
+import java.util.List;
+
+APMPlusExporter exporter = new APMPlusExporter();
+OpenTelemetry.initOpenTelemetry(List.of(exporter));
+
+// Optional: flush queued trace and metric data before a short-lived process exits.
+exporter.forceFlush();
+```
+
+When `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY` is not set, `APMPlusExporter` resolves the AppKey through the APMPlus `GetAppKey` OpenAPI. Volcengine mode requires `VOLCENGINE_ACCESS_KEY` and `VOLCENGINE_SECRET_KEY`. With `CLOUD_PROVIDER=byteplus`, it prefers `BYTEPLUS_ACCESS_KEY` and `BYTEPLUS_SECRET_KEY`, then falls back to Volcengine credentials.
+
+| Environment variable | Default | Description |
+| --- | --- | --- |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_ENDPOINT` | `http://apmplus-<region>.volces.com:4317` | APMPlus OTLP/gRPC endpoint. |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY` | Empty | APMPlus AppKey. If empty, VeADK resolves it with cloud credentials. |
+| `OBSERVABILITY_OPENTELEMETRY_APMPLUS_SERVICE_NAME` | `veadk_tracing` | Service name written to the OpenTelemetry resource. |
+| `REGION` | `cn-beijing` | Volcengine region used for the default endpoint and AppKey resolution. |
+| `CLOUD_PROVIDER` | Empty | Set to `byteplus` to use BytePlus endpoint and region rules. |
+| `BYTEPLUS_REGION` | `ap-southeast-1` | Default region in BytePlus mode. |
+| `APMPLUS_OPENAPI_HOST` | Provider-specific | OpenAPI host used when resolving the AppKey automatically. |
+
+## TLS
+
+`TLSExporter` exports traces to Volcengine TLS through OTLP/gRPC. It reads the endpoint, topic, and region from environment variables and uses Volcengine AK/SK to build authentication headers.
+
+```bash
+export OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME="${TLS_TRACE_TOPIC_ID}"
+export OBSERVABILITY_OPENTELEMETRY_TLS_REGION="cn-beijing"
+export VOLCENGINE_ACCESS_KEY="${VOLCENGINE_ACCESS_KEY}"
+export VOLCENGINE_SECRET_KEY="${VOLCENGINE_SECRET_KEY}"
+```
+
+```java
+import com.volcengine.veadk.trace.OpenTelemetry;
+import com.volcengine.veadk.trace.exporter.TLSExporter;
+import java.util.List;
+
+OpenTelemetry.initOpenTelemetry(List.of(new TLSExporter()));
+```
+
+| Environment variable | Default | Description |
+| --- | --- | --- |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_ENDPOINT` | `https://tls-cn-beijing.volces.com:4317` | TLS OTLP/gRPC endpoint. |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME` | None | TLS trace log topic ID. Initialization fails when it is missing. |
+| `OBSERVABILITY_OPENTELEMETRY_TLS_REGION` | `cn-beijing` | TLS service region. |
+| `VOLCENGINE_ACCESS_KEY` | None | Access Key used for TLS export authentication. |
+| `VOLCENGINE_SECRET_KEY` | None | Secret Key used for TLS export authentication. |
+
+## Export to Multiple Backends
+
+`OpenTelemetry.initOpenTelemetry(...)` combines multiple exporters into one composite exporter. Pass multiple exporters when traces should go to both APMPlus and TLS:
+
+```java
+OpenTelemetry.initOpenTelemetry(List.of(
+    new APMPlusExporter(),
+    new TLSExporter()
+));
+```
+
+The APMPlus exporter also registers a metric reader. The TLS exporter currently exports traces only.
+
+## Data and Privacy
+
+OpenTelemetry spans may include attributes from model, tool, knowledge-base, and memory paths. Before enabling production export, verify that:
+
+- API keys, AK/SK, tokens, cookies, and private user data are not written into prompts, tool arguments, metadata, or logs.
+- Agent names, Runner `appName`, `userId`, and `sessionId` are stable enough for cross-system debugging.
+- The target platform's retention, access-control, and deletion policies are understood.
+- Short-lived processes call `forceFlush()` or leave enough time for the shutdown hook to export queued data.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| APMPlus initialization fails with `Unable to resolve APMPlus app key` | Set `OBSERVABILITY_OPENTELEMETRY_APMPLUS_API_KEY`, or check cloud credentials, `REGION`, `CLOUD_PROVIDER`, and `APMPLUS_OPENAPI_HOST`. |
+| TLS initialization fails | Confirm `OBSERVABILITY_OPENTELEMETRY_TLS_SERVICE_NAME`, `VOLCENGINE_ACCESS_KEY`, and `VOLCENGINE_SECRET_KEY` are injected. |
+| No traces appear in the console | Ensure initialization happens before Runner calls, endpoint, region, and service name are correct, and the process has time to flush before exit. |
+| Traces are hard to correlate with business requests | Log `appName`, `userId`, and `sessionId` for the same turn, and keep agent names stable. |
+

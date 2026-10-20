@@ -1,0 +1,67 @@
+---
+title: "安装"
+en_link: "/productions/veadk-go/archives/1.0.1/en/get-started/installation"
+---
+
+本页说明如何安装 VeADK Go `v1.0.1`。该版本属于 V1 维护线，模块路径不带 `/v2`。
+
+## 前置条件
+
+- Go 1.25.0 或更高版本。
+- 能访问 `github.com/volcengine/veadk-go`。
+- 已准备火山方舟或 OpenAI-compatible 模型服务凭证。
+
+## 安装版本
+
+```bash
+go get github.com/volcengine/veadk-go@v1.0.1
+```
+
+代码中使用 V1 import 路径：
+
+```go
+import veagent "github.com/volcengine/veadk-go/agent/llmagent"
+```
+
+底层 ADK import 同样不带版本后缀：
+
+```go
+import "google.golang.org/adk/agent"
+```
+
+## 模型配置
+
+可以在项目根目录放置 `config.yaml`：
+
+```yaml
+model:
+  agent:
+    provider: openai
+    name: doubao-seed-1-6-250615
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+```
+
+再通过环境变量注入 API Key：
+
+```bash
+export MODEL_AGENT_API_KEY="your-ark-api-key"
+```
+
+也可以在创建智能体时显式传入 `ModelName`、`ModelProvider`、`ModelAPIBase` 和 `ModelAPIKey`。生产环境不要把凭证写入源码或文档仓。
+
+## 和 V2 的区别
+
+| 项 | V1 | V2 Preview |
+| --- | --- | --- |
+| 模块路径 | `github.com/volcengine/veadk-go` | `github.com/volcengine/veadk-go/v2` |
+| ADK 路径 | `google.golang.org/adk` | `google.golang.org/adk/v2` |
+| 直接执行 | 使用 ADK `runner` 包 | 使用 Preview 文档中的 v2 runner 能力 |
+| 适用对象 | 存量 V1 项目 | 新项目和主线验证 |
+
+## 常见问题
+
+| 现象 | 排查方向 |
+| --- | --- |
+| import 路径找不到 | 确认没有写成 `github.com/volcengine/veadk-go/v2`。 |
+| ADK 类型不兼容 | 确认没有混用 `google.golang.org/adk/v2`。 |
+| 模型认证失败 | 确认 `MODEL_AGENT_API_KEY`、模型名称和 `api_base` 与账号权限匹配。 |

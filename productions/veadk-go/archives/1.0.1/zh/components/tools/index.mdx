@@ -1,0 +1,120 @@
+---
+title: "工具"
+en_link: "/productions/veadk-go/archives/1.0.1/en/components/tools"
+---
+
+VeADK Go `v1.0.1` 同时支持 ADK 函数工具、ADK Toolset，以及 VeADK 提供的内置工具。V1 的工具 API 以 `google.golang.org/adk/tool` 为基础。
+
+## 函数工具
+
+```go
+import (
+	"fmt"
+
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/tool"
+	"google.golang.org/adk/tool/functiontool"
+)
+
+type AddArgs struct {
+	A float64 `json:"a" jsonschema:"第一个加数"`
+	B float64 `json:"b" jsonschema:"第二个加数"`
+}
+
+func AddTool() (tool.Tool, error) {
+	handler := func(ctx agent.Context, args AddArgs) (map[string]any, error) {
+		return map[string]any{"result": args.A + args.B}, nil
+	}
+	return functiontool.New(functiontool.Config{
+		Name:        "calculator_add",
+		Description: "执行两数相加。",
+	}, handler)
+}
+```
+
+把工具挂到智能体：
+
+```go
+addTool, err := AddTool()
+if err != nil {
+	return nil, err
+}
+
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name:  "tool_agent",
+		Tools: []tool.Tool{addTool},
+	},
+})
+```
+
+## Web 工具
+
+| 工具 | 构造方式 | 说明 |
+| --- | --- | --- |
+| Web Search | `web_search.NewWebSearchTool(&web_search.Config{})` | 搜索开放网页资料。 |
+| Parallel Web Search | `web_search.NewParallelWebSearchTool(&web_search.Config{})` | 对多个 query 并行搜索。 |
+| Web Fetch | `builtin_tools.NewWebFetchTool(...)` | 读取指定网页。 |
+| Link Reader | `builtin_tools.NewLinkReaderTool(...)` | 读取 URL、PDF 或视频链接内容。 |
+| Web Scraper | `builtin_tools.NewWebScraperTool(...)` | 更强的网页抓取能力。 |
+
+Web Search 会使用火山侧签名凭证或配置中的工具凭证；生产环境通过环境变量或 Secret 注入，不要写入仓库。
+
+## MCP Router
+
+V1 的 MCP Router 构造函数是 `NewMcpRouter()`，返回 ADK `tool.Toolset`：
+
+```go
+mcpSet := builtin_tools.NewMcpRouter()
+
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name:     "mcp_agent",
+		Toolsets: []tool.Toolset{mcpSet},
+	},
+})
+```
+
+需要配置：
+
+```bash
+export TOOL_MCP_ROUTER_URL="https://your-mcp-router-endpoint/mcp"
+export TOOL_MCP_ROUTER_API_KEY="your-api-key"
+```
+
+## Run Code Sandbox
+
+`NewRunCodeSandboxTool()` 创建 `run_code` 工具，把代码执行交给 AgentKit Code Sandbox：
+
+```go
+runCode, err := builtin_tools.NewRunCodeSandboxTool()
+if err != nil {
+	return nil, err
+}
+```
+
+V1 读取通用工具 ID：
+
+```bash
+export AGENTKIT_TOOL_ID="your-code-sandbox-tool-id"
+```
+
+## Skills Toolset
+
+VeADK Go `v1.0.1` 提供本地 Skills toolset。常用入口包括：
+
+| 入口 | 说明 |
+| --- | --- |
+| `skilltool.NewReadOnlySkillToolset(skills)` | 只读加载 skill 描述和资源，不执行脚本。 |
+| `skilltool.NewSkillToolset(skills, executor)` | 加载 skill 并允许通过 executor 执行脚本。 |
+| `skilltool.NewLocalSkillToolset(skills, config)` | 显式启用本地 runtime 工作区能力。 |
+| `skilltool.NewRegistrySkillToolset(snapshot)` | 从固定 registry snapshot 懒加载 skill。 |
+
+本地执行脚本时要限制工作区、超时、输出和文件访问权限。
+
+## 使用建议
+
+- 工具名称和描述要稳定，清楚说明输入、输出和副作用。
+- 有写入、删除、审批、发送消息或产生费用的工具，应在业务层增加确认和审计。
+- 凭证通过环境变量、Secret 或运行时状态传入，不写入 prompt、代码示例或文档仓。
+- 长耗时工具应设置超时，并向调用方返回可诊断的错误。

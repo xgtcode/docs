@@ -1,0 +1,87 @@
+---
+title: "长期记忆"
+en_link: "/productions/veadk-go/archives/1.0.1/en/components/memory"
+---
+
+长期记忆用于在不同会话之间保留用户偏好、任务结论或可复用事实。VeADK Go `v1.0.1` 通过 `memory.NewLongTermMemoryService` 创建 ADK `memory.Service`，再把它传给 ADK runner 的 `MemoryService`。
+
+## 最小流程
+
+```go
+sessionService := session.InMemoryService()
+memoryService := memory.InMemoryService()
+
+_, err := sessionService.Create(ctx, &session.CreateRequest{
+	AppName: "memory_demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+
+r, err := runner.New(runner.Config{
+	AppName:        "memory_demo",
+	Agent:          a,
+	SessionService: sessionService,
+	MemoryService:  memoryService,
+})
+if err != nil {
+	return err
+}
+```
+
+如果希望智能体主动检索长期记忆，需要给 agent 挂载 `LoadLongMemoryTool`：
+
+```go
+a, err := veagent.New(&veagent.Config{
+	Config: llmagent.Config{
+		Name: "personal_assistant",
+		Instruction: "Before answering personal questions, retrieve relevant memory first.",
+		Tools: []tool.Tool{utils.Must(builtin_tools.LoadLongMemoryTool())},
+	},
+})
+```
+
+完成一段会话后，可以把 session 写入 memory service：
+
+```go
+resp, err := sessionService.Get(ctx, &session.GetRequest{
+	AppName: "memory_demo",
+	UserID: "user-1",
+	SessionID: "session-1",
+})
+if err != nil {
+	return err
+}
+return memoryService.AddSessionToMemory(ctx, resp.Session)
+```
+
+## VeADK 后端
+
+```go
+memoryService, err := vem.NewLongTermMemoryService(vem.BackendLongTermMem0, nil)
+if err != nil {
+	return err
+}
+```
+
+可选后端：
+
+| 后端 | 常量 | 适合场景 |
+| --- | --- | --- |
+| 本地内存 | `BackendLongTermLocal` | 本地调试、单元验证。 |
+| Viking | `BackendLongTermViking` | 火山引擎 Viking 记忆后端。 |
+| Mem0 | `BackendLongTermMem0` | Mem0 记忆服务。 |
+| Redis | `BackendLongTermRedis` | Redis 向量检索或轻量记忆后端。 |
+| OpenSearch | `BackendLongTermOpenSearch` | OpenSearch 向量检索后端。 |
+
+`NewLongTermMemoryService(backend, config, topK...)` 的第三个参数控制检索返回数量，未传时默认 `5`。
+
+## 适合写入长期记忆的内容
+
+- 用户稳定偏好，例如语言、格式、业务约束。
+- 已确认的项目背景、术语和常用资源。
+- 可以复用的排障结论或任务执行经验。
+
+不要把 token、AK/SK、API key 或未经授权的隐私信息写入长期记忆。

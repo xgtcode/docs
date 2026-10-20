@@ -1,0 +1,102 @@
+---
+title: "Runner 与执行"
+en_link: "/productions/veadk-java/archives/0.0.2/en/components/agent/runtime"
+---
+
+`com.volcengine.veadk.Runner` 是 VeADK Java 的便捷执行入口。它继承并封装 ADK Java Runner，提供更直接的 `run(...)` 调用方式，同时接入短期会话和长期记忆配置。
+
+## 最小调用
+
+用 `Agent.builder()` 创建智能体后，可以直接把它传给 `Runner`。`run(String)` 会使用默认用户 `default_user`，自动创建一个新会话，并返回最终文本响应。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+
+Agent agent = Agent.builder()
+    .name("assistant")
+    .instruction("You are a helpful assistant.")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .build();
+
+String answer = new Runner(agent).run("Hello");
+System.out.println(answer);
+```
+
+`Runner` 会从 ADK 事件中提取文本：优先返回 final response 文本；如果没有 final response，则返回最后一条非空模型文本。没有可用文本时会抛出清晰错误。
+
+## 多轮会话
+
+需要保留对话上下文时，传入稳定的 `userId` 和 `sessionId`。同一组 ID 会复用同一段短期会话历史。
+
+```java
+Runner runner = new Runner(agent, "memory_demo");
+
+String first = runner.run("user_1", "session_1", "My name is Ming.");
+String second = runner.run("user_1", "session_1", "What is my name?");
+```
+
+没有显式配置短期会话时，`Runner` 使用本地内存会话服务。生产环境需要持久化会话时，在 `Agent.builder().shortTermMemory(...)` 或 `new Runner(agent, appName, shortTermMemory)` 中配置短期会话服务。
+
+## 会话解析
+
+`Runner` 的默认 `RunConfig` 是 `autoCreateSession(true)`。
+
+| 调用方式 | 会话行为 |
+| --- | --- |
+| `run("Hello")` | 使用 `default_user`，创建新会话。 |
+| `run(userId, null, message, config)` | 为该用户创建新会话。 |
+| `run(userId, sessionId, message)` | 默认自动创建或复用该 `sessionId`。 |
+| `run(userId, sessionId, message, RunConfig.builder().autoCreateSession(false).build())` | 只读取已存在会话；会话不存在时报错。 |
+
+```java
+import com.google.adk.agents.RunConfig;
+
+RunConfig existingOnly = RunConfig.builder()
+    .autoCreateSession(false)
+    .build();
+
+String answer = runner.run("user_1", "session_1", "Continue.", existingOnly);
+```
+
+当 `autoCreateSession(false)` 且会话不存在时，`Runner` 会抛出 `IllegalArgumentException`，错误信息包含缺失的 `sessionId` 和 `userId`。
+
+## 构造方式
+
+`Runner` 提供多种构造函数，按需要选择即可：
+
+| 构造方式 | 适用场景 |
+| --- | --- |
+| `new Runner(agent)` | 最小本地调用，`appName` 使用 `agent.name()`。 |
+| `new Runner(agent, "app_name")` | 需要固定应用名，用于隔离会话命名空间。 |
+| `new Runner(agent, shortTermMemory)` | 显式指定短期会话服务和上下文策略。 |
+| `new Runner(agent, appName, shortTermMemory)` | 同时固定应用名和短期会话服务。 |
+| `new Runner(agent, appName, sessionService, memoryService)` | 直接接入 ADK Java 的 session / memory service。 |
+
+如果传入的是 VeADK Java `Agent`，`Runner` 会优先读取智能体上配置的 `shortTermMemory` 和 `longTermMemory`。构造函数里显式传入的 `ShortTermMemory` 优先级更高。
+
+## 与 ADK Java Runner 的关系
+
+VeADK Java `Runner` 继承 ADK Java `Runner`。便捷 `run(...)` 方法会把文本转换成 `Content`，调用底层 `runAsync(...)`，收集事件并返回文本结果。
+
+如果需要完整事件流、原生 ADK Web 路由或服务端流式响应，可以选择：
+
+- 使用底层 ADK Java Runner / `runAsync(...)` 处理事件。
+- 使用 ADK Web 示例暴露 `/run`、`/run_sse` 等原生接口。
+- 使用 AgentKit Runtime 示例暴露 `/invoke`，并通过 `AGENTKIT_STREAMING=true` 开启 SSE。
+
+## 适用场景
+
+- **直接 Runner**：Java 服务、CLI、测试或本地脚本中同步调用智能体。
+- **ADK Web**：需要原生 ADK Web API、会话 CRUD 或 `/run_sse` 时使用。
+- **AgentKit Runtime**：需要对外 HTTP contract、容器运行、网关接入或运行时管理时使用。
+
+## 常见问题
+
+| 现象 | 排查方向 |
+| --- | --- |
+| 多轮对话没有上下文 | 确认两次调用使用相同的 `appName`、`userId` 和 `sessionId`。 |
+| 会话不存在时报错 | 检查是否设置了 `RunConfig.autoCreateSession(false)`；如果需要自动创建，使用默认配置或设为 `true`。 |
+| 重启后会话丢失 | 默认本地内存会话不会持久化；生产环境配置 SQLite、MySQL、PostgreSQL 或自定义 session service。 |
+| 没有文本返回 | 检查智能体是否产生模型文本事件或 final response；工具-only 流程可能需要自行处理事件。 |
+

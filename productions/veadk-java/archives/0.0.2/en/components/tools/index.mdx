@@ -1,0 +1,224 @@
+---
+title: "Tools"
+zh_link: "/productions/veadk-java/archives/0.0.2/zh/components/tools"
+---
+
+VeADK Java builds on the ADK Java tool system and adds Volcengine-oriented built-in tools and toolsets. You can attach Java functions, web search, web fetch, MCP Router, Skills, Skills Sandbox, Code Sandbox, and other capabilities to the same Agent, then let the model decide which tool to call at runtime.
+
+## Entry Point
+
+Tools are usually passed through `Agent.builder().tools(...)`. You can mix `BaseTool`, Toolsets, and ADK Java `FunctionTool` instances.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.tools.builtin.mcp.McpRouterToolset;
+import com.volcengine.veadk.tools.builtin.webfetch.WebFetchTool;
+import com.volcengine.veadk.tools.builtin.websearch.ParallelWebSearchTool;
+
+Agent agent = Agent.builder()
+        .name("research_assistant")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("Use tools to collect fresh context before answering, and cite the source.")
+        .tools(
+                new WebFetchTool(),
+                new ParallelWebSearchTool(),
+                McpRouterToolset.create())
+        .build();
+
+try {
+    String answer = new Runner(agent).run("Research VeADK Java tool capabilities.");
+    System.out.println(answer);
+} finally {
+    agent.close().blockingAwait();
+}
+```
+
+When an Agent uses MCP or remote Toolsets, call `agent.close().blockingAwait()` after the task so the underlying sessions and connections can be released.
+
+## Built-In Tools
+
+| Scenario | Java entry point | Tool name | Typical use |
+| --- | --- | --- | --- |
+| Web Search | `new WebSearchTool()` | `web_search` | Run one real-time web search query |
+| Parallel Web Search | `new ParallelWebSearchTool()` | `parallel_web_search` | Run multiple search queries in parallel |
+| Web Fetch | `new WebFetchTool()` | `web_fetch` | Read public web pages or PDF content |
+| MCP Router | `McpRouterToolset.create(...)` | Returned by remote MCP | Reuse centrally managed platform tools |
+| Skills | `new SkillToolset(...)` | Returned by the Skill definition | Expose local or remote Skills as callable tools |
+| Skills Sandbox | `new ExecuteSkillsTool()` | `execute_skills` | Delegate a full task to a remote Skills Sandbox |
+| Async Skills Sandbox | `new InvokeSkillTool()`, `new PollSkillTool()` | `invoke_skill`, `poll_skill` | Create a remote task and poll for the result |
+| Code Sandbox | `new RunCodeTool()` | `run_code` | Execute code in AgentKit Code Sandbox |
+| Code Sandbox Toolset | `CodeSandboxToolset.create(...)` | Returned by Sandbox MCP | Connect to an existing Code Sandbox MCP service |
+| Sandbox session client | `new SandboxClient()` | Not a model tool | Create sessions, upload files, run code, and read outputs in application code |
+| TTS | `new TextToSpeechTool()` | `text_to_speech` | Convert text to speech |
+| PowerPoint | `new PptGenerateTool()` | `ppt_generate` | Generate presentation files |
+| Lark | `LarkToolset.create()` | Returned by Lark MCP | Connect to Lark MCP tools |
+| Mobile Use | `new MobileUseTool(systemPrompt)` | `mobile_use` | Operate a cloud phone environment |
+| Vanna + ClickHouse | `new VannaToolset(...)` | `run_sql`, `summarize_data`, `visualize_data` | Query, summarize, and visualize structured data |
+
+## Web Search And Web Fetch
+
+Use `WebSearchTool` for one query and `ParallelWebSearchTool` when a question should be split into multiple concurrent queries. Use `WebFetchTool` when the user gives an explicit URL and the Agent should read the page or PDF body.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.webfetch.WebFetchTool;
+import com.volcengine.veadk.tools.builtin.websearch.ParallelWebSearchTool;
+import com.volcengine.veadk.tools.builtin.websearch.WebSearchTool;
+
+Agent agent = Agent.builder()
+        .name("web_researcher")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("""
+                Use web_search or parallel_web_search for fresh information.
+                When the user provides a link, call web_fetch first and answer from the content.
+                """)
+        .tools(
+                new WebSearchTool(),
+                new ParallelWebSearchTool(),
+                new WebFetchTool())
+        .build();
+```
+
+`web_fetch` accepts `url`, `extract_mode`, and `max_chars`. `extract_mode` defaults to `markdown` and also supports `text`. The tool blocks private, loopback, link-local, multicast, and reserved addresses, limits redirects and response size, and is intended for public resources rather than authenticated back-office pages.
+
+## MCP Router
+
+If tools are centrally registered in MCP Router, expose the Router as a Toolset. The default constructor reads environment variables, and the explicit constructor lets you pass the URL, API key, and allowed tool names.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.mcp.McpRouterToolset;
+import java.util.List;
+
+Agent agent = Agent.builder()
+        .name("mcp_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("Use authorized MCP Router tools for external system requests.")
+        .tools(McpRouterToolset.create(
+                System.getenv("TOOL_MCP_ROUTER_URL"),
+                System.getenv("TOOL_MCP_ROUTER_API_KEY"),
+                List.of("weather.query", "calendar.search")))
+        .build();
+```
+
+Without arguments, `McpRouterToolset.create()` reads `TOOL_MCP_ROUTER_URL` and optional `TOOL_MCP_ROUTER_API_KEY`. When an API key is configured, the client sends it as Bearer authentication.
+
+## Skills
+
+There are two common ways to use Skills. The first is to expose a Skill Source as ordinary tools, so the model can call skills just like any other tool.
+
+```java
+import com.google.adk.tools.skills.SkillToolset;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.skills.VeSkillSource;
+
+String skillSourceId = System.getenv("SKILL_SOURCE_ID");
+
+Agent agent = Agent.builder()
+        .name("skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("Select the right skill for each user request.")
+        .tools(new SkillToolset(new VeSkillSource(skillSourceId)))
+        .build();
+```
+
+The second is to execute remote skill workflows through Skills Sandbox. For synchronous workflows, use `ExecuteSkillsTool`; it sends `workflow_prompt` to the remote skill space and waits for the result.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.ExecuteSkillsTool;
+
+Agent agent = Agent.builder()
+        .name("remote_skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("When skills are needed, call execute_skills with the full user request.")
+        .skills(System.getenv("SKILL_SPACE_ID"))
+        .skillsMode("skills_sandbox")
+        .tools(new ExecuteSkillsTool())
+        .build();
+```
+
+For asynchronous workflows, combine `InvokeSkillTool` and `PollSkillTool`. The model calls `invoke_skill` to create the remote task, then calls `poll_skill` with the returned `task_id` until it receives a final result.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.InvokeSkillTool;
+import com.volcengine.veadk.tools.builtin.sandbox.PollSkillTool;
+
+Agent agent = Agent.builder()
+        .name("async_skill_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("For remote tasks, call invoke_skill first, then poll_skill until done.")
+        .tools(new InvokeSkillTool(), new PollSkillTool())
+        .build();
+```
+
+## Code Sandbox
+
+`RunCodeTool` lets the model execute code in AgentKit Code Sandbox. It is useful for data processing, temporary code checks, and artifact generation. Tool arguments include `code`, `language`, and optional `timeout`.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.RunCodeTool;
+
+Agent agent = Agent.builder()
+        .name("code_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .instruction("Use run_code for calculations, file parsing, and small generated outputs.")
+        .tools(new RunCodeTool())
+        .build();
+```
+
+If you already have a Code Sandbox MCP service, connect it through `CodeSandboxToolset`.
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.tools.builtin.sandbox.CodeSandboxToolset;
+
+Agent agent = Agent.builder()
+        .name("sandbox_mcp_agent")
+        .modelName("doubao-seed-2-1-pro-260628")
+        .tools(CodeSandboxToolset.create(System.getenv("TOOL_CODE_SANDBOX_URL")))
+        .build();
+```
+
+Application code can manage remote sandbox sessions directly with `SandboxClient`. Paths are resolved under remote `/workspace`, and the client rejects traversal and unsafe absolute paths.
+
+```java
+import com.volcengine.veadk.tools.builtin.sandbox.SandboxClient;
+
+try (SandboxClient client = new SandboxClient()) {
+    var session = client.createSession("order-analysis", 1800);
+    session.writeFile("input/orders.csv", csvBytes);
+    String result = session.runCode(
+            "import pandas as pd; print(pd.read_csv('/workspace/input/orders.csv').sum())",
+            "python3",
+            60);
+    byte[] report = session.readFile("output/report.json");
+    session.close();
+}
+```
+
+## Environment Variables
+
+| Capability | Environment variables |
+| --- | --- |
+| Volcengine authentication | `VOLCENGINE_ACCESS_KEY`, `VOLCENGINE_SECRET_KEY`, optional `VOLCENGINE_SESSION_TOKEN` |
+| Web Search | `WebSearchTool` uses `VOLCENGINE_ACCESS_KEY` and `VOLCENGINE_SECRET_KEY`. `ParallelWebSearchTool` can use `TOOL_WEB_SEARCH_ACCESS_KEY` / `TOOL_WEB_SEARCH_SECRET_KEY`, falling back to Volcengine AK/SK. |
+| MCP Router | `TOOL_MCP_ROUTER_URL`, optional `TOOL_MCP_ROUTER_API_KEY` |
+| Skills | `SKILL_SOURCE_ID` or `SKILL_SPACE_ID`, plus skill-space policy configuration |
+| AgentKit Code Sandbox | `AGENTKIT_TOOL_ID`, AgentKit host/region, and Volcengine AK/SK |
+| Code Sandbox MCP | `TOOL_CODE_SANDBOX_URL` |
+| TTS | `TOOL_VESPEECH_APP_ID`, `TOOL_VESPEECH_API_KEY`, optional `TOOL_VESPEECH_SPEAKER` |
+| Lark | `TOOL_LARK_ENDPOINT`, `TOOL_LARK_API_KEY`, and `TOOL_LARK_TOKEN` |
+| Mobile Use | `TOOL_MOBILE_USE_TOOL_ID` and Volcengine AK/SK |
+
+## Automatic Tools
+
+When an Agent is configured with a knowledge base or long-term memory, VeADK Java automatically adds retrieval tools such as `loadKnowledgebase` and `loadMemory`. When local Skills are configured and no explicit `SkillToolset` is provided, the framework also prepares the corresponding Skill tools. For `skills_sandbox` mode, pass `ExecuteSkillsTool` explicitly.
+
+## Security Notes
+
+Tools let the model access external systems, execute code, and trigger business workflows, so configure credentials and allowed tool names with least privilege. For tools that can write data, approve requests, make payments, delete resources, publish content, or send notifications, add business-level confirmation, auditing, and idempotency protection. Code Sandbox and Skills Sandbox provide execution isolation, but you should still limit input files, timeouts, network access, and the secret scope available to the execution environment.
+

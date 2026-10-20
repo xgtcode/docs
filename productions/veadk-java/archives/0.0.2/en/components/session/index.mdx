@@ -1,0 +1,25 @@
+---
+title: "Short-Term Sessions"
+zh_link: "/productions/veadk-java/archives/0.0.2/zh/components/session"
+---
+
+Short-term sessions store event history for the same user and conversation. VeADK Java wraps session services with `ShortTermMemory` and uses it in `Runner` to resolve or create sessions.
+
+## Multi-Turn Usage
+
+Reuse the same `userId` and `sessionId` across turns:
+
+```java
+Runner runner = new Runner(agent, "memory_demo");
+runner.run("user_1", "session_1", "My name is Ming.");
+runner.run("user_1", "session_1", "What is my name?");
+```
+
+## Context Window
+
+Short-term sessions can be combined with context window and tool-result compression policies to avoid oversized history or tool output.
+
+## Production Notes
+
+In-memory storage is suitable for examples. Production deployments should use stable session storage and define lifecycle, cleanup, and user-isolation policies.
+

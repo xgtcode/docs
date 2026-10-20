@@ -1,0 +1,75 @@
+---
+title: "模型与智能体"
+en_link: "/productions/veadk-go/archives/1.0.1/en/components/agent/model"
+---
+
+VeADK Go `v1.0.1` 的智能体入口是 `github.com/volcengine/veadk-go/agent/llmagent`。`llmagent.New` 在 ADK `llmagent.Config` 之上补充模型默认值、配置读取、PromptManager、Skills 发现和知识库工具注入。
+
+## 最小智能体
+
+```go
+import (
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+)
+
+func newAssistant() (agent.Agent, error) {
+	return veagent.New(&veagent.Config{
+		Config: llmagent.Config{
+			Name:        "assistant",
+			Description: "Answer product and engineering questions.",
+			Instruction: "You are a concise engineering assistant.",
+		},
+		ModelName:     "doubao-seed-1-6-250615",
+		ModelProvider: "openai",
+	})
+}
+```
+
+如果没有显式设置模型字段，VeADK Go 会按环境变量和全局配置读取 `MODEL_AGENT_NAME`、`MODEL_AGENT_PROVIDER`、`MODEL_AGENT_API_BASE` 和 `MODEL_AGENT_API_KEY`。当 Ark 路径没有 API key 时，源码会尝试使用 Ark token provider。
+
+## 带工具的智能体
+
+```go
+import (
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"github.com/volcengine/veadk-go/tool/builtin_tools/web_search"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/agent/llmagent"
+	"google.golang.org/adk/tool"
+)
+
+func newSearchAgent() (agent.Agent, error) {
+	searchTool, err := web_search.NewWebSearchTool(&web_search.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	return veagent.New(&veagent.Config{
+		Config: llmagent.Config{
+			Name:        "search_agent",
+			Instruction: "Use web search when fresh information is needed.",
+			Tools:       []tool.Tool{searchTool},
+		},
+	})
+}
+```
+
+## 主要配置
+
+| 配置 | 作用 |
+| --- | --- |
+| `Config` | 嵌入的 ADK `llmagent.Config`，声明名称、说明、系统提示词、工具和回调。 |
+| `ModelName` / `ModelProvider` | 模型名称和提供方；未设置时读取环境变量或全局配置。 |
+| `ModelAPIBase` / `ModelAPIKey` | 模型服务地址和凭证。 |
+| `ModelAPIKeyProvider` | 自定义 API key provider，例如 Ark token provider。 |
+| `ModelExtraConfig` / `ModelExtraHeaders` | 传给模型客户端的额外 body/header。 |
+| `KnowledgeBase` | 配置后自动追加知识库检索工具。 |
+| `PromptManager` | 未显式设置 `Instruction` 时，从 PromptManager 获取系统提示词。 |
+| `Skills` | 本地 skills 根目录，创建智能体时发现子目录中的 skill。 |
+| `DisableThought` | 给支持的模型补关闭思考内容的额外配置。 |
+
+<Note>
+  VeADK Go `v1.0.1` 通过 ADK runner 的 `MemoryService` 配置长期记忆，并按需挂载 `LoadLongMemoryTool`。
+</Note>

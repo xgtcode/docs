@@ -1,0 +1,181 @@
+---
+title: "长期记忆"
+en_link: "/productions/veadk-java/preview/en/components/memory"
+---
+
+长期记忆用于跨会话保存用户偏好、任务结论或可复用事实。VeADK Java 支持通过 builder 配置 memory service，并在需要时自动暴露 `loadMemory` 检索工具。
+
+## 接入方式
+
+在 `Agent.builder()` 中配置 `longTermMemory(...)` 后，`Runner` 会读取这个 memory service 作为长期记忆后端。只要没有手动声明同名工具，VeADK Java 会自动注入官方 `loadMemory` 工具，让模型在回答前按需检索历史记忆。
+
+如果希望会话结束后自动写入长期记忆，再打开 `autoSaveSession(true)`。VeADK Java 会追加保存会话的回调，把新产生的用户消息写入 memory service。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.Runner;
+import com.volcengine.veadk.memory.mem0.Mem0MemoryService;
+
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .topK(5)
+    .build();
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .instruction("""
+        Remember stable user preferences. Use memory only for facts that may
+        have been mentioned in previous sessions.
+        """)
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveSession(true)
+    .build();
+
+Runner runner = new Runner(agent, "memory_demo");
+runner.run("user_1", "session_1", "我更喜欢用中文看报告。");
+runner.run("user_1", "session_2", "我偏好的报告语言是什么？");
+```
+
+## Mem0 记忆
+
+`Mem0MemoryService` 适合把长期记忆托管到 Mem0。它会从会话事件中抽取用户消息写入 Mem0，并在 `loadMemory` 被调用时按 `userId` 和查询文本检索相关记忆。
+
+```java
+import com.volcengine.veadk.memory.mem0.Mem0MemoryService;
+
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .defaultUserId("default_user")
+    .topK(5)
+    .writeMode(Mem0MemoryService.WriteMode.SYNCHRONOUS)
+    .build();
+```
+
+常用参数：
+
+| 参数 | 说明 |
+| --- | --- |
+| `appName(String)` | 记忆应用名，默认 `default_app`。名称需要以英文字母开头，并只包含字母、数字和下划线。 |
+| `defaultUserId(String)` / `userId(String)` | 未显式传入用户时使用的默认用户，默认 `default_user`。 |
+| `topK(int)` | 每次检索返回的记忆数量，默认 `5`。 |
+| `writeMode(...)` | 写入确认模式，默认 `ASYNC`。需要下一步立即依赖新记忆时使用 `SYNCHRONOUS`。 |
+| `config(Mem0Config)` | 手动传入 Mem0 凭证配置；不传时从环境变量读取。 |
+
+Mem0 支持两种凭证方式。直接使用 Mem0 API Key 时：
+
+```bash
+export DATABASE_MEM0_API_KEY="..."
+export DATABASE_MEM0_BASE_URL="https://api.mem0.ai"
+```
+
+也可以让 VeADK 通过火山引擎凭证解析 Mem0 API Key：
+
+```bash
+export VOLCENGINE_ACCESS_KEY="..."
+export VOLCENGINE_SECRET_KEY="..."
+export DATABASE_MEM0_PROJECT_ID="..."
+export DATABASE_MEM0_API_KEY_ID="..." # 可选
+export DATABASE_MEM0_REGION="cn-beijing"
+```
+
+`DATABASE_MEM0_BASE_URL` 未配置时默认使用 `https://api.mem0.ai`。`DATABASE_MEM0_REGION` 未配置时默认使用 `cn-beijing`。
+
+## Viking Memory
+
+`VikingMemoryService` 适合使用火山引擎 Viking Memory 作为长期记忆后端。它同样实现了 ADK Java 的 `BaseMemoryService`，可以直接传给 `Agent.builder().longTermMemory(...)`。
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.memory.viking.VikingMemoryService;
+
+VikingMemoryService memoryService = new VikingMemoryService("memory_agent");
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveSession(true)
+    .build();
+```
+
+Viking Memory 可以使用 API Key，也可以使用火山引擎 AK/SK：
+
+```bash
+export DATABASE_VIKINGMEM_API_KEY="..."
+
+# 或者
+export VOLCENGINE_ACCESS_KEY="..."
+export VOLCENGINE_SECRET_KEY="..."
+```
+
+使用 API Key 时，数据面调用覆盖 Memory search 和 add-session。集合管理仍需要 AK/SK 或 IAM 凭证；如果只配置 API Key，通常应先在云上准备好对应集合。需要调整内置事件类型时，可以配置：
+
+```bash
+export DATABASE_VIKINGMEM_MEMORY_TYPE="sys_event_v1"
+```
+
+## 异步与同步写入
+
+Mem0 默认使用 `ASYNC` 写入模式：保存调用返回表示 Mem0 已接收请求，但新记忆不一定马上能被下一次搜索命中。对大多数聊天场景，这种模式延迟更低。
+
+当同一流程的下一步必须立即依赖刚写入的记忆时，使用同步模式：
+
+```java
+Mem0MemoryService memoryService = Mem0MemoryService.builder()
+    .appName("memory_agent")
+    .writeMode(Mem0MemoryService.WriteMode.SYNCHRONOUS)
+    .build();
+```
+
+同步模式会要求 Mem0 处理完成后再返回，但最终搜索可见性仍取决于后端服务的一致性策略。
+
+## 自动保存策略
+
+默认策略会避免每个事件都触发保存。首次有可保存内容时会写入；之后只有当新增事件数或距离上次保存的时间达到阈值时才继续保存。默认阈值为 `10` 条新事件和 `60` 秒，也可以通过环境变量调整：
+
+```bash
+export MIN_MESSAGES_THRESHOLD="10"
+export MIN_TIME_THRESHOLD="60"
+```
+
+需要在代码里显式配置时，传入 `autoSaveMemoryPolicy(...)`：
+
+```java
+import com.volcengine.veadk.memory.SaveSessionToMemoryCallback;
+import java.time.Duration;
+
+SaveSessionToMemoryCallback.AutoSavePolicy policy =
+    SaveSessionToMemoryCallback.AutoSavePolicy.builder()
+        .minEventsThreshold(5)
+        .minTimeThreshold(Duration.ofSeconds(30))
+        .build();
+
+Agent agent = Agent.builder()
+    .name("memory_agent")
+    .modelName("doubao-seed-2-1-pro-260628")
+    .longTermMemory(memoryService)
+    .autoSaveMemoryPolicy(policy)
+    .autoSaveSession(true)
+    .build();
+```
+
+## 应该保存什么
+
+适合写入长期记忆的内容：
+
+- 用户明确表达、未来会复用的偏好，例如语言、格式、通知习惯。
+- 经过确认的长期事实，例如项目角色、常用系统、稳定业务约束。
+- 可以跨会话复用的任务结论，例如某个集成的默认配置或排查结论。
+
+不应写入长期记忆的内容：
+
+- 密码、Token、SSH Key、API Key 或其他凭证。
+- 未脱敏的个人敏感信息、合规受限数据或客户原文。
+- 临时推理过程、工具原始输出、一次性草稿或未经确认的猜测。
+- 完整聊天记录。长期记忆应保存可复用事实，而不是把所有会话当作备份。
+
+## 注意事项
+
+如果模型没有检索到预期记忆，优先检查 `longTermMemory(...)` 是否已配置、用户 ID 是否一致、会话是否已保存，以及当前使用的写入模式是否允许下一轮立即搜索到新内容。对于 Viking Memory，还需要确认集合已经存在或当前凭证具备集合管理权限。
+

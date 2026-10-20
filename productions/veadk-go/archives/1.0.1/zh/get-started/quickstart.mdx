@@ -1,0 +1,154 @@
+---
+title: "快速开始"
+en_link: "/productions/veadk-go/archives/1.0.1/en/get-started/quickstart"
+---
+
+本教程使用 VeADK Go `v1.0.1` 创建一个最小智能体，并通过 ADK launcher 或 ADK runner 运行。
+
+## 配置模型
+
+在项目根目录创建 `config.yaml`：
+
+```yaml
+model:
+  agent:
+    provider: openai
+    name: doubao-seed-1-6-250615
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+```
+
+导出模型 API Key：
+
+```bash
+export MODEL_AGENT_API_KEY="your-ark-api-key"
+```
+
+## 编写智能体
+
+```go
+package main
+
+import (
+	"context"
+	"os"
+
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"github.com/volcengine/veadk-go/log"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/cmd/launcher"
+	"google.golang.org/adk/cmd/launcher/full"
+	"google.golang.org/adk/session"
+)
+
+func main() {
+	ctx := context.Background()
+
+	a, err := veagent.New(&veagent.Config{})
+	if err != nil {
+		log.Errorf("NewLLMAgent failed: %v", err)
+		return
+	}
+
+	config := &launcher.Config{
+		AgentLoader:    agent.NewSingleLoader(a),
+		SessionService: session.InMemoryService(),
+	}
+
+	l := full.NewLauncher()
+	if err = l.Execute(ctx, config, os.Args[1:]); err != nil {
+		log.Errorf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+	}
+}
+```
+
+## 运行
+
+```bash
+go run .
+```
+
+打开 Web UI：
+
+```bash
+go run . web api webui
+```
+
+如果智能体运行时间较长，可以增加读写超时：
+
+```bash
+go run . web -read-timeout 3m -write-timeout 3m api webui
+```
+
+## 在代码中直接调用 Runner
+
+V1 使用 ADK runner。调用前需要创建 session，然后消费 `Run` 返回的事件流：
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	veagent "github.com/volcengine/veadk-go/agent/llmagent"
+	"google.golang.org/adk/agent"
+	"google.golang.org/adk/runner"
+	"google.golang.org/adk/session"
+	"google.golang.org/genai"
+)
+
+func main() {
+	ctx := context.Background()
+	appName := "demo"
+	userID := "user-1"
+	sessionID := "session-1"
+
+	a, err := veagent.New(&veagent.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	sessionService := session.InMemoryService()
+	_, err = sessionService.Create(ctx, &session.CreateRequest{
+		AppName:   appName,
+		UserID:    userID,
+		SessionID: sessionID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	r, err := runner.New(runner.Config{
+		AppName:        appName,
+		Agent:          a,
+		SessionService: sessionService,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	input := genai.NewContentFromText("hello", "user")
+	var chunks []string
+	for event, err := range r.Run(ctx, userID, sessionID, input, agent.RunConfig{}) {
+		if err != nil {
+			panic(err)
+		}
+		if event.Content == nil || event.Partial {
+			continue
+		}
+		for _, part := range event.Content.Parts {
+			chunks = append(chunks, part.Text)
+		}
+	}
+	fmt.Println(strings.Join(chunks, ""))
+}
+```
+
+## 常见问题
+
+| 现象 | 排查方向 |
+| --- | --- |
+| `runner` 找不到 | V1 使用 `google.golang.org/adk/runner`，不是 `github.com/volcengine/veadk-go/runner`。 |
+| 第二轮对话没有上下文 | 确认已经创建 session，并复用相同 `appName`、`userID` 和 `sessionID`。 |
+| 模型无响应 | 确认 `MODEL_AGENT_API_KEY`、模型名称和 `api_base` 正确。 |

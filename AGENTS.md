@@ -22,6 +22,8 @@
 When editing product documentation under `productions/<product>/preview/{zh,en}`, read the root [`SPEC.md`](./SPEC.md) first, then read the matching product spec:
 
 - VeADK: [`productions/veadk/veadk_SPEC.md`](./productions/veadk/veadk_SPEC.md)
+- VeADK Go: [`productions/veadk-go/veadk-go_SPEC.md`](./productions/veadk-go/veadk-go_SPEC.md)
+- VeADK Java: [`productions/veadk-java/veadk-java_SPEC.md`](./productions/veadk-java/veadk-java_SPEC.md)
 - AgentKit CLI: [`productions/agentkit-cli/agentkit-cli_SPEC.md`](./productions/agentkit-cli/agentkit-cli_SPEC.md)
 - API Reference: [`productions/api-reference/api-reference_SPEC.md`](./productions/api-reference/api-reference_SPEC.md)
 
