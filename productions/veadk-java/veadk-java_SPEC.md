@@ -10,6 +10,17 @@
 - 不写源码走读，不记录内部文件名、内部函数、私有机制、测试辅助类型或未发布能力。
 - 中文为默认语言，英文并列；`zh` 与 `en` 路径、页面层级、参数、示例、限制和警告必须等价。
 
+## 版本线与触发规则
+
+`veadk-java` 当前按单基线维护文档：
+
+| 来源 | 目标目录 | 说明 |
+| --- | --- | --- |
+| `main` 分支 | `productions/veadk-java/preview/{zh,en}` | 默认文档入口，反映当前开发态。 |
+| release tag，例如 `v0.0.2` | `productions/veadk-java/archives/<version>/{zh,en}` | 已发布版本快照，目录版本名去掉 tag 前缀 `v`。 |
+
+生成 Preview PR 时必须维护 `.docs-autogen/veadk-java-preview.json`，记录本次 Preview 对应的 `main` commit。生成 Archive 时，必须先由 runtime 脚本确认 tag commit 属于 `main`，不能交给生成文档的 agent 自行判断；只有当该元数据的 `source_head_sha` 与 tag commit 完全一致时，才可以复制 Preview；不一致时应等待 Preview 合入，超时后基于 tag 源码生成 archive，不能复制过旧或过新的 Preview。
+
 ## 事实来源
 
 更新 VeADK Java 文档时，按以下优先级确认事实：
