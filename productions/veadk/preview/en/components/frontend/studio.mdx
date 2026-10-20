@@ -28,14 +28,14 @@ Intelligent development, custom configuration, code-package deployment, and exis
 
 ## Version and availability
 
-This page covers released VeADK 1.1.13 features and the next Preview. API key status and model-permission filtering, the migration home layout, session artifacts, GitLab MR review, MCP credential editing, and new Studio deployment resource defaults were added after 1.1.13. A regular PyPI installation does not include those additions
+This page covers released VeADK 1.1.13 features and the next Preview. API key status and model-permission filtering, the migration home layout, session artifacts, GitLab MR review, MCP credential editing, new Studio deployment resource defaults, and code-package upload deployability validation were added after 1.1.13. A regular PyPI installation does not include those additions
 
 Use the following commands in a separate virtual environment to reproduce this Preview. The source revision is pinned for consistent UI and behavior. Release-package users can proceed to local startup
 
 ```bash
 git clone https://github.com/volcengine/veadk-python.git veadk-preview
 cd veadk-preview
-git checkout 763865db9fb3b643e9fc0f04e2e0790ea5a4fc65
+git checkout 86c93529969e6dde86890b30f7e407bfc32ff5ea
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -658,7 +658,7 @@ Code-package deployment is an independent creation flow: on Add Agent, select �
 
 <Steps>
   <Step title="Upload the code package">
-    On the Add Agent menu, choose “Add and deploy from a code package” and click the upload area or drag a file to select a `.zip` archive. The archive can be up to 50 MB and contain no more than 800 files after extraction. The entry point defaults to `app.py` at the root; if the root contains an `agentkit.yaml` that declares `common.entry_point`, the declared file is used as the entry point instead.
+    On the Add Agent menu, choose “Add and deploy from a code package” and click the upload area or drag a file to select a `.zip` archive. The archive can be up to 50 MB and contain no more than 800 files after extraction. The entry point defaults to `app.py` at the root; if the root contains an `agentkit.yaml` that declares `common.entry_point`, the declared file is used as the entry point instead. When the archive has no `Dockerfile`, Studio starts the service with `python -m app` and installs `requirements.txt` by default, so the root must contain both `app.py` and `requirements.txt`; missing either fails the upload with a corresponding message.
   </Step>
   <Step title="Review or edit files">
     After a successful upload, Studio reports the recognized file count and derives a project name from the archive file name (following Google ADK naming rules: starting with an ASCII letter or underscore, containing only ASCII letters, digits, and underscores, never using the reserved name `user`, and at most 64 characters). Use “View files” to preview or edit file contents in the code browser; re-upload the archive to replace the contents.
@@ -672,19 +672,26 @@ Code-package deployment is an independent creation flow: on Add Agent, select �
 </Steps>
 
 <Note>
-  Studio sanitizes the archive: it ignores `__MACOSX` directories and `.DS_Store` files, and when all files share a single top-level directory it strips that wrapping directory before validating the entry. Entries with absolute paths, empty segments, `.`, `..` segments, or null bytes are rejected, and duplicate file paths raise an error. The entry point file must be in the root after the wrapping directory is removed.
+  Studio sanitizes the archive: it ignores `__MACOSX` directories and `.DS_Store` files, and when all files share a single top-level directory it strips that wrapping directory before validating the entry. Entries with absolute paths, empty segments, `.`, `..` segments, or null bytes are rejected, and duplicate file paths raise an error. The entry point file must be in the root after the wrapping directory is removed. Studio reads uploaded archives as text source, so it rejects `__pycache__/` directories, `*.pyc` files, and binary files containing null bytes or replacement characters; upload only source, configuration, and dependency declaration files.
 </Note>
 
 <Warning>
   The uploaded `app.py` runs inside the deployed AgentKit Runtime and can call external services or access data available to the runtime. Deploy only trusted projects and give Studio restricted credentials.
 </Warning>
 
+<Note>
+  After a successful upload, Studio checks whether the code package exposes a service listening on `0.0.0.0:8000`. When no `0.0.0.0` host binding or `8000` / `PORT` listener is detected, Studio shows a warning instead of blocking the upload, noting that AgentKit Runtime requires the in-container service to listen on `0.0.0.0:8000`; otherwise the Runtime may start but remain unreachable. Use `HOST=0.0.0.0` in the startup entry and listen on `PORT` (default 8000), for example `uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))`.
+</Note>
+
 | Check | Limit | Description |
 | :--- | :--- | :--- |
 | Archive size | 50 MB | Maximum size of a single uploaded archive. |
 | File count | 800 | Maximum number of files retained after extraction. |
 | Uncompressed size | 50 MB | Maximum total size after extraction. |
-| Entry point | `app.py` | Default entry file. If the root contains an `agentkit.yaml` that declares `common.entry_point`, that value is used instead; otherwise `app.py` at the root is required. |
+| Entry point | `app.py` | Default entry file. If the root contains an `agentkit.yaml` that declares `common.entry_point`, that value is used instead; otherwise `app.py` at the root is required. When no `Dockerfile` is present, `app.py` at the root is required or the upload fails. |
+| Default dependency file | `requirements.txt` | Required at the root when no `Dockerfile` is present; the upload fails if missing. |
+| Binary and cache files | — | Rejects `__pycache__/`, `*.pyc`, and binary files containing null bytes or replacement characters. |
+| Runtime listener | Warning | Shows a warning when no `0.0.0.0:8000` or `PORT` listener is detected; does not block the upload. |
 | Path safety | — | Absolute paths, `.` / `..` segments, and null bytes are rejected; `__MACOSX` and `.DS_Store` are ignored. |
 | Wrapping directory | Single level | When all files share one top-level directory, that level is stripped automatically. |
 | Project name | 64 characters | Derived from the archive file name and follows ADK naming rules. |
