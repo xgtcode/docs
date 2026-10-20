@@ -11,6 +11,20 @@
 - 不写源码走读，不记录内部文件名、内部函数、私有机制、测试辅助类型或未发布能力。
 - 中文为默认语言，英文并列；`zh` 与 `en` 路径、页面层级、参数、示例、限制和警告必须等价。
 
+## 版本线与触发规则
+
+`veadk-go` 是 V1/V2 双基线项目，文档生成和归档必须按分支与 tag 来源分流：
+
+| 来源 | 版本线 | 目标目录 | 模块路径 | 说明 |
+| --- | --- | --- | --- | --- |
+| `main` 分支 | V2 Preview | `productions/veadk-go/preview/{zh,en}` | `github.com/volcengine/veadk-go/v2` | 默认文档入口，反映当前 V2 开发态；在 V2 正式 tag 前不生成 V2 archive。 |
+| `release/v1` 分支上的 `v1.x` tag | V1 Archive | `productions/veadk-go/archives/<version>/{zh,en}` | `github.com/volcengine/veadk-go` | 面向存量 V1 用户，内容必须以对应 tag 的代码和示例为准。 |
+| `main` 分支上的 `v2.x` tag | V2 Archive | `productions/veadk-go/archives/<version>/{zh,en}` | `github.com/volcengine/veadk-go/v2` | 仅在 V2 稳定 tag 发布后生成，内容固定到该 tag。 |
+
+生成 Preview 时只读取 `main` 分支事实，不得把 `release/v1` 的 V1 API 写成新项目默认用法。生成 Preview PR 时必须维护 `.docs-autogen/veadk-go-preview.json`，记录本次 Preview 对应的 `main` commit。
+
+生成 Archive 时必须先由 runtime 脚本确认 tag commit 属于对应版本线，不能交给生成文档的 agent 自行判断：`v1.x` tag 应来自 `release/v1` 或 `release-v1`，`v2.x` tag 应来自 `main`；无法确认来源时应停止生成并给出明确错误。V1 archive 不得复用 V2 Preview 文本后只替换 import 路径，必须按 V1 tag 重新核对 API、示例、Go 版本和依赖。V2 archive 可以在 `.docs-autogen/veadk-go-preview.json` 的 `source_head_sha` 与 tag commit 完全一致时复制 Preview；不一致时应等待 Preview 合入，超时后基于 tag 源码生成 archive，不能复制过旧或过新的 Preview。
+
 ## 事实来源
 
 更新 VeADK Go 文档时，按以下优先级确认事实：
