@@ -28,14 +28,14 @@ AgentKit Studio 使用与 VeADK Frontend 相同的服务和完整界面，提供
 
 ## 版本与可用范围
 
-本页同时说明 VeADK 1.1.13 已发布能力与下一版本 Preview。API Key 状态及模型权限筛选、迁移首页布局、会话产物、GitLab MR 自动评审、MCP 凭据编辑以及 Studio 新部署资源默认值属于 1.1.13 之后的增量，普通 PyPI 安装不包含这些增量
+本页同时说明 VeADK 1.1.13 已发布能力与下一版本 Preview。API Key 状态及模型权限筛选、迁移首页布局、会话产物、GitLab MR 自动评审、MCP 凭据编辑、Studio 新部署资源默认值以及代码包上传部署可行性校验属于 1.1.13 之后的增量，普通 PyPI 安装不包含这些增量
 
 以下命令可在独立虚拟环境中复现本页 Preview，固定源码版本用于保证界面和行为一致。已使用发行包的读者可直接跳至本地启动
 
 ```bash
 git clone https://github.com/volcengine/veadk-python.git veadk-preview
 cd veadk-preview
-git checkout 763865db9fb3b643e9fc0f04e2e0790ea5a4fc65
+git checkout 86c93529969e6dde86890b30f7e407bfc32ff5ea
 python -m venv .venv
 source .venv/bin/activate
 pip install -e .
@@ -658,7 +658,7 @@ veadk studio deploy \
 
 <Steps>
   <Step title="上传代码包">
-    在「添加智能体」菜单中选择「从代码包添加和部署」，点击上传区域或拖拽文件即可选择 `.zip` 压缩包。压缩包最大 50 MB，解压后文件数不能超过 800 个。启动入口默认为根目录的 `app.py`；如果压缩包根目录包含 `agentkit.yaml` 且其中声明了 `common.entry_point`，则以该配置指定的文件作为启动入口。
+    在「添加智能体」菜单中选择「从代码包添加和部署」，点击上传区域或拖拽文件即可选择 `.zip` 压缩包。压缩包最大 50 MB，解压后文件数不能超过 800 个。启动入口默认为根目录的 `app.py`；如果压缩包根目录包含 `agentkit.yaml` 且其中声明了 `common.entry_point`，则以该配置指定的文件作为启动入口。压缩包不含 `Dockerfile` 时，Studio 以 `python -m app` 启动服务并默认安装 `requirements.txt`，因此根目录必须包含 `app.py` 和 `requirements.txt`，缺失会上传失败并给出对应提示。
   </Step>
   <Step title="查看或编辑文件">
     上传成功后，Studio 会列出已识别的文件数量，并按压缩包文件名生成项目名称（符合 Google ADK 命名规则：以英文字母或下划线开头，仅含英文字母、数字和下划线，不使用保留名 `user`，长度不超过 64 个字符）。点击「查看文件」可在代码浏览器中预览或编辑文件内容；需要替换内容时重新上传压缩包即可。
@@ -672,19 +672,26 @@ veadk studio deploy \
 </Steps>
 
 <Note>
-  Studio 会对压缩包做安全处理：自动忽略 `__MACOSX` 目录与 `.DS_Store` 文件；当全部文件位于同一个顶层目录时，会去掉这层包裹目录后再校验入口。包含绝对路径、空段、`.`、`..` 段或空字节的条目会被拒绝；重复文件路径也会报错。启动入口文件必须位于去除包裹目录后的根目录。
+  Studio 会对压缩包做安全处理：自动忽略 `__MACOSX` 目录与 `.DS_Store` 文件；当全部文件位于同一个顶层目录时，会去掉这层包裹目录后再校验入口。包含绝对路径、空段、`.`、`..` 段或空字节的条目会被拒绝；重复文件路径也会报错。启动入口文件必须位于去除包裹目录后的根目录。Studio 以文本源码方式读取上传内容，因此会拒绝 `__pycache__/` 目录、`*.pyc` 文件以及包含空字节或替换字符的二进制文件；只上传源码、配置和依赖声明文件。
 </Note>
 
 <Warning>
   代码包中的 `app.py` 会在部署后的 AgentKit Runtime 中执行，可能访问外部服务或运行环境中的数据。只部署可信来源的项目，并为 Studio 使用权限受限的凭证。
 </Warning>
 
+<Note>
+  上传成功后，Studio 会检查代码包是否包含面向 `0.0.0.0:8000` 的服务监听。未检测到 `0.0.0.0` 主机绑定或 `8000` / `PORT` 端口监听时，Studio 会显示警告而非阻止上传，提示 AgentKit Runtime 需要容器内服务监听 `0.0.0.0:8000`，否则 Runtime 可能启动成功但无法访问。建议在启动入口中使用 `HOST=0.0.0.0` 并监听 `PORT`（默认 8000），例如 `uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", "8000")))`。
+</Note>
+
 | 校验项 | 限制 | 说明 |
 | :--- | :--- | :--- |
 | 压缩包大小 | 50 MB | 单个上传压缩包的最大体积。 |
 | 文件数量 | 800 个 | 解压后保留文件数的上限。 |
 | 解压后总大小 | 50 MB | 解压后内容总大小上限。 |
-| 启动入口 | `app.py` | 默认入口文件。如果根目录存在 `agentkit.yaml` 且声明了 `common.entry_point`，则以该配置值为准；否则使用根目录的 `app.py`。 |
+| 启动入口 | `app.py` | 默认入口文件。如果根目录存在 `agentkit.yaml` 且声明了 `common.entry_point`，则以该配置值为准；否则使用根目录的 `app.py`。不含 `Dockerfile` 时根目录必须存在 `app.py`，缺失会上传失败。 |
+| 默认依赖文件 | `requirements.txt` | 不含 `Dockerfile` 时必须存在根目录 `requirements.txt`，缺失会上传失败。 |
+| 二进制与缓存文件 | — | 拒绝 `__pycache__/`、`*.pyc` 及包含空字节或替换字符的二进制文件。 |
+| 运行时监听 | 警告 | 未检测到 `0.0.0.0:8000` 或 `PORT` 监听时显示警告，不阻止上传。 |
 | 路径安全 | — | 拒绝绝对路径、`.` / `..` 段、空字节；忽略 `__MACOSX` 与 `.DS_Store`。 |
 | 包裹目录 | 单层 | 全部文件同属一个顶层目录时自动去除该层。 |
 | 项目名称 | 64 个字符 | 由压缩包文件名生成，符合 ADK 命名规则。 |
