@@ -91,6 +91,87 @@ export TOOL_LLM_SHIELD_REGION="cn-beijing"
 
 与默认端点相比，Lumen Moderate 端点在工具调用审查时会附带当前会话标识与调用标识，便于在审计侧关联同一会话内的多次审查。模型输入审查、模型输出审查与工具入参、工具返回审查分别在对应回调点发起请求，拦截行为与默认端点一致。
 
+### AgentSentry V3 私有审查
+
+当设置了 `AGENTSENTRY_URL` 时，`content_safety` 进入 V3 私有审查模式，与公共防火墙端点（默认端点和 V1 Lumen Moderate 端点）完全独立。此模式优先于 `TOOL_LLM_SHIELD_*` 配置：设置 `AGENTSENTRY_URL` 后，公共模式的相关配置不再生效。V3 私有审查通过 AgentSentry V3 的 Moderate 端点（路径 `/OpenTOP/V3/Lumen/Moderate`）进行内容审查，使用端点 AK/SK 签名鉴权。
+
+<Warning>
+V3 私有审查模式的审查范围与行为与公共模式不同：仅审查用户输入与工具调用前的模型可见计划，不审查模型输出和工具返回。切换前请仔细阅读下方说明。
+</Warning>
+
+#### 环境变量
+
+| 环境变量 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `AGENTSENTRY_URL` | — | V3 Moderate 端点地址，路径必须为 `/OpenTOP/V3/Lumen/Moderate`。设置后进入 V3 私有审查模式，优先于 `TOOL_LLM_SHIELD_*` 配置。 |
+| `AGENTSENTRY_ACCOUNT_ID` | — | 账户 ID。 |
+| `AGENTSENTRY_INSTANCE_ID` | — | 实例 ID。 |
+| `AGENTSENTRY_AK` | — | 端点 Access Key，用于 V3 端点签名鉴权。 |
+| `AGENTSENTRY_SK` | — | 端点 Secret Key，用于 V3 端点签名鉴权。 |
+| `AGENTSENTRY_REGION` | `cn-private` | 服务区域。 |
+| `AGENTSENTRY_ENABLED` | `true` | 是否启用 V3 私有审查。设为 `false` 时所有回调变为空操作，不影响已配置的 `AGENTSENTRY_URL` 与其他 V3 环境变量。 |
+
+配置示例：
+
+```bash
+export AGENTSENTRY_URL="https://<your-v3-host>/OpenTOP/V3/Lumen/Moderate"
+export AGENTSENTRY_ACCOUNT_ID="<your_account_id>"
+export AGENTSENTRY_INSTANCE_ID="<your_instance_id>"
+export AGENTSENTRY_AK="<your_endpoint_ak>"
+export AGENTSENTRY_SK="<your_endpoint_sk>"
+```
+
+<Note>
+V3 私有审查必须通过 `AGENTSENTRY_URL` 配置。如果 `TOOL_LLM_SHIELD_URL` 的路径为 `/OpenTOP/V3/Lumen/Moderate`，初始化会报错。
+</Note>
+
+#### 审查范围与行为
+
+V3 私有审查模式只审查以下两个环节：
+
+| 审查点 | 审查内容 | 行为 |
+| :--- | :--- | :--- |
+| 用户输入审查 | 当前请求中用户内容的全部文本部分 | 违规内容返回拦截响应；纯非文本输入（如图片）返回不支持的提示 |
+| 工具调用审查 | 模型生成工具调用时的可见文本计划与工具调用信息 | 要求模型在生成工具调用时提供可见文本计划；未找到匹配计划时阻止工具执行；将计划文本与工具调用信息一并发送审查 |
+
+与公共模式的主要差异：
+
+- **用户输入审查**：审查用户内容的全部文本部分，而非仅最后一条用户内容的首个文本部分。同一调用内仅审查一次用户输入。
+- **模型输出**：不审查模型输出，但会记录模型生成工具调用时的可见文本（排除思维过程文本）作为计划，用于后续工具调用审查。
+- **工具调用审查**：要求模型在生成工具调用时提供可见文本计划。如果未找到匹配的计划，工具调用将被阻止，而非直接执行。审查内容为模型计划文本与工具调用信息，而非序列化的工具参数。
+- **工具返回**：不审查。
+- **审查失败处理**：当 V3 服务返回降级响应、非 200 状态码、超时或未知决策时，阻止工具执行并返回服务不可用提示，而非放行内容。
+
+#### 使用方法
+
+V3 模式的回调挂载方式与公共模式一致，在导入 `content_safety` 前设置上述环境变量即可进入 V3 模式，调用代码无需修改：
+
+```python lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.tools.builtin_tools.llm_shield import content_safety
+
+agent = Agent(
+    name="robot",
+    description="A robot that helps the user.",
+    instruction="Talk with the user in a friendly way.",
+    before_model_callback=content_safety.before_model_callback,
+    after_model_callback=content_safety.after_model_callback,
+    before_tool_callback=content_safety.before_tool_callback,
+    after_tool_callback=content_safety.after_tool_callback,
+)
+
+runner = Runner(agent=agent)
+
+response = asyncio.run(
+    runner.run("请用一句话介绍你能提供的帮助")
+)
+
+print(response)
+```
+
+
 ## 使用方法
 
 把 `content_safety` 的回调挂到智能体上，即可对执行过程进行审计：
@@ -135,6 +216,10 @@ tool:
 在导入 `content_safety` 前完成配置，并通过环境变量 `TOOL_LLM_SHIELD_API_KEY` 提供密钥。保存示例后执行 `python app.py`：普通输入应获得回复；用已在防火墙策略中配置的测试文本验证拦截，并同时检查审查服务的记录。不能仅凭固定示例句子保证命中某项策略
 
 模型输入审查检查当前请求最后一条用户内容的首个文本部分，模型输出审查检查首个文本部分；不会自动审查全部历史、图片、音频或所有多部分内容。工具回调审查序列化的参数与结果。默认请求超时为 `50` 秒
+
+<Note>
+V3 私有审查模式的审查范围与上述公共模式不同：用户输入审查检查全部文本部分而非仅首个，工具调用审查检查模型可见计划而非序列化参数，且不审查模型输出和工具返回。详见上方「AgentSentry V3 私有审查」一节。
+</Note>
 
 ### 调整请求超时
 

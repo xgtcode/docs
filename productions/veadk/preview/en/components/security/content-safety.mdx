@@ -91,6 +91,87 @@ You must configure `TOOL_LLM_SHIELD_API_KEY` before using the Lumen Moderate end
 
 Compared with the default endpoint, the Lumen Moderate endpoint attaches the current session identifier and invocation identifier during tool-call reviews, so that multiple reviews within the same session can be correlated on the audit side. Model-input review, model-output review, tool-argument review, and tool-return review each issue a request at the corresponding callback point, with blocking behavior matching the default endpoint.
 
+### AgentSentry V3 private moderation
+
+When `AGENTSENTRY_URL` is set, `content_safety` enters V3 private moderation mode, which is fully independent of the public firewall endpoints (default endpoint and V1 Lumen Moderate endpoint). This mode takes precedence over `TOOL_LLM_SHIELD_*` configuration: once `AGENTSENTRY_URL` is set, the public-mode settings no longer apply. V3 private moderation uses the AgentSentry V3 Moderate endpoint (path `/OpenTOP/V3/Lumen/Moderate`) with endpoint AK/SK signature authentication.
+
+<Warning>
+V3 private moderation has a different review scope and behavior from the public mode: it only reviews user input and the model's visible plan before tool calls, not model output or tool results. Read the details below before switching.
+</Warning>
+
+#### Environment variables
+
+| Environment variable | Default | Description |
+| :--- | :--- | :--- |
+| `AGENTSENTRY_URL` | — | V3 Moderate endpoint address. The path must be `/OpenTOP/V3/Lumen/Moderate`. When set, V3 private moderation mode is activated and takes precedence over `TOOL_LLM_SHIELD_*` settings. |
+| `AGENTSENTRY_ACCOUNT_ID` | — | Account ID. |
+| `AGENTSENTRY_INSTANCE_ID` | — | Instance ID. |
+| `AGENTSENTRY_AK` | — | Endpoint Access Key, used for V3 endpoint signature authentication. |
+| `AGENTSENTRY_SK` | — | Endpoint Secret Key, used for V3 endpoint signature authentication. |
+| `AGENTSENTRY_REGION` | `cn-private` | Service region. |
+| `AGENTSENTRY_ENABLED` | `true` | Whether to enable V3 private moderation. When set to `false`, all callbacks become no-ops. Does not affect the configured `AGENTSENTRY_URL` or other V3 environment variables. |
+
+Configuration example:
+
+```bash
+export AGENTSENTRY_URL="https://<your-v3-host>/OpenTOP/V3/Lumen/Moderate"
+export AGENTSENTRY_ACCOUNT_ID="<your_account_id>"
+export AGENTSENTRY_INSTANCE_ID="<your_instance_id>"
+export AGENTSENTRY_AK="<your_endpoint_ak>"
+export AGENTSENTRY_SK="<your_endpoint_sk>"
+```
+
+<Note>
+V3 private moderation must be configured through `AGENTSENTRY_URL`. If the path of `TOOL_LLM_SHIELD_URL` is `/OpenTOP/V3/Lumen/Moderate`, initialization raises an error.
+</Note>
+
+#### Review scope and behavior
+
+V3 private moderation mode reviews only the following two points:
+
+| Review point | Content reviewed | Behavior |
+| :--- | :--- | :--- |
+| User input review | All text parts of the user content in the current request | Violating content returns a blocking response; non-text-only input (e.g., images) returns an unsupported-input message |
+| Tool-call review | The model's visible text plan when generating a tool call, together with the tool call information | Requires the model to provide a visible text plan when generating tool calls; blocks tool execution if no matching plan is found; sends the plan text and tool call information together for moderation |
+
+Key differences from public mode:
+
+- **User input review**: Reviews all text parts of the user content, not just the first text part of the last user content. User input is reviewed only once per invocation.
+- **Model output**: Does not review model output, but records the model's visible text (excluding thought-process text) as a plan when the model generates tool calls, for use in subsequent tool-call review.
+- **Tool-call review**: Requires the model to provide a visible text plan when generating tool calls. If no matching plan is found, the tool call is blocked rather than executed directly. The reviewed content is the model's plan text and tool call information, not serialized tool arguments.
+- **Tool results**: Not reviewed.
+- **Moderation failure handling**: When the V3 service returns a degraded response, a non-200 status code, a timeout, or an unknown decision, tool execution is blocked with a service-unavailable message rather than allowing the content through.
+
+#### Usage
+
+V3 mode uses the same callback configuration as public mode. Set the environment variables above before importing `content_safety` to enter V3 mode; the calling code stays the same:
+
+```python lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.tools.builtin_tools.llm_shield import content_safety
+
+agent = Agent(
+    name="robot",
+    description="A robot that helps the user.",
+    instruction="Talk with the user in a friendly way.",
+    before_model_callback=content_safety.before_model_callback,
+    after_model_callback=content_safety.after_model_callback,
+    before_tool_callback=content_safety.before_tool_callback,
+    after_tool_callback=content_safety.after_tool_callback,
+)
+
+runner = Runner(agent=agent)
+
+response = asyncio.run(
+    runner.run("Describe how you can help in one sentence")
+)
+
+print(response)
+```
+
+
 ## Usage
 
 Hook the `content_safety` callbacks onto the agent to audit its execution:
@@ -135,6 +216,10 @@ tool:
 Configure settings before importing `content_safety`, and provide the key through `TOOL_LLM_SHIELD_API_KEY`. Save the example and run `python app.py`. Ordinary input should receive a response; verify blocking with test text covered by your configured policy and check the service audit records. A fixed sample sentence does not guarantee a particular policy match
 
 Model-input moderation checks the first text part of the last user content in the current request; model-output moderation checks its first text part. It does not automatically cover all history, images, audio, or multipart content. Tool callbacks moderate serialized arguments and results. The default request timeout is `50` seconds
+
+<Note>
+V3 private moderation mode has a different review scope from the public mode described above: user input review checks all text parts rather than only the first, tool-call review checks the model's visible plan rather than serialized arguments, and model output and tool results are not reviewed. See the "AgentSentry V3 private moderation" section above.
+</Note>
 
 ### Adjusting the request timeout
 
