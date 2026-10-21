@@ -1,0 +1,183 @@
+---
+title: "A2A Server"
+zh_link: "/productions/veadk-java/preview/zh/apps/a2a"
+---
+
+VeADK Java provides A2A (Agent-to-Agent) protocol support. You can expose a built `Agent` as an A2A server endpoint, or consume remote A2A services as sub-agents. The A2A module builds on ADK Java's A2A implementation and adds session context preservation, blocking execution, and timeout cancellation.
+
+## When to use
+
+- Expose a VeADK Java agent as a standard A2A REST server for other agents or clients to call via the A2A protocol.
+- Consume remote A2A services as sub-agents for multi-agent collaboration.
+- Reuse VeADK Java's execution lifecycle management in a custom A2A transport layer (such as JSON-RPC).
+
+## Exposing an A2A server
+
+Use `VeA2AServer` to expose a built `Agent` as an A2A REST server:
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.VeA2AServer;
+import com.volcengine.veadk.memory.ShortTermMemory;
+
+Agent agent = Agent.builder()
+        .name("weather_agent")
+        .description("Answers weather questions")
+        .build();
+
+VeA2AServer server = new VeA2AServer(
+        agent,
+        "http://127.0.0.1:8080",
+        "weather_app",
+        ShortTermMemory.local())
+        .start("127.0.0.1", 8080);
+```
+
+The server exposes the following REST endpoints:
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/.well-known/agent-card.json` | GET | Returns the Agent Card with agent name, description, and capability information. |
+| `/v1/message:send` | POST | Sends a message and blocks until execution completes, returning the final task state. |
+| `/v1/message:stream` | POST | Returns execution events as a Server-Sent Events stream. |
+| `/v1/tasks/{taskId}` | GET | Queries task status. Supports the `historyLength` query parameter. |
+| `/v1/tasks/{taskId}:cancel` | POST | Cancels the specified task. |
+
+### Constructor parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `agent` | `Agent` (`BaseAgent`) | — | The agent to expose. Required. |
+| `url` | `String` | — | Service URL declared in the Agent Card. Required. |
+| `appName` | `String` | — | Application name used for session isolation. Required. |
+| `shortTermMemory` | `ShortTermMemory` | — | Short-term memory providing the session service. Required. |
+| `blockingTimeout` | `Duration` | `Duration.ofSeconds(60)` | Timeout for blocking on a single execution to complete. |
+
+`VeA2AServer` uses `InMemoryArtifactService` and `InMemoryMemoryService` as default artifact and long-term memory services. To customize these services, use `VeA2AExecutor` directly to build the executor.
+
+### Lifecycle
+
+`VeA2AServer` implements `AutoCloseable` and supports try-with-resources:
+
+```java title="ServerLifecycle.java"
+try (VeA2AServer server = new VeA2AServer(
+        agent, "http://127.0.0.1:8080", "weather_app",
+        ShortTermMemory.local())
+        .start("127.0.0.1", 8080)) {
+    // Server is running
+    Thread.sleep(Long.MAX_VALUE);
+}
+```
+
+Closing the server stops the HTTP server and shuts down the thread pool.
+
+## Execution lifecycle
+
+`VeA2AServer` uses `VeA2AExecutor` internally to manage the execution lifecycle of A2A tasks. `VeA2AExecutor` can also be used independently with custom A2A transports (such as the official JSON-RPC transport).
+
+`VeA2AExecutor` provides the following behavior when executing A2A tasks:
+
+- **Session context preservation**: Before execution starts, a session is pre-created using the `contextId` from the A2A request as the session ID. Subsequent messages with the same `contextId` reuse the existing session, preserving conversation history.
+- **Blocking until completion**: The `execute` method blocks the calling thread until the final event is queued. This ensures that a blocking `message/send` does not return a prematurely completed task state when the model response is slow.
+- **Timeout cancellation**: When execution exceeds the configured timeout, the A2A task is automatically cancelled and the waiting producer thread is released.
+- **Duplicate execution rejection**: The same task ID cannot execute twice concurrently. A duplicate execution attempt fails immediately.
+
+### Using VeA2AExecutor independently
+
+Use `VeA2AExecutor` with a custom transport layer:
+
+```java title="CustomA2A.java"
+import com.google.adk.artifacts.InMemoryArtifactService;
+import com.google.adk.memory.InMemoryMemoryService;
+import com.google.adk.sessions.InMemorySessionService;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.VeA2AExecutor;
+import com.volcengine.veadk.memory.ShortTermMemory;
+import io.a2a.server.events.InMemoryQueueManager;
+import io.a2a.server.tasks.InMemoryTaskStore;
+import java.time.Duration;
+import java.util.concurrent.Executors;
+
+Agent agent = Agent.builder().name("my_agent").build();
+
+VeA2AExecutor executor = new VeA2AExecutor(
+        agent,
+        "my_app",
+        ShortTermMemory.local().sessionService(),
+        new InMemoryArtifactService(),
+        new InMemoryMemoryService(),
+        Duration.ofSeconds(120));
+
+var requestHandler = executor.requestHandler(
+        new InMemoryTaskStore(),
+        new InMemoryQueueManager(new InMemoryTaskStore()),
+        Executors.newCachedThreadPool());
+```
+
+The `requestHandler` method creates a `DefaultRequestHandler` with a request-handling timeout aligned to the execution timeout, ensuring the request handler does not time out before the executor completes.
+
+### VeA2AExecutor constructor parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `agent` | `BaseAgent` | — | The agent to execute. Required. |
+| `appName` | `String` | — | Application name. Required. |
+| `sessions` | `BaseSessionService` | — | Session service. Required. |
+| `artifacts` | `BaseArtifactService` | — | Artifact service. Required. |
+| `memory` | `BaseMemoryService` | — | Long-term memory service. Required. |
+| `timeout` | `Duration` | — | Per-execution timeout. Must be at least 1 millisecond. Required. |
+
+<Note>
+The `agent` and services passed to `VeA2AExecutor` are owned and managed by the caller. `VeA2AExecutor` does not close these resources when execution completes or is cancelled.
+</Note>
+
+### Timeout and cancellation behavior
+
+When execution exceeds the configured `timeout`, `VeA2AExecutor` calls `cancel` to cancel the A2A task, and the task state transitions to `TASK_STATE_CANCELLED`. If the execution thread is interrupted, cancellation is also triggered and the interrupt flag is restored.
+
+<Warning>
+ADK Java 1.11's model flow uses a caching mechanism. After an A2A task is cancelled, the underlying model request may still be running. `VeA2AExecutor` cancels A2A task delivery but cannot guarantee that an already-submitted model request stops immediately. A cancelled task state does not mean model computation has terminated.
+</Warning>
+
+## Consuming remote A2A agents
+
+Use `RemoteVeAgent` to consume a remote A2A server as a sub-agent:
+
+```java title="RemoteAgent.java"
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.RemoteVeAgent;
+
+RemoteVeAgent remote = RemoteVeAgent.builder()
+        .name("weather_agent")
+        .url("http://127.0.0.1:8080")
+        .authToken(System.getenv("A2A_TOKEN"))
+        .authMethod("header")
+        .build();
+
+Agent root = Agent.builder()
+        .name("root_agent")
+        .subAgents(remote)
+        .build();
+```
+
+`RemoteVeAgent` fetches the remote server's Agent Card at construction time and verifies connectivity. The default HTTP client uses a 600-second connect and request timeout. A custom A2A SDK `A2AHttpClient` can be supplied via the `httpClient` method.
+
+### RemoteVeAgent builder parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `name` | `String` | — | Sub-agent name, used for `transfer_to_agent` routing. Required. |
+| `url` | `String` | — | Remote A2A service URL. Required. |
+| `authToken` | `String` | `null` | Authentication token. Attached to requests using the method specified by `authMethod`. |
+| `authMethod` | `String` / `AuthMethod` | `null` | Authentication method. Supports `"header"` (request header) and `"querystring"` (query parameter). |
+| `httpClient` | `A2AHttpClient` | `VeA2AHttpClient` | Custom HTTP client. |
+
+<Note>
+The Java version currently uses an explicitly supplied static token for authentication. It does not support loading tokens dynamically from an invocation credential service. For dynamic authentication, obtain the token in your application layer and pass it in.
+</Note>
+
+## Sessions and context
+
+The `contextId` in the A2A protocol identifies a conversation context. `VeA2AExecutor` creates or reuses a session using `contextId` as the session ID. Multiple messages with the same `contextId` share conversation history. The user identifier is derived from the `contextId` in the format `A2A_USER_{contextId}`.
+
+The default session service stores data in memory, so conversation state is lost when the process restarts. To persist conversation history, pass a `ShortTermMemory` or `BaseSessionService` that supports persistence when constructing `VeA2AServer` or `VeA2AExecutor`.

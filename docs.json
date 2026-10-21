@@ -3447,6 +3447,12 @@
                     ]
                   },
                   {
+                    "group": "应用",
+                    "pages": [
+                      "productions/veadk-java/preview/zh/apps/a2a"
+                    ]
+                  },
+                  {
                     "group": "部署",
                     "pages": [
                       "productions/veadk-java/preview/zh/deploy/agentkit"
@@ -8675,6 +8681,12 @@
                     "group": "Observability",
                     "pages": [
                       "productions/veadk-java/preview/en/components/observability/index"
+                    ]
+                  },
+                  {
+                    "group": "Apps",
+                    "pages": [
+                      "productions/veadk-java/preview/en/apps/a2a"
                     ]
                   },
                   {

@@ -1,0 +1,183 @@
+---
+title: "A2A 服务"
+en_link: "/productions/veadk-java/preview/en/apps/a2a"
+---
+
+VeADK Java 提供 A2A（Agent-to-Agent）协议支持，可以将已构建的 `Agent` 暴露为 A2A 服务端，也可以将远程 A2A 服务作为子智能体接入。A2A 模块基于 ADK Java 的 A2A 实现，并增加了会话上下文保持、阻塞式执行和超时取消能力。
+
+## 何时使用
+
+- 需要将一个 VeADK Java 智能体暴露为标准 A2A REST 服务端，供其他智能体或客户端通过 A2A 协议调用。
+- 需要将远程 A2A 服务作为子智能体接入，实现多智能体协作。
+- 需要在自定义 A2A 传输层（如 JSON-RPC）中复用 VeADK Java 的执行生命周期管理。
+
+## 暴露 A2A 服务端
+
+使用 `VeA2AServer` 将一个已构建的 `Agent` 暴露为 A2A REST 服务端：
+
+```java
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.VeA2AServer;
+import com.volcengine.veadk.memory.ShortTermMemory;
+
+Agent agent = Agent.builder()
+        .name("weather_agent")
+        .description("Answers weather questions")
+        .build();
+
+VeA2AServer server = new VeA2AServer(
+        agent,
+        "http://127.0.0.1:8080",
+        "weather_app",
+        ShortTermMemory.local())
+        .start("127.0.0.1", 8080);
+```
+
+服务端启动后暴露以下 REST 接口：
+
+| 接口 | 方法 | 说明 |
+| --- | --- | --- |
+| `/.well-known/agent-card.json` | GET | 返回 Agent Card，包含智能体名称、描述和能力信息。 |
+| `/v1/message:send` | POST | 发送消息并阻塞等待执行完成，返回最终任务状态。 |
+| `/v1/message:stream` | POST | 以 SSE 方式流式返回执行事件。 |
+| `/v1/tasks/{taskId}` | GET | 查询任务状态，支持 `historyLength` 查询参数。 |
+| `/v1/tasks/{taskId}:cancel` | POST | 取消指定任务。 |
+
+### 构造参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `agent` | `Agent`（`BaseAgent`） | — | 要暴露的智能体。必填。 |
+| `url` | `String` | — | Agent Card 中声明的服务地址。必填。 |
+| `appName` | `String` | — | 应用名称，用于会话隔离。必填。 |
+| `shortTermMemory` | `ShortTermMemory` | — | 短期记忆，提供会话服务。必填。 |
+| `blockingTimeout` | `Duration` | `Duration.ofSeconds(60)` | 阻塞等待单次执行完成的超时时间。 |
+
+`VeA2AServer` 内部使用 `InMemoryArtifactService` 和 `InMemoryMemoryService` 作为默认的 Artifact 和长期记忆服务。如果需要自定义这些服务，应直接使用 `VeA2AExecutor` 构建执行器。
+
+### 生命周期
+
+`VeA2AServer` 实现了 `AutoCloseable`，支持 try-with-resources 语法：
+
+```java title="ServerLifecycle.java"
+try (VeA2AServer server = new VeA2AServer(
+        agent, "http://127.0.0.1:8080", "weather_app",
+        ShortTermMemory.local())
+        .start("127.0.0.1", 8080)) {
+    // 服务运行中
+    Thread.sleep(Long.MAX_VALUE);
+}
+```
+
+关闭服务时会停止 HTTP 服务并关闭线程池。
+
+## 执行生命周期
+
+`VeA2AServer` 内部使用 `VeA2AExecutor` 管理 A2A 任务的执行生命周期。`VeA2AExecutor` 也可以独立使用，接入自定义的 A2A 传输层（如官方 JSON-RPC 传输）。
+
+`VeA2AExecutor` 在执行 A2A 任务时提供以下行为：
+
+- **会话上下文保持**：在执行开始前，以 A2A 请求中的 `contextId` 作为会话 ID 预先创建会话。同一 `contextId` 的后续消息会复用已有会话，保持对话历史。
+- **阻塞等待完成**：`execute` 方法会阻塞调用线程，直到最终事件被放入事件队列后才返回。这确保阻塞式 `message/send` 不会在模型响应较慢时提前返回未完成的任务状态。
+- **超时取消**：当执行时间超过设定的超时时，自动取消 A2A 任务并释放等待中的生产者线程。
+- **重复执行拒绝**：同一个任务 ID 不能同时执行两次，重复执行会直接报错。
+
+### 独立使用 VeA2AExecutor
+
+在自定义传输层中使用 `VeA2AExecutor`：
+
+```java title="CustomA2A.java"
+import com.google.adk.artifacts.InMemoryArtifactService;
+import com.google.adk.memory.InMemoryMemoryService;
+import com.google.adk.sessions.InMemorySessionService;
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.VeA2AExecutor;
+import com.volcengine.veadk.memory.ShortTermMemory;
+import io.a2a.server.events.InMemoryQueueManager;
+import io.a2a.server.tasks.InMemoryTaskStore;
+import java.time.Duration;
+import java.util.concurrent.Executors;
+
+Agent agent = Agent.builder().name("my_agent").build();
+
+VeA2AExecutor executor = new VeA2AExecutor(
+        agent,
+        "my_app",
+        ShortTermMemory.local().sessionService(),
+        new InMemoryArtifactService(),
+        new InMemoryMemoryService(),
+        Duration.ofSeconds(120));
+
+var requestHandler = executor.requestHandler(
+        new InMemoryTaskStore(),
+        new InMemoryQueueManager(new InMemoryTaskStore()),
+        Executors.newCachedThreadPool());
+```
+
+`requestHandler` 方法创建的 `DefaultRequestHandler` 会将请求处理超时与执行超时对齐，确保请求处理层不会在执行器完成前提前超时。
+
+### VeA2AExecutor 构造参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `agent` | `BaseAgent` | — | 要执行的智能体。必填。 |
+| `appName` | `String` | — | 应用名称。必填。 |
+| `sessions` | `BaseSessionService` | — | 会话服务。必填。 |
+| `artifacts` | `BaseArtifactService` | — | Artifact 服务。必填。 |
+| `memory` | `BaseMemoryService` | — | 长期记忆服务。必填。 |
+| `timeout` | `Duration` | — | 单次执行超时时间，需大于等于 1 毫秒。必填。 |
+
+<Note>
+传入 `VeA2AExecutor` 的 `agent` 和各项服务由调用方持有和管理。`VeA2AExecutor` 不会在执行结束或取消时关闭这些资源。
+</Note>
+
+### 超时与取消行为
+
+当执行时间超过设定的 `timeout` 时，`VeA2AExecutor` 会调用 `cancel` 取消 A2A 任务，任务状态变为 `TASK_STATE_CANCELLED`。如果执行线程被中断，也会触发取消并恢复中断标志。
+
+<Warning>
+ADK Java 1.11 的模型流使用了缓存机制，在 A2A 任务取消后，底层模型请求可能仍在运行。`VeA2AExecutor` 会取消 A2A 任务交付，但无法保证已提交的模型请求立即停止。任务状态变为取消不意味着模型计算已经终止。
+</Warning>
+
+## 接入远程 A2A 智能体
+
+使用 `RemoteVeAgent` 将远程 A2A 服务端作为子智能体接入：
+
+```java title="RemoteAgent.java"
+import com.volcengine.veadk.Agent;
+import com.volcengine.veadk.a2a.RemoteVeAgent;
+
+RemoteVeAgent remote = RemoteVeAgent.builder()
+        .name("weather_agent")
+        .url("http://127.0.0.1:8080")
+        .authToken(System.getenv("A2A_TOKEN"))
+        .authMethod("header")
+        .build();
+
+Agent root = Agent.builder()
+        .name("root_agent")
+        .subAgents(remote)
+        .build();
+```
+
+`RemoteVeAgent` 会在构建时获取远程服务端的 Agent Card，并验证连接可用性。默认 HTTP 客户端使用 600 秒连接和请求超时，可通过 `httpClient` 方法传入自定义 A2A SDK `A2AHttpClient`。
+
+### RemoteVeAgent 构建参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `name` | `String` | — | 子智能体名称，用于 `transfer_to_agent` 转发。必填。 |
+| `url` | `String` | — | 远程 A2A 服务地址。必填。 |
+| `authToken` | `String` | `null` | 认证令牌。通过 `authMethod` 指定的方式附加到请求中。 |
+| `authMethod` | `String` / `AuthMethod` | `null` | 认证方式，支持 `"header"`（请求头）和 `"querystring"`（查询参数）。 |
+| `httpClient` | `A2AHttpClient` | `VeA2AHttpClient` | 自定义 HTTP 客户端。 |
+
+<Note>
+Java 版当前使用显式传入的静态令牌进行认证，不支持从调用凭证服务动态加载令牌。如果需要动态认证，请在业务层获取令牌后传入。
+</Note>
+
+## 会话与上下文
+
+A2A 协议中的 `contextId` 用于标识对话上下文。`VeA2AExecutor` 会以 `contextId` 作为会话 ID 创建或复用会话，同一 `contextId` 的多条消息共享对话历史。用户标识由 `contextId` 生成，格式为 `A2A_USER_{contextId}`。
+
+默认会话服务保存在内存中，进程重启后会丢失。需要持久化对话历史时，应在构造 `VeA2AServer` 或 `VeA2AExecutor` 时传入支持持久化的 `ShortTermMemory` 或 `BaseSessionService`。
