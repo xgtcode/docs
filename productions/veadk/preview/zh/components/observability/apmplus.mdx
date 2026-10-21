@@ -3,7 +3,7 @@ title: "APMPlus"
 en_link: "/productions/veadk/preview/en/components/observability/apmplus"
 ---
 
-`APMPlusExporter` 将 span 数据以 OTLP（gRPC）协议上报至火山引擎 APMPlus 平台。除追踪链路外，它还会通过内置的指标上报器采集模型调用次数、token 用量、操作耗时、异常次数以及工具耗时等指标，写入 APMPlus 的指标面板。
+`APMPlusExporter` 将 span 数据以 OTLP（gRPC）协议上报至火山引擎 APMPlus 平台。除追踪链路外，它还会通过内置的指标上报器采集模型调用次数、token 用量、操作耗时、异常次数、工具耗时以及技能下载与加载次数等指标，写入 APMPlus 的指标面板。
 
 <Note>
 启用内容追踪时，模型输出中的推理内容以 `reasoning` 类型标注，与普通文本内容区分，便于在 APMPlus 中单独查看推理过程。
@@ -11,6 +11,10 @@ en_link: "/productions/veadk/preview/en/components/observability/apmplus"
 
 <Note>
 token 用量指标按 `input`、`output` 和 `cache_read` 三个维度分别记录。`cache_read` 表示命中的缓存输入 token 数量，是 `input` 的子集而非额外用量。
+</Note>
+
+<Note>
+技能下载与加载次数通过 `gen_ai_skill_download` 和 `gen_ai_skill_load` 两个 OTEL 计数器记录。`gen_ai_skill_download` 统计技能包下载次数（含缓存命中），维度包括 `skill_source`、`skill_id`、`skill_version`、`skill_space_id` 和 `outcome`（`success` 或 `error`）。`gen_ai_skill_load` 统计技能指令成功加载次数，维度与下载计数器一致但不含 `outcome`。技能下载过程同时生成 `skill_download` span，标注技能来源、ID、版本、空间、结果、缓存命中与消费者等属性。
 </Note>
 
 ## 何时使用

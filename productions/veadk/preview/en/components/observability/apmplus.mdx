@@ -3,7 +3,7 @@ title: "APMPlus"
 zh_link: "/productions/veadk/preview/zh/components/observability/apmplus"
 ---
 
-`APMPlusExporter` reports span data to the Volcengine APMPlus platform over OTLP (gRPC). Beyond traces, its built-in metrics uploader collects model invocation counts, token usage, operation duration, exception counts, and tool latency, writing them to APMPlus metrics dashboards.
+`APMPlusExporter` reports span data to the Volcengine APMPlus platform over OTLP (gRPC). Beyond traces, its built-in metrics uploader collects model invocation counts, token usage, operation duration, exception counts, tool latency, and skill download and load counts, writing them to APMPlus metrics dashboards.
 
 <Note>
 When content tracing is enabled, reasoning content in model output is labeled with the `reasoning` type to distinguish it from regular text, making it easier to inspect the reasoning process separately in APMPlus.
@@ -11,6 +11,10 @@ When content tracing is enabled, reasoning content in model output is labeled wi
 
 <Note>
 Token usage metrics are recorded in three dimensions: `input`, `output`, and `cache_read`. The `cache_read` dimension represents cached input tokens and is a subset of `input`, not additional usage.
+</Note>
+
+<Note>
+Skill download and load counts are recorded through the `gen_ai_skill_download` and `gen_ai_skill_load` OTEL counters. `gen_ai_skill_download` counts skill package acquisitions (including cache hits), with dimensions `skill_source`, `skill_id`, `skill_version`, `skill_space_id`, and `outcome` (`success` or `error`). `gen_ai_skill_load` counts successful skill instruction loads, with the same identity dimensions (excluding `outcome`). The skill download process also produces a `skill_download` span annotating skill source, ID, version, space, outcome, cache hit, and consumer attributes.
 </Note>
 
 ## When to use
