@@ -14,7 +14,7 @@ token 用量指标按 `input`、`output` 和 `cache_read` 三个维度分别记�
 </Note>
 
 <Note>
-技能下载与加载次数通过 `gen_ai_skill_download` 和 `gen_ai_skill_load` 两个 OTEL 计数器记录。`gen_ai_skill_download` 统计技能包下载次数（含缓存命中），维度包括 `skill_source`、`skill_id`、`skill_version`、`skill_space_id` 和 `outcome`（`success` 或 `error`）。`gen_ai_skill_load` 统计技能指令成功加载次数，维度与下载计数器一致但不含 `outcome`。技能下载过程同时生成 `skill_download` span，标注技能来源、ID、版本、空间、结果、缓存命中与消费者等属性。
+技能下载与加载次数通过 `gen_ai_skill_download_count` 和 `gen_ai_skill_load_count` 两个 OTEL 计数器记录，单位为 `time`。`gen_ai_skill_download_count` 统计技能包下载次数（含缓存命中与失败），维度包括 `skill_source`、`skill_id`、`skill_name`、`skill_version` 和 `skill_space_id`。`gen_ai_skill_load_count` 统计技能指令成功加载次数，维度与下载计数器一致。技能下载过程同时生成 `download_skill {skill_name}` span，标注技能来源、ID、名称、版本、空间、消费者、结果与缓存命中等属性；结果（`success` 或 `error`）仅记录在 Span 上，不作为计数器维度。技能指令加载成功时将既有工具 Span 命名为 `load_skill {skill_name}`，并添加技能来源、ID、名称、版本、空间与消费者属性。
 </Note>
 
 ## 何时使用
