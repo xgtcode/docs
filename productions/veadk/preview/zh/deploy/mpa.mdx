@@ -311,3 +311,9 @@ veadk mpa control delete-preview \
 <Note>
   Studio 内置配置使用北京地域的默认镜像和模型。模型 API Key 从 `VEADK_MPA_CONFIG_MODEL_AGENT_API_KEY` 环境变量读取。选择其他地域时 Studio 会返回配置错误。
 </Note>
+
+<Note>
+  Studio 托管创建 MPA 智能体时，配置中引用的 `latest` 镜像标签会在部署前被匿名解析为同一公共仓库中已发布且 manifest digest 完全一致的具体版本标签，并持久化该选择。即使 `latest` 后续移动，重试部署时仍验证已保存的版本标签，确保部署内容不变。
+
+  镜像发布方须在每次发布 `latest` 的同时保留对应的版本标签，且不得覆盖已有标签。若无匹配的版本标签、公共读取不可用或保存内容发生变更，部署将明确失败。使用固定版本标签的部署、已有智能体和独立 CLI 部署不受此行为影响。
+</Note>

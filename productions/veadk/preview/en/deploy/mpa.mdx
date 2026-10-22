@@ -311,3 +311,9 @@ Select **Agents → MPA Agents → Create MPA Agent** to enter a three-step crea
 <Note>
   Studio's built-in configuration uses the Beijing region default images and models. The model API Key is read from the `VEADK_MPA_CONFIG_MODEL_AGENT_API_KEY` environment variable. Selecting other regions returns a configuration error.
 </Note>
+
+<Note>
+  When creating an MPA agent through Studio managed creation, `latest` image tags referenced in the configuration are resolved anonymously to a specific published version tag in the same public repository with an identical manifest digest before deployment. The selection is persisted. Even if `latest` moves later, retried deployments verify the saved version tag, ensuring the deployed content remains unchanged.
+
+  Image publishers must retain a matching version tag alongside each `latest` publication and must not overwrite existing tags. If no matching version tag exists, public read access is unavailable, or the saved content has changed, deployment fails explicitly. Deployments using fixed version tags, existing agents, and standalone CLI deployments are unaffected by this behavior.
+</Note>
