@@ -1,0 +1,12 @@
+{
+  "docs_project": "veadk-java",
+  "source_repo": "https://github.com/volcengine/veadk-java.git",
+  "source_branch": "main",
+  "previous_source_head_sha": "2bccd581c3ddc2bf9d138f9858ddfe7709bbf870",
+  "source_head_sha": "24a6393a30b1e8c26988696573a1f7984b1a1f56",
+  "event_base_ref": "2bccd581c3ddc2bf9d138f9858ddfe7709bbf870",
+  "event_head_ref": "24a6393a30b1e8c26988696573a1f7984b1a1f56",
+  "bootstrap_preview_base_ref": "2bccd581c3ddc2bf9d138f9858ddfe7709bbf870",
+  "generated_at": "2026-10-23T06:32:13Z",
+  "task_type": "preview"
+}
