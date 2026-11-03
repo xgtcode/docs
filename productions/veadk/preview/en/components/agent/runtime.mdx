@@ -14,8 +14,6 @@ Omitting `runtime` is equivalent to `runtime="adk"`, suitable for standard model
 ```python main.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 agent = Agent(name="assistant", runtime="adk")
 
 async def main():
@@ -121,11 +119,12 @@ Run `python codex_runtime.py`. Register function and MCP tools through `Agent.to
 | `network_access` | `bool` | `False` | Controls network only under `workspace_write` |
 | `workspace_root` | `str \| None` | `None` | Workspace root; otherwise an isolated temporary directory is created |
 | `reuse_workspace` | `bool` | `False` | Reuses an explicitly configured workspace across invocations |
+| `mcp_process_reuse` | `bool` | `True` | Whether to reuse same-thread MCP processes with identity validation. Enabled by default for stable ADK/MCP tools under `direct` + `resume`; set `False` to use a fresh process per invocation |
 | `reasoning_effort` | `"minimal" \| "low" \| "medium" \| "high" \| "xhigh"` | `"medium"` | Reasoning effort; actual support depends on the model |
 | `personality` | `"none" \| "friendly" \| "pragmatic"` | `"pragmatic"` | Response style |
 | `max_tool_iterations` | `int` | `32` | Bridged ADK tool iteration budget for the whole turn, from 1 to 256; not a universal limit on native operations |
 | `tool_timeout_seconds` | `float \| None` | `120.0` | Bridged tool timeout in seconds; must be positive, or `None` to omit this timeout |
-| `turn_timeout_seconds` | `float \| None` | `1800.0` | Upper bound for one Codex turn in seconds; the turn is interrupted and the invocation fails on timeout; `None` removes the bound |
+| `turn_timeout_seconds` | `float \| None` | `1800.0` | Upper bound for Codex admission, setup, and one running turn; the turn is interrupted and the invocation fails on timeout; `None` removes the bound |
 | `auto_compact_token_limit` | `int \| None` | `None` | Token count at which Codex compacts the thread history itself (direct transport only); `None` keeps Codex's default |
 | `model_transport` | `"auto" \| "direct" \| "shim"` | `"auto"` | How Codex reaches the model: `direct` calls the endpoint's Responses API directly and serves ADK tools over an MCP bridge; `shim` routes through VeADK's in-process Responses-to-chat shim that runs the tools; `auto` selects `direct` for endpoints known to serve the Responses API and `shim` for the rest |
 | `thread_mode` | `"resume" \| "ephemeral"` | `"resume"` | `resume` keeps one Codex thread per session, resumed on the next turn instead of replaying a transcript; `ephemeral` starts a fresh thread every invocation. Only `direct` supports resume; `shim` is always ephemeral |
@@ -133,6 +132,8 @@ Run `python codex_runtime.py`. Register function and MCP tools through `Agent.to
 <Warning>
 `auto_review` automatically approves escalation and file changes; it is not model-based review. `full_access` broadens host access, and `reuse_workspace=True` can share files across invocations. Use them only when explicitly needed in trusted environments. `network_access=False` cannot restrict `full_access`, so that combination is rejected. `read_only` also ignores this network switch
 </Warning>
+
+VeADK enforces session isolation through a custom permissions profile: under `workspace_write` and `read_only`, sandbox commands run with a VeADK-generated permissions configuration based on read-only access, denying access to temporary directories and non-shared workspace roots, and only allowing the current session's working directory and skills. A session's commands cannot read or write another session's workspace, rollouts, or configuration. Other files on the host (such as application configuration or a local SQLite session database) remain readable; isolate tenants at the container or OS-user level
 
 These environment variables override constructor settings:
 
@@ -144,6 +145,35 @@ These environment variables override constructor settings:
 | `VEADK_CODEX_NETWORK_ACCESS` | Unset | Overrides `network_access`; `1`, `true`, `yes`, and `on` enable it, case-insensitively |
 | `VEADK_CODEX_MODEL_TRANSPORT` | Unset | Overrides `model_transport`, case-insensitively |
 | `VEADK_CODEX_THREAD_MODE` | Unset | Overrides `thread_mode`, case-insensitively |
+| `VEADK_CODEX_MCP_PROCESS_REUSE` | Unset | Overrides `mcp_process_reuse`; `1`, `true`, `yes`, and `on` enable it, case-insensitively |
+
+### Codex process reuse and concurrency
+
+With `direct` transport and `thread_mode="resume"`, tool-free turns and turns exposing stable ADK/MCP tools reuse processes by default. Set `mcp_process_reuse=False` or `VEADK_CODEX_MCP_PROCESS_REUSE=0` to disable MCP process reuse; tool-free turns can still be reused. Each turn rebinds the executor, callbacks, working directory, and tool budget. Before execution, the SDK-confirmed thread/turn ID is validated; stale turns, missing or mismatched identities, and duplicate in-process request IDs are rejected. Idle processes do not accept tool execution. Reuse occurs only when the storage, session, thread, model, permissions, skills, instruction, and tool declarations are unchanged and the stored thread identity and version still match. Processes are closed on error, interruption, save failure, or when the request lifecycle cannot be determined. `VEADK_CODEX_PROCESS_POOL_SIZE=0` keeps a fresh process for every turn.
+
+Reuse avoids repeatedly injecting skills and environment context on warm paths; necessary context is still preserved on cold recovery. An existing empty working directory is no longer reported as reset; newly created or rebuilt directories still are.
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `VEADK_CODEX_PROCESS_POOL_SIZE` | `20` | Maximum idle Codex processes retained per VeADK process; the least recently used is closed when exceeded. `0` disables reuse (one process per call) |
+| `VEADK_CODEX_PROCESS_IDLE_TTL_SECONDS` | `600` | Idle processes are closed after this many seconds |
+| `VEADK_CODEX_MAX_CONCURRENT_TURNS` | Unset (no limit) | Maximum concurrent Codex turns per VeADK process. Excess calls queue before workspace, private directory, tools, and session lock allocation; admission, setup, and execution share `turn_timeout_seconds`, and expiry before the turn starts raises a timeout error |
+| `VEADK_CODEX_DENY_READ_PATHS` | Unset | Additional host paths the sandbox cannot read, separated by `os.pathsep` (`:` on Linux/macOS) |
+
+Idle processes are released automatically after the idle timeout. To release early: `await veadk.runtime.codex.release_codex_session(app_name, user_id, session_id)` closes a session's persistent process (call when deleting a session); `await veadk.runtime.codex.shutdown_codex_runtime()` closes all persistent processes plus the MCP bridge and shim, called automatically when an AgentKit application shuts down. If a VeADK process is killed, its Codex subprocesses exit with it; subsequent VeADK processes on the same host clean up locked workspaces and directories only when they can prove the owner has exited
+
+### Parallel and batch tool workloads
+
+Independent async function tools can already execute concurrently when Codex emits them in the same model response. Mark independence in application instructions and concise tool descriptions; dependent reads and writes must retain their required ordering. An application-owned batch tool can bound independent reads and return a result or explicit error for each item. Authorize each item: ADK tools execute on the host, so the Codex sandbox does not replace business permissions. One batch is one SDK tool invocation, and the application must cap the number of business reads separately.
+
+The checkout provides a local example and benchmark, `scripts/benchmark_codex_tools.py`, with `single`, `parallel`, `serial`, and `batch` scenarios. Its `bounded_batch_lookup` example limits admission, applies per-item timeouts, preserves cancellation, and reports partial failures. It never combines arbitrary registered tools automatically.
+
+```bash
+uv run --extra dev python scripts/benchmark_codex_tools.py --scenario parallel --turns 5 --pool-size 20
+uv run --extra dev python scripts/benchmark_codex_tools.py --scenario parallel --turns 5 --pool-size 0
+```
+
+These runs use the real Codex binary and a scripted loopback model without provider tokens. They validate warm hits, model request counts, context growth, and tool results; their latency is framework/simulation evidence, not a real-model performance claim. Run the real-binary regression separately with `CODEX_RUN_SMOKE=1 uv run --extra dev pytest tests/runtime/codex/test_codex_tool_workloads.py -m codex_smoke -p no:xdist -rs`.
 
 ### Model transport
 
@@ -226,8 +256,6 @@ PiAgent executes in a local working directory. Built-in tools may modify files o
 ```python piagent_runtime.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 agent = Agent(name="coding_assistant", runtime="piagent")
 
 async def main():
@@ -340,7 +368,6 @@ When `dsh_home` is not configured, VeADK generates an isolated process-owned dir
 | `shutdown_timeout_seconds` | `float \| None` | `1.0` | Timeout for shutting down the DSH SDK in seconds; `None` omits this timeout |
 | `base_url` | `str \| None` | `None` | Model API endpoint; falls back to `Agent.model_api_base` when unset |
 | `api_key` | `str \| None` | `None` | Model API Key; falls back to `Agent.model_api_key` when unset |
-
 These environment variables override constructor settings:
 
 | Variable | Default | Description |
@@ -395,8 +422,6 @@ Check these settings when switching to `codex`, `piagent`, or `dsh`:
 ```python transfer.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 writer = Agent(
     name="writer",
     description="Rewrite supplied text as a concise announcement.",

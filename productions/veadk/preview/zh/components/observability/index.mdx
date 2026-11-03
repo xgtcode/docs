@@ -147,3 +147,26 @@ export OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED=false
 ```
 
 关闭本地缓存后，span 标注、日志中的 Trace ID 和已配置的云端上报保持可用，`tracer.dump()` 写入空数组。同一个 `TracerProvider` 下的多个追踪器共享一份本地缓存额度。更多细节参见[内存导出器](/productions/veadk/preview/zh/components/observability/inmemory#本地缓存限制)。
+
+## 请求 Span 与流式 TTFT
+
+VeADK 使用 OpenTelemetry Span 原生起止时间表达执行边界。VeADK AgentKit/Harness HTTP 应用在 ASGI 入口、请求体解析前创建 `http_request` server Span，在应用执行结束时关闭。直接执行 VeADK Runner 时创建 `runner_request` Span；在 HTTP 请求中调用 Runner 时复用该请求范围。上述边界不包含应用接收请求之前的客户端、网络和网关耗时。
+
+每次 LiteLLM Chat 或 Ark Responses SDK 请求，在所属模型 Span 下创建 `model_request` client Span。其原生开始时间与 TTFT 计算使用的本地 SDK 请求起点相同，不代表服务端开始推理。VeADK 发起的重试/降级分别创建 Span；供应商/LiteLLM 内部不可观测的重试仍属于同一次 SDK 调用。
+
+| 属性 | 类型 / 含义 |
+| --- | --- |
+| `gen_ai.span.kind` | SDK 请求 Span 上为 `llm`。 |
+| `gen_ai.request.model` | 实际请求的模型。 |
+| `gen_ai.request.stream` | 布尔值，表示实际 SDK 流式模式，不依赖 HTTP SSE 或 Runner 配置。 |
+| `gen_ai.chat_completions.streaming_time_to_first_token` | 从 SDK 请求开始到首个生成增量到达的浮点秒数。 |
+
+首个非空文本、推理或工具调用增量触发一次 TTFT 记录。元数据、空增量、usage、心跳和仅完成时返回的聚合内容不计入。非流式、无输出或未埋点路径省略 TTFT；SDK 模式未知时不从 Runner 配置推导。一个 chunk 可含多个 token，因此这是 SDK 侧观测耗时，不是供应商侧逐 token 时间戳。
+
+同一个值通过现有全局 MeterProvider，在 `gen_ai.chat_completions.streaming_time_to_first_token` Histogram 记录一次，单位为 `s`。维度为 `gen_ai.request.model` 和 `gen_ai.operation.name=chat`。指标不依赖 token usage 或 Trace 采样；导出需要配置指标链路。负时钟间隔省略并产生诊断；真正测得的零值有效。
+
+失败模型请求设置原生 Span Status 为 `ERROR`，`error.type` 为 `llm_error`、`timeout` 或 `cancelled`。请求 Span 使用 `request_error`、`timeout` 或 `cancelled`；HTTP 5xx 响应使用 `http_error`。主动关闭生成器不算错误。已观测的 TTFT 在中断后保留，本埋点不添加异常正文。
+
+<Note>
+此埋点替代了此前的自定义计时字段，不再导出自定义 `veadk.request.*`、`veadk.model.*` 属性或自定义首 Token 事件，不保留兼容别名。客户端渲染计时和 TPOT Histogram 上报不在本功能范围内。
+</Note>

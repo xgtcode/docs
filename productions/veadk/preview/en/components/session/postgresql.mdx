@@ -115,7 +115,7 @@ database:
 
 | Field | Env var | Type | Default | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| `host` | `DATABASE_POSTGRESQL_HOST` | `str` | `""` | Database host or IP. |
+| `host` | `DATABASE_POSTGRESQL_HOST` | `str` | `""` | Database host or IP. Accepts `host:port` format; an embedded port takes precedence over the separate `port` field. |
 | `port` | `DATABASE_POSTGRESQL_PORT` | `int` | `5432` | Port. |
 | `user` | `DATABASE_POSTGRESQL_USER` | `str` | `""` | Username. |
 | `password` | `DATABASE_POSTGRESQL_PASSWORD` | `str` | `""` | Password. |

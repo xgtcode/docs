@@ -115,7 +115,7 @@ database:
 
 | 配置项 | 环境变量 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- | :--- |
-| `host` | `DATABASE_POSTGRESQL_HOST` | `str` | `""` | 数据库主机或 IP |
+| `host` | `DATABASE_POSTGRESQL_HOST` | `str` | `""` | 数据库主机或 IP。支持 `host:port` 格式，嵌入端口优先于单独的 `port` 配置项 |
 | `port` | `DATABASE_POSTGRESQL_PORT` | `int` | `5432` | 端口 |
 | `user` | `DATABASE_POSTGRESQL_USER` | `str` | `""` | 用户名 |
 | `password` | `DATABASE_POSTGRESQL_PASSWORD` | `str` | `""` | 密码 |
