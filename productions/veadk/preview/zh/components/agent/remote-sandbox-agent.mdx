@@ -3,7 +3,7 @@ title: "远端沙箱智能体"
 en_link: "/productions/veadk/preview/en/components/agent/remote-sandbox-agent"
 ---
 
-`AgentkitRemoteSandboxAgent` 将一个文本任务交给 AgentKit 中的 Skill 或 CodeEnv 沙箱执行，并返回进度、工具事件和结果。它可以直接作为根智能体，也可以作为协调智能体的子智能体
+`AgentkitRemoteSandboxAgent` 将一个文本任务交给 AgentKit 中的 Skill 或 CodeEnv 沙箱执行，并返回进度、工具事件和结果。它可以直接作为根智能体，也可以作为协调智能体的子智能体。`SkillSandboxAgent` 是其子类，预设 Skill 类型和独立 Tool ID 环境变量，适用于只需技能沙箱的场景
 
 与[代码沙箱工具](/productions/veadk/preview/zh/components/tools/code-sandbox)相比，这个入口委派完整任务，由远端智能体决定执行步骤；`run_code`、`execute_skills` 则作为工具供当前智能体调用
 
@@ -109,6 +109,52 @@ if __name__ == "__main__":
 
 未指定 `tool_type` 时，通过 AgentKit `GetTool` 自动发现。私有工具或兼容但返回其他类型的自定义工具应显式指定类型。`AGENTKIT_TOOL_TYPE` 是示例显式读取的变量，智能体不会自动读取它
 
+## 技能沙箱智能体
+
+`SkillSandboxAgent` 是 `AgentkitRemoteSandboxAgent` 的子类，预设 `tool_type` 为 `Skill`，并默认从 `AGENTKIT_TOOL_ID_SKILLS` 环境变量读取 Tool ID（未设置时回退到 `AGENTKIT_TOOL_ID`）。适用于只需要 Skill 沙箱、希望使用独立 Tool ID 配置的场景
+
+它额外提供以下参数：
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `guardrails` | `str` | `""` | 非空时在用户任务前添加护栏指令，与用户请求一并发送给沙箱 |
+| `timeout` | `float \| None` | `None` | 设置后覆盖 `request_timeout`，并确保 `ttl` 不小于该值；大于 0 且小于 86000 |
+
+`tool_type` 固定为 `Skill`，不可更改。除上述参数外，`SkillSandboxAgent` 继承 `AgentkitRemoteSandboxAgent` 的全部参数
+
+以下示例使用 `guardrails` 限制沙箱可用工具，并将其作为子智能体注册到协调智能体：
+
+```python skill_sandbox.py lines
+import asyncio
+from veadk import Agent, SkillSandboxAgent, Runner
+
+sandbox = SkillSandboxAgent(
+    name="skill_sandbox",
+    description="Execute skill workflows in the remote sandbox.",
+    guardrails="Only use bash_tool.",
+)
+coordinator = Agent(
+    name="coordinator",
+    instruction=(
+        "Answer general questions directly. Transfer tasks that need skill "
+        "execution to skill_sandbox using transfer_to_agent."
+    ),
+    sub_agents=[sandbox],
+)
+
+async def main():
+    print(await Runner(agent=coordinator).run(
+        messages="List the available skills.",
+        session_id="skill-demo",
+    ))
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+运行 `python skill_sandbox.py`，协调智能体可将任务转交给技能沙箱。设置 `AGENTKIT_TOOL_ID_SKILLS` 环境变量可指定技能沙箱专用的 Tool ID，与 CodeEnv 沙箱的 `AGENTKIT_TOOL_ID` 分开管理
+
+
 ## 参数
 
 | 参数 | 类型 | 默认值 | 说明 |
@@ -116,6 +162,7 @@ if __name__ == "__main__":
 | `name` | `str` | 必填 | 应用内唯一的智能体名称 |
 | `description` | `str` | `""` | 供协调智能体选择任务转交目标的能力描述 |
 | `tool_id` | `str \| None` | `None` | 未指定时读取 `AGENTKIT_TOOL_ID` |
+| `tool_id_env` | `str \| None` | `None` | 设置后优先从该环境变量读取 Tool ID，未设置时回退到 `AGENTKIT_TOOL_ID` |
 | `tool_type` | `Literal["Skill", "CodeEnv"] \| None` | `None` | 未指定时自动发现 |
 | `request_timeout` | `float` | `900` | 任务执行超时秒数，大于 0 且小于 86000 |
 | `expiry_buffer` | `float` | `90` | 会话租约的安全余量秒数，大于等于 0 且小于 86400 |
@@ -132,6 +179,7 @@ if __name__ == "__main__":
 | 环境变量 | 默认值 | 说明 |
 | :--- | :--- | :--- |
 | `AGENTKIT_TOOL_ID` | 未设置 | 默认 Tool ID |
+| `AGENTKIT_TOOL_ID_SKILLS` | 未设置 | `SkillSandboxAgent` 默认读取的 Tool ID，未设置时回退到 `AGENTKIT_TOOL_ID` |
 | `AGENTKIT_TOOL_REGION` | 火山引擎 `cn-beijing`；BytePlus `ap-southeast-1` | 控制面地域；火山引擎还可继承 `REGION` |
 | `AGENTKIT_TOOL_HOST` | SDK 对应环境的端点 | 显式覆盖控制面地址，应使用服务提供的地址 |
 | `AGENTKIT_TOOL_SERVICE_CODE` | `agentkit` | 控制面服务标识，覆盖时也影响派生端点 |

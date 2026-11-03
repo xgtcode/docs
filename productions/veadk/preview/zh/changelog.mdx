@@ -9,6 +9,8 @@ en_link: "/productions/veadk/preview/en/changelog"
 
 | 模块 | 变更细节 | 链接 |
 | --- | --- | --- |
+| 远端沙箱智能体 | 新增 `SkillSandboxAgent`：`AgentkitRemoteSandboxAgent` 的子类，预设 `tool_type` 为 `Skill`，默认从 `AGENTKIT_TOOL_ID_SKILLS` 环境变量读取 Tool ID（未设置时回退到 `AGENTKIT_TOOL_ID`）；新增 `guardrails` 参数在用户任务前附加护栏指令，新增 `timeout` 参数覆盖执行超时并调整会话存活时间。 | [远端沙箱智能体](/productions/veadk/preview/zh/components/agent/remote-sandbox-agent#技能沙箱智能体) |
+| 远端沙箱智能体 | `AgentkitRemoteSandboxAgent` 新增 `tool_id_env` 参数：设置后优先从指定环境变量读取 Tool ID，未设置时回退到 `AGENTKIT_TOOL_ID`。 | [远端沙箱智能体](/productions/veadk/preview/zh/components/agent/remote-sandbox-agent#参数) |
 | 运行时 | 修复外部运行时中长时工具调用挂起后智能体可能重复启动模型循环的问题，以及会话持久化后事件顺序不正确的问题：当长时工具调用尚未返回结果时，智能体现在正确等待而非重新启动模型；模型响应事件的时间戳改为反映实际完成时间，确保数据库会话存储重载后事件顺序正确；Codex 运行时恢复线程时包含当前批次中全部工具结果；PiAgent 运行时跨调用保留完整对话历史与工具调用结果配对。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
 | 短期记忆 | PostgreSQL 后端 `host` 配置项支持 `host:port` 格式：在 `host` 中嵌入端口时，嵌入端口优先于单独的 `port` 配置项，端口必须在 1–65535 范围内。 | [使用 PostgreSQL 存储](/productions/veadk/preview/zh/components/session/postgresql) |
 | 可观测 | 新增请求 Span 与流式 TTFT 遥测：VeADK 在 ASGI 入口和 Runner 执行时创建 `http_request` / `runner_request` Span，在每次 LiteLLM Chat 或 Ark Responses SDK 请求下创建 `model_request` Span。首个非空文本、推理或工具调用增量触发一次 TTFT 记录，属性为 `gen_ai.chat_completions.streaming_time_to_first_token`（浮点秒数），并通过全局 MeterProvider 在同名 Histogram 记录一次。失败请求设置原生 Span Status 为 `ERROR` 并标注 `error.type`。此埋点替代此前的自定义计时字段，不保留兼容别名。 | [可观测概述](/productions/veadk/preview/zh/components/observability#请求-span-与流式-ttft) |
