@@ -14,8 +14,6 @@ en_link: "/productions/veadk/preview/en/components/agent/runtime"
 ```python main.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 agent = Agent(name="assistant", runtime="adk")
 
 async def main():
@@ -121,11 +119,12 @@ if __name__ == "__main__":
 | `network_access` | `bool` | `False` | 仅在 `workspace_write` 下控制网络 |
 | `workspace_root` | `str \| None` | `None` | 工作区根路径；未指定时创建隔离临时目录 |
 | `reuse_workspace` | `bool` | `False` | 配合显式 `workspace_root` 在调用间复用工作区 |
+| `mcp_process_reuse` | `bool` | `True` | 是否复用同线程 MCP 进程并校验身份。默认开启 `direct` + `resume` 下稳定 ADK/MCP 工具的进程复用；设为 `False` 时每次调用使用新进程 |
 | `reasoning_effort` | `"minimal" \| "low" \| "medium" \| "high" \| "xhigh"` | `"medium"` | 推理投入程度，实际支持取决于模型 |
 | `personality` | `"none" \| "friendly" \| "pragmatic"` | `"pragmatic"` | 回答风格 |
 | `max_tool_iterations` | `int` | `32` | 整轮调用中桥接 ADK 工具的迭代预算，范围 1–256，不是所有原生操作的统一上限 |
 | `tool_timeout_seconds` | `float \| None` | `120.0` | 单次桥接工具超时秒数，数值必须大于 0；`None` 不设置该超时 |
-| `turn_timeout_seconds` | `float \| None` | `1800.0` | 单次 Codex 轮次的超时上限，超时后中断当前轮次并使调用失败；`None` 表示不限制 |
+| `turn_timeout_seconds` | `float \| None` | `1800.0` | Codex 准入、setup 和运行轮次的超时上限，超时后中断轮次并使调用失败；`None` 表示不限制 |
 | `auto_compact_token_limit` | `int \| None` | `None` | Codex 自行压缩线程历史的 token 阈值，仅 direct 传输模式生效；`None` 使用 Codex 默认值 |
 | `model_transport` | `"auto" \| "direct" \| "shim"` | `"auto"` | Codex 访问模型的方式：`direct` 直接调用模型端点的 Responses API 并通过 MCP 桥接 ADK 工具；`shim` 通过 VeADK 进程内 Responses 到 chat 的适配层执行工具；`auto` 对已知支持 Responses API 的端点选择 `direct`，其余选择 `shim` |
 | `thread_mode` | `"resume" \| "ephemeral"` | `"resume"` | `resume` 为每个会话保持一个 Codex 线程，后续轮次恢复该线程而非重放对话；`ephemeral` 每次调用创建新线程。仅 `direct` 传输模式支持恢复；`shim` 始终为临时线程 |
@@ -133,6 +132,8 @@ if __name__ == "__main__":
 <Warning>
 `auto_review` 会自动批准提权和文件修改请求，不是模型审核步骤。`full_access` 放宽主机访问，`reuse_workspace=True` 可能在调用间共享文件；仅在明确需要且可信的环境中设置。`network_access=False` 不能限制 `full_access`，该组合会在配置时被拒绝。`read_only` 也不使用这个网络开关
 </Warning>
+
+VeADK 使用自定义权限配置实现 Session 隔离：`workspace_write` 和 `read_only` 下，沙箱命令运行在 VeADK 生成的权限配置下，以只读访问为基础，拒绝访问临时目录和非共享的工作区根目录，只放行当前 Session 的工作目录和技能。一个 Session 的命令无法读写其他 Session 的工作区、rollout 和配置。主机上的其他文件（例如应用配置、本地 SQLite 会话数据库）仍然可读；需要在容器或操作系统用户层面隔离租户
 
 以下环境变量优先于构造配置：
 
@@ -144,6 +145,35 @@ if __name__ == "__main__":
 | `VEADK_CODEX_NETWORK_ACCESS` | 未设置 | 覆盖 `network_access`；`1`、`true`、`yes`、`on` 为开启，不区分大小写 |
 | `VEADK_CODEX_MODEL_TRANSPORT` | 未设置 | 覆盖 `model_transport`，不区分大小写 |
 | `VEADK_CODEX_THREAD_MODE` | 未设置 | 覆盖 `thread_mode`，不区分大小写 |
+| `VEADK_CODEX_MCP_PROCESS_REUSE` | 未设置 | 覆盖 `mcp_process_reuse`；`1`、`true`、`yes`、`on` 为开启，不区分大小写 |
+
+### Codex 进程复用与并发
+
+`direct` 传输且 `thread_mode="resume"` 时，无工具回合与暴露稳定 ADK/MCP 工具的回合默认复用进程。设置 `mcp_process_reuse=False` 或 `VEADK_CODEX_MCP_PROCESS_REUSE=0` 关闭 MCP 进程复用，无工具回合仍可复用。每轮重新绑定执行器、回调、工作目录和工具预算；执行前校验 SDK 确认的 thread/turn ID，旧轮次、缺失或不一致的身份及进程内重复的请求 ID 均被拒绝。空闲进程不接受工具执行。仅在同一存储、Session、thread，且模型、权限、skills、instruction、工具声明未变，存储中的 thread 身份和版本仍匹配时复用。错误、中断、保存失败或请求生命周期无法确定时关闭进程。`VEADK_CODEX_PROCESS_POOL_SIZE=0` 保持每轮新起进程。
+
+复用避免在正常 warm 路径反复注入 skills 和环境上下文；冷恢复时仍保留必要上下文。已有的空工作目录不再被提示为重置，新建或重建的目录仍会提示。
+
+| 环境变量 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `VEADK_CODEX_PROCESS_POOL_SIZE` | `20` | 每个 VeADK 进程最多保留的空闲 Codex 进程数，超出时关闭最久未用的。`0` 关闭复用（每次调用一个进程） |
+| `VEADK_CODEX_PROCESS_IDLE_TTL_SECONDS` | `600` | 空闲进程超过该秒数后关闭 |
+| `VEADK_CODEX_MAX_CONCURRENT_TURNS` | 未设置（不限） | 每个 VeADK 进程同时运行的 Codex 回合上限。超出的调用在分配工作区、私有目录、工具和会话锁前排队；准入、setup 和执行共享 `turn_timeout_seconds`，回合开始前过期会报超时错误 |
+| `VEADK_CODEX_DENY_READ_PATHS` | 未设置 | 沙箱命令禁止读取的额外主机路径，用 `os.pathsep` 分隔（Linux/macOS 为 `:`） |
+
+常驻进程在空闲超时后自动释放。如需提前释放：`await veadk.runtime.codex.release_codex_session(app_name, user_id, session_id)` 关闭某个 Session 的常驻进程（删除 Session 时调用）；`await veadk.runtime.codex.shutdown_codex_runtime()` 关闭全部常驻进程以及 MCP bridge 和 shim，AgentKit 应用关闭时自动调用。VeADK 进程被强杀时其 Codex 子进程随之退出；同一主机上后续 VeADK 进程只在能证明 owner 已退出时清理带锁的工作区和目录
+
+### 并行与批量工具场景
+
+当 Codex 在同一次模型响应里生成多个独立异步函数调用时，现有链路即可并行执行。应用 instruction 和简洁的工具描述应明确哪些查询独立；有依赖的读取和写入仍按业务顺序执行。应用可以提供批量工具，对每个查询项返回结果或明确错误，并逐项鉴权：ADK 工具在宿主进程执行，Codex 沙箱不能替代业务权限。一个批量请求计作一次 SDK 工具调用，应用须另外限制业务查询数量。
+
+仓库的 `scripts/benchmark_codex_tools.py` 提供 `single`、`parallel`、`serial`、`batch` 示例与基准。其 `bounded_batch_lookup` 限制批量准入、设置逐项超时、保留取消行为并报告部分失败，不会自动合并任意已注册工具。
+
+```bash
+uv run --extra dev python scripts/benchmark_codex_tools.py --scenario parallel --turns 5 --pool-size 20
+uv run --extra dev python scripts/benchmark_codex_tools.py --scenario parallel --turns 5 --pool-size 0
+```
+
+这些运行使用真实 Codex 二进制和脚本化 loopback 模型，不需要供应商 token。它们验证 warm 命中、模型请求次数、上下文增长和工具结果；延迟数据只代表框架和仿真证据，不代表真实模型性能。真实二进制回归可单独运行：`CODEX_RUN_SMOKE=1 uv run --extra dev pytest tests/runtime/codex/test_codex_tool_workloads.py -m codex_smoke -p no:xdist -rs`。
 
 ### 模型传输模式
 
@@ -227,8 +257,6 @@ PiAgent 在本机工作目录执行任务，内置工具可能读写文件和执
 ```python piagent_runtime.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 agent = Agent(name="coding_assistant", runtime="piagent")
 
 async def main():
@@ -341,7 +369,6 @@ if __name__ == "__main__":
 | `shutdown_timeout_seconds` | `float \| None` | `1.0` | 关闭 DSH SDK 的超时秒数；`None` 不设置该超时 |
 | `base_url` | `str \| None` | `None` | 模型 API 地址；未设置时回退到 `Agent.model_api_base` |
 | `api_key` | `str \| None` | `None` | 模型 API Key；未设置时回退到 `Agent.model_api_key` |
-
 以下环境变量优先于构造配置：
 
 | 环境变量 | 默认值 | 说明 |
@@ -396,8 +423,6 @@ if __name__ == "__main__":
 ```python transfer.py lines
 import asyncio
 from veadk import Agent, Runner
-
-
 writer = Agent(
     name="writer",
     description="Rewrite supplied text as a concise announcement.",
