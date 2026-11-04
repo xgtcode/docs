@@ -3,7 +3,7 @@ title: "Remote sandbox agent"
 zh_link: "/productions/veadk/preview/zh/components/agent/remote-sandbox-agent"
 ---
 
-`AgentkitRemoteSandboxAgent` sends a text task to an AgentKit Skill or CodeEnv sandbox and returns progress, tool events, and results. Use it directly as a root agent or as a coordinator's sub-agent
+`AgentkitRemoteSandboxAgent` sends a text task to an AgentKit Skill or CodeEnv sandbox and returns progress, tool events, and results. Use it directly as a root agent or as a coordinator's sub-agent. `SkillSandboxAgent` is a subclass that presets the Skill type and a dedicated Tool ID environment variable, suitable for skill-only sandbox scenarios
 
 Unlike [code sandbox tools](/productions/veadk/preview/en/components/tools/code-sandbox), this entry delegates an entire task and lets the remote agent choose the steps. `run_code` and `execute_skills` are individual tools called by the current agent
 
@@ -109,6 +109,52 @@ Run `python coordinator.py`. The coordinator can delegate through `transfer_to_a
 
 When `tool_type` is omitted, AgentKit `GetTool` discovers it. Specify the type for private tools or compatible custom tools that report a different type. `AGENTKIT_TOOL_TYPE` is read explicitly by these examples, not automatically by the agent
 
+## Skill sandbox agent
+
+`SkillSandboxAgent` is a subclass of `AgentkitRemoteSandboxAgent` that presets `tool_type` to `Skill` and defaults `tool_id_env` to `AGENTKIT_TOOL_ID_SKILLS` (falling back to `AGENTKIT_TOOL_ID` when unset). It is suited for scenarios that only need a Skill sandbox with a dedicated Tool ID configuration
+
+It adds the following parameters:
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `guardrails` | `str` | `""` | When non-empty, prepended to the user task as a guardrail instruction and sent to the sandbox together with the request |
+| `timeout` | `float \| None` | `None` | When set, overrides `request_timeout` and ensures `ttl` is at least this value; greater than 0 and less than 86000 |
+
+`tool_type` is fixed to `Skill` and cannot be changed. Beyond the parameters above, `SkillSandboxAgent` inherits all parameters from `AgentkitRemoteSandboxAgent`
+
+The following example uses `guardrails` to restrict the sandbox to a specific tool, registered as a sub-agent under a coordinator:
+
+```python skill_sandbox.py lines
+import asyncio
+from veadk import Agent, SkillSandboxAgent, Runner
+
+sandbox = SkillSandboxAgent(
+    name="skill_sandbox",
+    description="Execute skill workflows in the remote sandbox.",
+    guardrails="Only use bash_tool.",
+)
+coordinator = Agent(
+    name="coordinator",
+    instruction=(
+        "Answer general questions directly. Transfer tasks that need skill "
+        "execution to skill_sandbox using transfer_to_agent."
+    ),
+    sub_agents=[sandbox],
+)
+
+async def main():
+    print(await Runner(agent=coordinator).run(
+        messages="List the available skills.",
+        session_id="skill-demo",
+    ))
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Run `python skill_sandbox.py`. The coordinator can delegate tasks to the skill sandbox. Set the `AGENTKIT_TOOL_ID_SKILLS` environment variable to use a dedicated Tool ID for the skill sandbox, separate from the `AGENTKIT_TOOL_ID` used for CodeEnv sandboxes
+
+
 ## Parameters
 
 | Parameter | Type | Default | Description |
@@ -116,6 +162,7 @@ When `tool_type` is omitted, AgentKit `GetTool` discovers it. Specify the type f
 | `name` | `str` | Required | Agent name, unique within the application |
 | `description` | `str` | `""` | Capability description used by the coordinator for transfers |
 | `tool_id` | `str \| None` | `None` | Falls back to `AGENTKIT_TOOL_ID` |
+| `tool_id_env` | `str \| None` | `None` | When set, the Tool ID is read from this environment variable first, falling back to `AGENTKIT_TOOL_ID` |
 | `tool_type` | `Literal["Skill", "CodeEnv"] \| None` | `None` | Automatically discovered when omitted |
 | `request_timeout` | `float` | `900` | Task timeout in seconds, greater than 0 and less than 86000 |
 | `expiry_buffer` | `float` | `90` | Session lease margin in seconds, at least 0 and less than 86400 |
@@ -132,6 +179,7 @@ When `tool_type` is omitted, AgentKit `GetTool` discovers it. Specify the type f
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `AGENTKIT_TOOL_ID` | Unset | Default Tool ID |
+| `AGENTKIT_TOOL_ID_SKILLS` | Unset | Tool ID read by `SkillSandboxAgent` by default, falling back to `AGENTKIT_TOOL_ID` |
 | `AGENTKIT_TOOL_REGION` | Volcengine: `cn-beijing`; BytePlus: `ap-southeast-1` | Control-plane region; Volcengine can also inherit `REGION` |
 | `AGENTKIT_TOOL_HOST` | SDK endpoint for the environment | Explicit control-plane host override; use an address supplied by the service |
 | `AGENTKIT_TOOL_SERVICE_CODE` | `agentkit` | Control-plane service identifier; overriding it also affects the derived endpoint |
