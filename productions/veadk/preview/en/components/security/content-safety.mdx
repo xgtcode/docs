@@ -178,7 +178,7 @@ Key differences from public mode:
 - **Model output**: Does not review model output, but records the model's visible text (excluding thought-process text) as a plan when the model generates tool calls, for use in subsequent tool-call review.
 - **Tool-call review**: Requires the model to provide a visible text plan when generating tool calls. If no matching plan is found, the tool call is blocked rather than executed directly. The reviewed content is the model's plan text and tool call information, not serialized tool arguments.
 - **Tool results**: Not reviewed.
-- **Moderation failure handling**: When the V3 service returns a degraded response, a non-200 status code, a timeout, or an unknown decision, tool execution is blocked with a service-unavailable message rather than allowing the content through.
+- **Moderation failure handling**: When the V3 service returns an API error, a non-200 status code, or a timeout, tool execution is blocked with a service-unavailable message. For successful responses, content is blocked only when the decision type normalizes to BLOCK (value 2); a PASS decision (value 1), other values, or values that cannot be converted to an integer allow the content through, regardless of the degraded flag.
 
 #### Usage
 
