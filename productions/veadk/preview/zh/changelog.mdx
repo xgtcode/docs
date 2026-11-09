@@ -9,8 +9,6 @@ en_link: "/productions/veadk/preview/en/changelog"
 
 | 模块 | 变更细节 | 链接 |
 | --- | --- | --- |
-| 技能 | 修复从云端技能空间下载技能时，部分技能因返回的存储地址为签名 HTTPS URL 或对象直读被拒绝而无法下载的问题：当技能空间返回的存储路径为签名 HTTPS TOS 地址时直接通过该地址下载；当对象直读失败时自动请求临时下载链接并重试。 | [技能](/productions/veadk/preview/zh/components/agent/skills#云端技能空间) |
-| 内容安全 | 修复 AgentSentry V3 私有审查的决策处理：成功响应仅当决策类型归一化后为 BLOCK（值为 2）时拦截内容；PASS（值为 1）、其他值或无法转换为整数的决策放行内容，不再因降级标记或未知决策阻止执行。仅 API 错误、非 200 状态码和超时返回服务不可用提示。 | [内容安全护栏](/productions/veadk/preview/zh/components/security/content-safety) |
 | 远端沙箱智能体 | 新增 `SkillSandboxAgent`：`AgentkitRemoteSandboxAgent` 的子类，预设 `tool_type` 为 `Skill`，默认从 `AGENTKIT_TOOL_ID_SKILLS` 环境变量读取 Tool ID（未设置时回退到 `AGENTKIT_TOOL_ID`）；新增 `guardrails` 参数在用户任务前附加护栏指令，新增 `timeout` 参数覆盖执行超时并调整会话存活时间。 | [远端沙箱智能体](/productions/veadk/preview/zh/components/agent/remote-sandbox-agent#技能沙箱智能体) |
 | 远端沙箱智能体 | `AgentkitRemoteSandboxAgent` 新增 `tool_id_env` 参数：设置后优先从指定环境变量读取 Tool ID，未设置时回退到 `AGENTKIT_TOOL_ID`。 | [远端沙箱智能体](/productions/veadk/preview/zh/components/agent/remote-sandbox-agent#参数) |
 | 运行时 | 修复外部运行时中长时工具调用挂起后智能体可能重复启动模型循环的问题，以及会话持久化后事件顺序不正确的问题：当长时工具调用尚未返回结果时，智能体现在正确等待而非重新启动模型；模型响应事件的时间戳改为反映实际完成时间，确保数据库会话存储重载后事件顺序正确；Codex 运行时恢复线程时包含当前批次中全部工具结果；PiAgent 运行时跨调用保留完整对话历史与工具调用结果配对。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
@@ -95,6 +93,15 @@ en_link: "/productions/veadk/preview/en/changelog"
 | 依赖 | `jsonschema` 版本约束从 `>=4.23,<5` 收窄为 `>=4.23,<4.24`：litellm 固定 jsonschema 4.23.0。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `fastmcp` 版本约束新增 `<4` 上限：fastmcp 4.x 要求 mcp>=2，与当前 mcp 版本不兼容。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `harness-sidecar` 可选依赖组中 `agentkit-sdk-python` 约束从 `>=0.8.1,<0.9.0` 调整为 `>=0.8.5`，移除版本上限。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
+
+## 1.1.26
+
+VeADK 1.1.26 发布于 2026 年 11 月 6 日。下表列出该版本的公开用户能力变化；完整提交记录见 [GitHub Release](https://github.com/volcengine/veadk-python/releases/tag/1.1.26)。
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| 技能 | 修复从云端技能空间下载技能时，部分技能因返回的存储地址为签名 HTTPS URL 或对象直读被拒绝而无法下载的问题：当技能空间返回的存储路径为签名 HTTPS TOS 地址时直接通过该地址下载；当对象直读失败时自动请求临时下载链接并重试。 | [技能](/productions/veadk/preview/zh/components/agent/skills#云端技能空间) |
+| 内容安全 | 修复 AgentSentry V3 私有审查的决策处理：成功响应仅当决策类型归一化后为 BLOCK（值为 2）时拦截内容；PASS（值为 1）、其他值或无法转换为整数的决策放行内容，不再因降级标记或未知决策阻止执行。仅 API 错误、非 200 状态码和超时返回服务不可用提示。 | [内容安全护栏](/productions/veadk/preview/zh/components/security/content-safety) |
 
 ## 1.1.13
 
