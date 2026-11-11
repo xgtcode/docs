@@ -1,6 +1,6 @@
 ---
 title: "远程技能代理"
-en_link: "/productions/veadk/preview/en/components/tools/remote-skills"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/remote-skills"
 ---
 
 ## 功能说明
@@ -14,12 +14,12 @@ en_link: "/productions/veadk/preview/en/components/tools/remote-skills"
 - 希望以声明式配置管理技能列表，而非在代码中逐个编写工具函数。
 
 <Note>
-远程技能代理复用 `execute_skills` 的沙箱基础设施与凭证配置。环境变量、Tool ID 等前提条件与[代码沙箱](/productions/veadk/preview/zh/components/tools/code-sandbox)页面中的说明一致，此处不再重复。
+远程技能代理复用 `execute_skills` 的沙箱基础设施与凭证配置。环境变量、Tool ID 等前提条件与[代码沙箱](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)页面中的说明一致，此处不再重复。
 </Note>
 
 ## 前提条件
 
-先完成[技能沙箱配置](/productions/veadk/preview/zh/components/tools/code-sandbox)，确保目标 Skill Space 已有可执行的技能，再将下文[清单格式](#清单格式)中的 JSON 保存为当前目录下的 `remote-skills.json`。清单只描述能力，不会上传或部署技能；名称和参数需与远端已部署技能一致
+先完成[技能沙箱配置](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)，确保目标 Skill Space 已有可执行的技能，再将下文[清单格式](#清单格式)中的 JSON 保存为当前目录下的 `remote-skills.json`。清单只描述能力，不会上传或部署技能；名称和参数需与远端已部署技能一致
 
 加载清单与构建工具本身不会访问云端；真正调用默认执行器时需要有效的工具上下文、模型和沙箱配置
 

@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-zh_link: "/productions/veadk/preview/zh/components/session"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/session"
 ---
 
 Short-term memory stores messages, tool interactions, and state so later turns can restore context. Sessions are identified by `app_name`, `user_id`, and `session_id`; continuing a session requires the same storage backend and all three identifiers
@@ -50,14 +50,14 @@ All backends provide the same session-management operations. They differ in pers
 
 | Backend | Persistent | External service | Use case | Docs |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | No (memory only) | None | Local debugging, ephemeral sessions | [In-memory](/productions/veadk/preview/en/components/session/local) |
-| `sqlite` | Yes (local file) | None | Single-node persistence | [SQLite](/productions/veadk/preview/en/components/session/sqlite) |
-| `mysql` | Yes | MySQL | Distributed persistence | [MySQL](/productions/veadk/preview/en/components/session/mysql) |
-| `postgresql` | Yes | PostgreSQL | Distributed persistence | [PostgreSQL](/productions/veadk/preview/en/components/session/postgresql) |
+| `local` | No (memory only) | None | Local debugging, ephemeral sessions | [In-memory](/productions/veadk/archives/1.1.26/en/components/session/local) |
+| `sqlite` | Yes (local file) | None | Single-node persistence | [SQLite](/productions/veadk/archives/1.1.26/en/components/session/sqlite) |
+| `mysql` | Yes | MySQL | Distributed persistence | [MySQL](/productions/veadk/archives/1.1.26/en/components/session/mysql) |
+| `postgresql` | Yes | PostgreSQL | Distributed persistence | [PostgreSQL](/productions/veadk/archives/1.1.26/en/components/session/postgresql) |
 
 ## Working with the Runner
 
-Short-term memory is usually passed to the `Runner`, which then creates or restores sessions automatically. Complete [model configuration](/productions/veadk/preview/en/components/agent/model), then reuse the app, user, and session identifiers to continue the context
+Short-term memory is usually passed to the `Runner`, which then creates or restores sessions automatically. Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model), then reuse the app, user, and session identifiers to continue the context
 
 ```python lines
 import asyncio

@@ -1,13 +1,13 @@
 ---
 title: "执行引擎"
-en_link: "/productions/veadk/preview/en/components/execution-engine"
+en_link: "/productions/veadk/archives/1.1.26/en/components/execution-engine"
 ---
 
 `Runner` 负责运行智能体，并连接会话存储、工具和追踪能力。VeADK 在 Google ADK 的事件执行接口上提供 `run()` 简化入口；需要逐个处理事件时，使用 `run_async()`
 
 ## 最简运行
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)和[模型配置](/productions/veadk/preview/zh/components/agent/model)。将示例保存为 `app.py`，运行 `python app.py`，终端应输出模型的文本回复
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)和[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。将示例保存为 `app.py`，运行 `python app.py`，终端应输出模型的文本回复
 
 ```python title="app.py" lines
 import asyncio
@@ -37,8 +37,8 @@ asyncio.run(main())
 
 | 数据 | 标识与范围 |
 | --- | --- |
-| 短期会话 | 通过 `app_name`、`user_id`、`session_id` 查找；持久性取决于[会话后端](/productions/veadk/preview/zh/components/session) |
-| 长期记忆 | 用户过滤取决于[记忆后端](/productions/veadk/preview/zh/components/memory)；本地后端不按 `user_id` 隔离 |
+| 短期会话 | 通过 `app_name`、`user_id`、`session_id` 查找；持久性取决于[会话后端](/productions/veadk/archives/1.1.26/zh/components/session) |
+| 长期记忆 | 用户过滤取决于[记忆后端](/productions/veadk/archives/1.1.26/zh/components/memory)；本地后端不按 `user_id` 隔离 |
 | 知识库 | 由所选知识库、集合及后端查询条件决定；设置 `app_name` 不会自动建立租户访问控制 |
 
 ## 流式处理事件
@@ -117,7 +117,7 @@ asyncio.run(main())
 | `app_name` | `str` | `veadk_default_app` | 应用标识；传入 ADK `app` 时由该应用决定 |
 | `user_id` | `str` | `veadk_default_user` | `run()` 使用的默认用户标识 |
 | `upload_inline_data_to_tos` | `bool` | `False` | 将运行中的内联媒体上传到 TOS；需要凭证、资源权限并可能产生费用 |
-| `run_processor` | `BaseRunProcessor` | 优先使用智能体配置，否则不拦截 | 本次 Runner 的运行处理器；认证场景见[出站认证](/productions/veadk/preview/zh/components/security/outbound) |
+| `run_processor` | `BaseRunProcessor` | 优先使用智能体配置，否则不拦截 | 本次 Runner 的运行处理器；认证场景见[出站认证](/productions/veadk/archives/1.1.26/zh/components/security/outbound) |
 
 可通过关键字参数传入 ADK 的 `session_service`、`memory_service`、`credential_service`。显式服务优先于智能体配置；自行传入会话服务时，应通过该服务创建会话并使用 `run_async()`，避免会话创建与读取指向不同后端。其他 ADK 参数见 [Runner 参考](https://google.github.io/adk-docs/api-reference/python/google-adk.html#google.adk.runners.Runner)
 

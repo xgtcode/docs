@@ -1,6 +1,6 @@
 ---
 title: "A2UI"
-zh_link: "/productions/veadk/preview/zh/components/frontend/a2ui"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/frontend/a2ui"
 ---
 
 A2UI lets an agent return **rich, interactive UI** — cards, forms, row/column layouts — rendered natively by the frontend, instead of plain text only. It suits naturally visual answers: status cards, summaries, option lists, and small forms.
@@ -11,7 +11,7 @@ A2UI lets an agent return **rich, interactive UI** — cards, forms, row/column 
 
 ## Project setup
 
-Complete [model configuration](/productions/veadk/preview/en/components/agent/model) and use a tool-capable model with the ADK runtime. Create the files below; use the next example for `agent.py` and put `from . import agent` in `__init__.py`
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model) and use a tool-capable model with the ADK runtime. Create the files below; use the next example for `agent.py` and put `from . import agent` in `__init__.py`
 
 ```text
 agents/
@@ -47,7 +47,7 @@ veadk frontend --dev --agents-dir ./agents --open
 Select `ui_agent` and ask for three tasks displayed as cards. A successful response includes a structured card. If only text appears, check whether the model called the A2UI tool and whether the frontend recognized its components. Models do not guarantee UI output on every turn
 
 
-A2UI is rendered by the frontend. Launch [VeADK Frontend](/productions/veadk/preview/en/components/frontend/veadk-frontend) and chat with the agent to see the returned cards and other components.
+A2UI is rendered by the frontend. Launch [VeADK Frontend](/productions/veadk/archives/1.1.26/en/components/frontend/veadk-frontend) and chat with the agent to see the returned cards and other components.
 
 ## Custom components
 
@@ -56,7 +56,7 @@ Beyond the built-in set, you can add your own components (a revenue chart, an or
 - **Backend**: declare a component catalog that tells the model which components are available;
 - **Frontend**: provide a renderer for each component.
 
-Pass your catalog to the agent's `a2ui_catalog` to enable it. For the frontend renderer, see [VeADK Frontend · Add enterprise components](/productions/veadk/preview/en/components/frontend/veadk-frontend#adding-a-custom-enterprise-component).
+Pass your catalog to the agent's `a2ui_catalog` to enable it. For the frontend renderer, see [VeADK Frontend · Add enterprise components](/productions/veadk/archives/1.1.26/en/components/frontend/veadk-frontend#adding-a-custom-enterprise-component).
 
 <Note>
   Components without a renderer fall back to a collapsible JSON view, so a mismatch never breaks the UI.

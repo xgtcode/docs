@@ -1,13 +1,13 @@
 ---
 title: "Model"
-zh_link: "/productions/veadk/preview/zh/components/agent/model"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/model"
 ---
 
 The model interprets input, selects tools, and generates responses. Agents read global model settings from environment variables or `config.yaml` by default. Use `Agent` parameters to give individual agents their own models, endpoints, and credentials
 
 ## Set the model for a single agent
 
-Complete [installation](/productions/veadk/preview/en/get-started/installation), then select one platform configuration below. Enable the model in the corresponding account, or replace its name with an accessible model or inference endpoint
+Complete [installation](/productions/veadk/archives/1.1.26/en/get-started/installation), then select one platform configuration below. Enable the model in the corresponding account, or replace its name with an accessible model or inference endpoint
 
 <Tabs>
 <Tab title="Volcengine">
@@ -59,7 +59,7 @@ Run `python main.py` to print a response. If all agents share the settings above
 
 ### Model parameters and global settings
 
-Explicit constructor arguments override their corresponding global settings. Unspecified fields retain global values. VeADK searches for `config.yaml` from the current directory upward, and existing environment variables take precedence over matching file settings. See [quickstart](/productions/veadk/preview/en/get-started/quickstart) for YAML configuration
+Explicit constructor arguments override their corresponding global settings. Unspecified fields retain global values. VeADK searches for `config.yaml` from the current directory upward, and existing environment variables take precedence over matching file settings. See [quickstart](/productions/veadk/archives/1.1.26/en/get-started/quickstart) for YAML configuration
 
 | Parameter | Type | Default | Environment variable or behavior |
 | :--- | :--- | :--- | :--- |
@@ -150,7 +150,7 @@ Dictionaries can replace endpoint objects. Supported aliases are `model`, `provi
 ### Fallback limitations
 
 - `enable_responses=True` accepts only same-provider string fallbacks; endpoint objects or dictionaries fail at initialization
-- `codex` and `piagent` ignore fallback chains; use `adk` when fallbacks are required. See [runtime](/productions/veadk/preview/en/components/agent/runtime#switch-the-execution-backend)
+- `codex` and `piagent` ignore fallback chains; use `adk` when fallbacks are required. See [runtime](/productions/veadk/archives/1.1.26/en/components/agent/runtime#switch-the-execution-backend)
 - With a custom `model` object in the default runtime, `model_fallbacks` is ignored; configure fallbacks on that object instead
 
 ## Responses API
@@ -242,4 +242,4 @@ Responses caching is enabled by default. Cache hits depend on the service and re
 
 In event `usage_metadata`, `cached_content_token_count` counts cached input tokens and `prompt_token_count` counts total input tokens. Calculate their ratio only when the latter is greater than zero. Read events with `Runner.run_async` to inspect usage
 
-When `output_schema` is configured, VeADK removes cache settings that conflict with structured output. See [structured output](/productions/veadk/preview/en/components/agent/structured-output)
+When `output_schema` is configured, VeADK removes cache settings that conflict with structured output. See [structured output](/productions/veadk/archives/1.1.26/en/components/agent/structured-output)

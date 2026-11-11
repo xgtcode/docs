@@ -1,13 +1,13 @@
 ---
 title: "概述"
-en_link: "/productions/veadk/preview/en/components/observability"
+en_link: "/productions/veadk/archives/1.1.26/en/components/observability"
 ---
 
 VeADK 通过运行日志和调用链追踪帮助定位模型、工具及执行流程的问题。日志记录离散事件；追踪将一次请求中的多个操作关联起来，便于查看耗时和调用关系
 
 追踪使用 [OpenTelemetry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/) 的 span 与生成式 AI 属性。实际采集范围取决于运行时和工具的埋点；接入外部平台还需要匹配其协议、端点与凭证
 
-运行日志的级别与格式见[应用日志](/productions/veadk/preview/zh/components/observability/logging)
+运行日志的级别与格式见[应用日志](/productions/veadk/archives/1.1.26/zh/components/observability/logging)
 
 ## 核心概念
 
@@ -25,10 +25,10 @@ span 是一次可被追踪的执行单元，记录名称、起止时间、属性
 
 | 导出器 | 类 | 目标平台 | 文档 |
 | :--- | :--- | :--- | :--- |
-| APMPlus | `APMPlusExporter` | 火山引擎 APMPlus，追踪与指标 | [APMPlus](/productions/veadk/preview/zh/components/observability/apmplus) |
-| Cozeloop | `CozeloopExporter` | Cozeloop，链路观测与评测 | [Cozeloop](/productions/veadk/preview/zh/components/observability/cozeloop) |
-| TLS | `TLSExporter` | 火山引擎日志服务 TLS | [TLS 日志服务](/productions/veadk/preview/zh/components/observability/tls) |
-| 内存 | `InMemoryExporter` | 进程内存，本地调试与落盘 | [内存导出器](/productions/veadk/preview/zh/components/observability/inmemory) |
+| APMPlus | `APMPlusExporter` | 火山引擎 APMPlus，追踪与指标 | [APMPlus](/productions/veadk/archives/1.1.26/zh/components/observability/apmplus) |
+| Cozeloop | `CozeloopExporter` | Cozeloop，链路观测与评测 | [Cozeloop](/productions/veadk/archives/1.1.26/zh/components/observability/cozeloop) |
+| TLS | `TLSExporter` | 火山引擎日志服务 TLS | [TLS 日志服务](/productions/veadk/archives/1.1.26/zh/components/observability/tls) |
+| 内存 | `InMemoryExporter` | 进程内存，本地调试与落盘 | [内存导出器](/productions/veadk/archives/1.1.26/zh/components/observability/inmemory) |
 
 
 <Warning>
@@ -37,7 +37,7 @@ span 是一次可被追踪的执行单元，记录名称、起止时间、属性
 
 ## 给智能体挂载追踪器
 
-先完成[模型配置](/productions/veadk/preview/zh/components/agent/model)。下面的示例只保存在内存中，不需要外部观测平台；运行后会输出模型回复和本地 JSON 文件路径
+先完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。下面的示例只保存在内存中，不需要外部观测平台；运行后会输出模型回复和本地 JSON 文件路径
 
 ```python title="app.py" lines
 import asyncio
@@ -129,7 +129,7 @@ path = tracer.dump(user_id="demo-user", session_id="demo-session", path="traces"
 print(f"trace 已写入 {path}")
 ```
 
-导出的 JSON 包含每个 span 的名称、`span_id`、`trace_id`、起止时间、属性以及父 span 关系。更多细节参见[内存导出器](/productions/veadk/preview/zh/components/observability/inmemory)。
+导出的 JSON 包含每个 span 的名称、`span_id`、`trace_id`、起止时间、属性以及父 span 关系。更多细节参见[内存导出器](/productions/veadk/archives/1.1.26/zh/components/observability/inmemory)。
 
 ## 本地缓存限制
 
@@ -146,7 +146,7 @@ print(f"trace 已写入 {path}")
 export OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED=false
 ```
 
-关闭本地缓存后，span 标注、日志中的 Trace ID 和已配置的云端上报保持可用，`tracer.dump()` 写入空数组。同一个 `TracerProvider` 下的多个追踪器共享一份本地缓存额度。更多细节参见[内存导出器](/productions/veadk/preview/zh/components/observability/inmemory#本地缓存限制)。
+关闭本地缓存后，span 标注、日志中的 Trace ID 和已配置的云端上报保持可用，`tracer.dump()` 写入空数组。同一个 `TracerProvider` 下的多个追踪器共享一份本地缓存额度。更多细节参见[内存导出器](/productions/veadk/archives/1.1.26/zh/components/observability/inmemory#本地缓存限制)。
 
 ## 请求 Span 与流式 TTFT
 

@@ -1,13 +1,13 @@
 ---
 title: "VeADK Web"
-zh_link: "/productions/veadk/preview/zh/components/frontend/veadk-web"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-web"
 ---
 
 `veadk web` starts the Google ADK browser debugger to select local agents, send messages, and inspect events. It integrates memory configured on a VeADK root agent, offers optional OAuth2 login, and hides OpenAPI documentation pages by default
 
 ## Start
 
-Complete [installation](/productions/veadk/preview/en/get-started/installation) and [model configuration](/productions/veadk/preview/en/components/agent/model). Create these two files in `agents/assistant/`
+Complete [installation](/productions/veadk/archives/1.1.26/en/get-started/installation) and [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model). Create these two files in `agents/assistant/`
 
 ```python title="agents/assistant/__init__.py"
 from . import agent
@@ -86,7 +86,7 @@ veadk web ./agents \
   --oauth2-redirect-uri http://127.0.0.1:8000/oauth2/callback
 ```
 
-The command's OAuth2 adapter targets local HTTP debugging and permits non-HTTPS cookies. For production or public access, use [Frontend/Studio authentication](/productions/veadk/preview/en/components/frontend/veadk-frontend#authentication) or configure HTTPS middleware explicitly
+The command's OAuth2 adapter targets local HTTP debugging and permits non-HTTPS cookies. For production or public access, use [Frontend/Studio authentication](/productions/veadk/archives/1.1.26/en/components/frontend/veadk-frontend#authentication) or configure HTTPS middleware explicitly
 
 ## Automatic memory integration
 

@@ -1,11 +1,11 @@
 ---
 title: "Knowledge Base"
-zh_link: "/productions/veadk/preview/zh/components/knowledge"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/knowledge"
 ---
 
 A knowledge base (`KnowledgeBase`) is an agent's external source of knowledge — a place to store static material such as product docs, FAQs, and articles. Attach it to an agent and VeADK automatically injects a retrieval tool, so the model can retrieve relevant snippets when needed. The model and instructions determine whether retrieval happens; mounting a knowledge base does not guarantee a search on every turn or replace source verification
 
-Before running the local examples, install `veadk-python[extensions]` and complete [embedding configuration](/productions/veadk/preview/en/components/knowledge/local#environment-variables). Agent and Runner examples also require [model configuration](/productions/veadk/preview/en/components/agent/model)
+Before running the local examples, install `veadk-python[extensions]` and complete [embedding configuration](/productions/veadk/archives/1.1.26/en/components/knowledge/local#environment-variables). Agent and Runner examples also require [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model)
 
 ## Unified entry point: `KnowledgeBase`
 
@@ -54,14 +54,14 @@ Use `local` for development. Choose `viking`, `context_search`, or `openviking` 
 
 | Backend | Storage | Dependencies | Use case | Docs |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | In-memory vector index | `extensions` + embedding | Local debugging (data lost on exit) | [Local](/productions/veadk/preview/en/components/knowledge/local) |
-| `opensearch` | OpenSearch vector store | OpenSearch + `extensions` + embedding | Self-hosted vector search | [OpenSearch](/productions/veadk/preview/en/components/knowledge/opensearch) |
-| `redis` | Redis vector store | Redis (RediSearch) + `extensions` + embedding | Low-latency self-hosted vector search | [Redis](/productions/veadk/preview/en/components/knowledge/redis) |
-| `milvus` | Milvus collection | Milvus + `extensions` + embedding | Self-hosted or managed Milvus | [Milvus](/productions/veadk/preview/en/components/knowledge/milvus) |
-| `tos_vector` | TOS vector bucket | Volcengine account + `extensions` + embedding | Volcengine object-storage vector store | [TOS Vector](/productions/veadk/preview/en/components/knowledge/tos-vector) |
-| `viking` | VikingDB knowledge base (managed) | Volcengine account | Recommended for production | [VikingDB](/productions/veadk/preview/en/components/knowledge/viking) |
-| `context_search` | Context Search (managed) | Volcengine account | Recommended for production | [Context Search](/productions/veadk/preview/en/components/knowledge/context-search) |
-| `openviking` | OpenViking resource tree | OpenViking service | Server-side resource processing and retrieval | [OpenViking](/productions/veadk/preview/en/components/knowledge/openviking) |
+| `local` | In-memory vector index | `extensions` + embedding | Local debugging (data lost on exit) | [Local](/productions/veadk/archives/1.1.26/en/components/knowledge/local) |
+| `opensearch` | OpenSearch vector store | OpenSearch + `extensions` + embedding | Self-hosted vector search | [OpenSearch](/productions/veadk/archives/1.1.26/en/components/knowledge/opensearch) |
+| `redis` | Redis vector store | Redis (RediSearch) + `extensions` + embedding | Low-latency self-hosted vector search | [Redis](/productions/veadk/archives/1.1.26/en/components/knowledge/redis) |
+| `milvus` | Milvus collection | Milvus + `extensions` + embedding | Self-hosted or managed Milvus | [Milvus](/productions/veadk/archives/1.1.26/en/components/knowledge/milvus) |
+| `tos_vector` | TOS vector bucket | Volcengine account + `extensions` + embedding | Volcengine object-storage vector store | [TOS Vector](/productions/veadk/archives/1.1.26/en/components/knowledge/tos-vector) |
+| `viking` | VikingDB knowledge base (managed) | Volcengine account | Recommended for production | [VikingDB](/productions/veadk/archives/1.1.26/en/components/knowledge/viking) |
+| `context_search` | Context Search (managed) | Volcengine account | Recommended for production | [Context Search](/productions/veadk/archives/1.1.26/en/components/knowledge/context-search) |
+| `openviking` | OpenViking resource tree | OpenViking service | Server-side resource processing and retrieval | [OpenViking](/productions/veadk/archives/1.1.26/en/components/knowledge/openviking) |
 
 ## Binding to an agent
 

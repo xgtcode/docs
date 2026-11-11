@@ -1,18 +1,18 @@
 ---
 title: "远端沙箱智能体"
-en_link: "/productions/veadk/preview/en/components/agent/remote-sandbox-agent"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/remote-sandbox-agent"
 ---
 
 `AgentkitRemoteSandboxAgent` 将一个文本任务交给 AgentKit 中的 Skill 或 CodeEnv 沙箱执行，并返回进度、工具事件和结果。它可以直接作为根智能体，也可以作为协调智能体的子智能体。`SkillSandboxAgent` 是其子类，预设 Skill 类型和独立 Tool ID 环境变量，适用于只需技能沙箱的场景
 
-与[代码沙箱工具](/productions/veadk/preview/zh/components/tools/code-sandbox)相比，这个入口委派完整任务，由远端智能体决定执行步骤；`run_code`、`execute_skills` 则作为工具供当前智能体调用
+与[代码沙箱工具](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)相比，这个入口委派完整任务，由远端智能体决定执行步骤；`run_code`、`execute_skills` 则作为工具供当前智能体调用
 
 ## 依赖与前提
 
 - 安装 VeADK，并准备有权访问的 AgentKit Tool ID、地域和账号凭证
 - Skill 沙箱需提供兼容的 A2A 服务；CodeEnv 镜像需支持 Codex Worker 协议 v1 和 `tool_events`
 - 运行环境能够访问 AgentKit 控制面和返回的沙箱会话端点
-- 使用本地协调智能体时，还需完成[模型配置](/productions/veadk/preview/zh/get-started/quickstart)；直接运行远端智能体时，模型能力由远端服务提供
+- 使用本地协调智能体时，还需完成[模型配置](/productions/veadk/archives/1.1.26/zh/get-started/quickstart)；直接运行远端智能体时，模型能力由远端服务提供
 
 <Warning>
 运行示例会创建或复用云端沙箱会话，可能产生资源费用。沙箱可执行代码、命令和文件操作，并访问其网络可达的服务。请使用可信镜像，限制数据、网络和权限，并确认任务内容可以发送到该沙箱
@@ -200,7 +200,7 @@ if __name__ == "__main__":
 
 当前上下文存在入站凭证时，智能体会通过 `inbound_auth` 请求头转发给沙箱，用于延续原始用户身份。没有入站凭证时不发送该头，这不代表绕过沙箱自身的访问认证；`api_key` 配置的 `X-API-Key` 与转发用户身份是不同用途
 
-应只向受信任的沙箱转发身份凭证，配置方式见[入站认证](/productions/veadk/preview/zh/components/security/inbound)
+应只向受信任的沙箱转发身份凭证，配置方式见[入站认证](/productions/veadk/archives/1.1.26/zh/components/security/inbound)
 
 ## 错误处理
 

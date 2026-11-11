@@ -1,6 +1,6 @@
 ---
 title: "Harness 服务部署"
-en_link: "/productions/veadk/preview/en/deploy/harness"
+en_link: "/productions/veadk/archives/1.1.26/en/deploy/harness"
 ---
 
 Harness 服务是一个独立的 VeADK 智能体运行时，通过 `veadk harness` 命令行进行创建、配置和部署。部署后，Harness 服务以 AgentKit Runtime 的形式运行，提供对话接口、会话管理和运行时配置覆盖能力，适合需要独立托管智能体并通过 HTTP API 调用的场景。
@@ -148,7 +148,7 @@ veadk harness add \
 当前版本虽然在帮助中列出 `--builtin-tools`、`--mcp-router-id`、`--selected-skills`、`--mcp` 与 `--registry`，但 `add` 不会保存这些值。结构化资源请按下文直接编辑 YAML；OIDC 选项属于 `deploy`，不属于 `add`
 </Note>
 
-连接字段被 CLI 接受不代表所有后端都会使用。Redis 用户名在知识库中可用，在长期记忆中不生效；OpenSearch 的 `secret_token` 不用于当前知识库或长期记忆连接。详见 [Redis 长期记忆](/productions/veadk/preview/zh/components/memory/redis)和 [OpenSearch 知识库](/productions/veadk/preview/zh/components/knowledge/opensearch)
+连接字段被 CLI 接受不代表所有后端都会使用。Redis 用户名在知识库中可用，在长期记忆中不生效；OpenSearch 的 `secret_token` 不用于当前知识库或长期记忆连接。详见 [Redis 长期记忆](/productions/veadk/archives/1.1.26/zh/components/memory/redis)和 [OpenSearch 知识库](/productions/veadk/archives/1.1.26/zh/components/knowledge/opensearch)
 
 ### harness.yaml 配置结构
 
@@ -247,7 +247,7 @@ harness:
 | `mode` | `"allow" \| "deny"` | — | 筛选模式 |
 | `ids` | `list[str]` | `[]` | 参与筛选的技能 ID 列表 |
 
-`mode` 为 `allow` 时仅加载 ID 在列表中的技能；`mode` 为 `deny` 时排除 ID 在列表中的技能。多个 `skillspace` 条目可分别设置各自的 `skill_space_policy`，按空间独立筛选。当任一条目设置了 `skill_space_policy` 时，`SKILL_SPACE_POLICY` 环境变量不再生效，详见[技能](/productions/veadk/preview/zh/components/agent/skills#harness-技能空间筛选)
+`mode` 为 `allow` 时仅加载 ID 在列表中的技能；`mode` 为 `deny` 时排除 ID 在列表中的技能。多个 `skillspace` 条目可分别设置各自的 `skill_space_policy`，按空间独立筛选。当任一条目设置了 `skill_space_policy` 时，`SKILL_SPACE_POLICY` 环境变量不再生效，详见[技能](/productions/veadk/archives/1.1.26/zh/components/agent/skills#harness-技能空间筛选)
 
 ```yaml title="harness.yaml" lines
 harness:
@@ -288,7 +288,7 @@ harness_enhance:
 | `profile` | `str` | `default` | 插件配置场景 |
 | `compression_provider` | `str` | `builtin` | 压缩提供方，可选 builtin 或 headroom |
 
-HTTP 调用可通过请求体顶层的 `harness_enhance` 临时覆盖这些设置，其中 `components` 使用逗号分隔的字符串。压缩可能损失细节，回答校验也不保证事实正确；组件行为和限制见 [Harness 扩展](/productions/veadk/preview/zh/components/extensions/harness)
+HTTP 调用可通过请求体顶层的 `harness_enhance` 临时覆盖这些设置，其中 `components` 使用逗号分隔的字符串。压缩可能损失细节，回答校验也不保证事实正确；组件行为和限制见 [Harness 扩展](/productions/veadk/archives/1.1.26/zh/components/extensions/harness)
 
 ## 查看配置
 

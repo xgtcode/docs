@@ -1,6 +1,6 @@
 ---
 title: "APMPlus"
-zh_link: "/productions/veadk/preview/zh/components/observability/apmplus"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/observability/apmplus"
 ---
 
 `APMPlusExporter` reports span data to the Volcengine APMPlus platform over OTLP (gRPC). Beyond traces, its built-in metrics uploader collects model invocation counts, token usage, operation duration, exception counts, tool latency, and skill download and load counts, writing them to APMPlus metrics dashboards.
@@ -25,7 +25,7 @@ Skill download and load counts are recorded through the `gen_ai_skill_download_c
 
 ## Prerequisites
 
-Complete [installation](/productions/veadk/preview/en/get-started/installation) and [model configuration](/productions/veadk/preview/en/components/agent/model), then set the environment variables below before starting Python. Replace placeholders with accessible resources and valid credentials
+Complete [installation](/productions/veadk/archives/1.1.26/en/get-started/installation) and [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model), then set the environment variables below before starting Python. Replace placeholders with accessible resources and valid credentials
 
 <Warning>
 APMPlus receives traces and metrics. Set an App Key explicitly where possible; otherwise VeADK uses cloud credentials to request a token. The current gRPC export connection is unencrypted, so use a network that meets your deployment requirements
@@ -122,7 +122,7 @@ With `ENABLE_APMPLUS=true`, `Agent` creates an `OpentelemetryTracer` and attache
 </Tip>
 
 <Note>
-If a global `TracerProvider` already exists when `OpentelemetryTracer` is initialized, VeADK reuses that provider and skips registering the APMPlus span processor. The exporter object remains in the list; verify that the existing provider actually reports to APMPlus. You can check this with the `apmplus_managed_externally` property; see [Observability overview](/productions/veadk/preview/en/components/observability) for details.
+If a global `TracerProvider` already exists when `OpentelemetryTracer` is initialized, VeADK reuses that provider and skips registering the APMPlus span processor. The exporter object remains in the list; verify that the existing provider actually reports to APMPlus. You can check this with the `apmplus_managed_externally` property; see [Observability overview](/productions/veadk/archives/1.1.26/en/components/observability) for details.
 </Note>
 
 <Note>

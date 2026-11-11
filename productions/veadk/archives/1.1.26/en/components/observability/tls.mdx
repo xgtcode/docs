@@ -1,6 +1,6 @@
 ---
 title: "TLS log service"
-zh_link: "/productions/veadk/preview/zh/components/observability/tls"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/observability/tls"
 ---
 
 `TLSExporter` reports span data to the Volcengine TLS log service over OTLP (HTTP). Data is organized by TLS topic, which suits centralized storage, long-term retention, and cross-service trace analysis.
@@ -13,7 +13,7 @@ zh_link: "/productions/veadk/preview/zh/components/observability/tls"
 
 ## Prerequisites
 
-Complete [installation](/productions/veadk/preview/en/get-started/installation) and [model configuration](/productions/veadk/preview/en/components/agent/model), then set the environment variables below before starting Python. Replace placeholders with accessible resources and valid credentials
+Complete [installation](/productions/veadk/archives/1.1.26/en/get-started/installation) and [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model), then set the environment variables below before starting Python. Replace placeholders with accessible resources and valid credentials
 
 <Warning>
 TLS receives traces and may incur storage charges. Specify an existing trace topic ID where possible; otherwise VeADK calls TLS to obtain or create default trace resources. This example uses a Volcengine TLS endpoint. With `CLOUD_PROVIDER=byteplus`, credential configuration can use BytePlus AK/SK. Match the endpoint, region, and topic to the target service; using a BytePlus model alone does not configure TLS

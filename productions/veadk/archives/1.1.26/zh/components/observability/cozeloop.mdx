@@ -1,6 +1,6 @@
 ---
 title: "Cozeloop"
-en_link: "/productions/veadk/preview/en/components/observability/cozeloop"
+en_link: "/productions/veadk/archives/1.1.26/en/components/observability/cozeloop"
 ---
 
 `CozeloopExporter` 将 span 数据以 OTLP（HTTP）协议上报至Cozeloop平台。接入后，可通过Cozeloop的 Trace 功能观测调用链路，或通过其评测功能对智能体进行评测。数据按工作空间隔离。
@@ -13,7 +13,7 @@ en_link: "/productions/veadk/preview/en/components/observability/cozeloop"
 
 ## 接入前准备
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)和[模型配置](/productions/veadk/preview/zh/components/agent/model)，再设置以下环境变量。占位符需要替换为有权限访问的实际资源和凭证；在启动 Python 前完成配置
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)和[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)，再设置以下环境变量。占位符需要替换为有权限访问的实际资源和凭证；在启动 Python 前完成配置
 
 <Warning>
 Cozeloop 会接收链路数据。建议显式指定已存在的工作空间 ID；省略时会使用令牌尝试创建默认工作空间，需要相应权限。配置导出器不会自动创建或执行评测任务

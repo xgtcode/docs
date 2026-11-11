@@ -1,13 +1,13 @@
 ---
 title: "Observability"
-zh_link: "/productions/veadk/preview/zh/components/observability"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/observability"
 ---
 
 VeADK provides application logs and traces to diagnose model calls, tools, and agent execution. Logs record individual events; traces connect operations within a request so you can inspect timing and relationships
 
 Tracing uses [OpenTelemetry](https://opentelemetry.io/docs/specs/semconv/registry/attributes/gen-ai/) spans and generative AI attributes. Coverage depends on the instrumentation provided by the runtime and tools. External backends also require compatible protocols, endpoints, and credentials
 
-See [Application logging](/productions/veadk/preview/en/components/observability/logging) for log levels and formatting
+See [Application logging](/productions/veadk/archives/1.1.26/en/components/observability/logging) for log levels and formatting
 
 ## Core concepts
 
@@ -25,10 +25,10 @@ An exporter sends span data to a specific backend platform. Each exporter target
 
 | Exporter | Class | Target platform | Docs |
 | :--- | :--- | :--- | :--- |
-| APMPlus | `APMPlusExporter` | Volcengine APMPlus, traces and metrics | [APMPlus](/productions/veadk/preview/en/components/observability/apmplus) |
-| Cozeloop | `CozeloopExporter` | Cozeloop, trace observation and evaluation | [Cozeloop](/productions/veadk/preview/en/components/observability/cozeloop) |
-| TLS | `TLSExporter` | Volcengine TLS log service | [TLS](/productions/veadk/preview/en/components/observability/tls) |
-| In-memory | `InMemoryExporter` | In-process memory, local debugging and dumping | [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory) |
+| APMPlus | `APMPlusExporter` | Volcengine APMPlus, traces and metrics | [APMPlus](/productions/veadk/archives/1.1.26/en/components/observability/apmplus) |
+| Cozeloop | `CozeloopExporter` | Cozeloop, trace observation and evaluation | [Cozeloop](/productions/veadk/archives/1.1.26/en/components/observability/cozeloop) |
+| TLS | `TLSExporter` | Volcengine TLS log service | [TLS](/productions/veadk/archives/1.1.26/en/components/observability/tls) |
+| In-memory | `InMemoryExporter` | In-process memory, local debugging and dumping | [In-memory exporter](/productions/veadk/archives/1.1.26/en/components/observability/inmemory) |
 
 
 <Warning>
@@ -37,7 +37,7 @@ Traces may contain user input, model responses, and tool data. Before enabling e
 
 ## Attaching a tracer to an agent
 
-Complete [model configuration](/productions/veadk/preview/en/components/agent/model) first. This example stores traces locally and does not require an external observability backend. Running it prints a model response and the path to a JSON trace file
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model) first. This example stores traces locally and does not require an external observability backend. Running it prints a model response and the path to a JSON trace file
 
 ```python title="app.py" lines
 import asyncio
@@ -129,7 +129,7 @@ path = tracer.dump(user_id="demo-user", session_id="demo-session", path="traces"
 print(f"trace written to {path}")
 ```
 
-The exported JSON contains, for each span, its name, `span_id`, `trace_id`, start/end times, attributes, and parent span. See [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory) for details.
+The exported JSON contains, for each span, its name, `span_id`, `trace_id`, start/end times, attributes, and parent span. See [In-memory exporter](/productions/veadk/archives/1.1.26/en/components/observability/inmemory) for details.
 
 ## Local cache limits
 
@@ -146,7 +146,7 @@ The in-memory exporter retains the most recent 1024 spans by default, with an es
 export OBSERVABILITY_OPENTELEMETRY_INMEMORY_ENABLED=false
 ```
 
-When local caching is disabled, span annotation, Trace IDs in logs, and configured cloud export remain available; `tracer.dump()` writes an empty array. Multiple tracers under the same `TracerProvider` share one local cache budget. See [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory#local-cache-limits) for details.
+When local caching is disabled, span annotation, Trace IDs in logs, and configured cloud export remain available; `tracer.dump()` writes an empty array. Multiple tracers under the same `TracerProvider` share one local cache budget. See [In-memory exporter](/productions/veadk/archives/1.1.26/en/components/observability/inmemory#local-cache-limits) for details.
 
 ## Request spans and streaming TTFT
 

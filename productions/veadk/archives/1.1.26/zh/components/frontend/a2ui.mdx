@@ -1,6 +1,6 @@
 ---
 title: "A2UI"
-en_link: "/productions/veadk/preview/en/components/frontend/a2ui"
+en_link: "/productions/veadk/archives/1.1.26/en/components/frontend/a2ui"
 ---
 
 A2UI 让智能体不只返回纯文本，还能返回**富交互界面**，包括卡片、表单、行列布局等，由前端以原生组件渲染。适合状态卡片、信息摘要、选项列表、简单表单等天然适合可视化的场景。
@@ -11,7 +11,7 @@ A2UI 让智能体不只返回纯文本，还能返回**富交互界面**，包�
 
 ## 项目准备
 
-先完成[模型配置](/productions/veadk/preview/zh/components/agent/model)，使用支持工具调用的模型与 ADK 运行时。在工作目录创建以下文件；`agent.py` 使用下方示例，`__init__.py` 内容为 `from . import agent`
+先完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)，使用支持工具调用的模型与 ADK 运行时。在工作目录创建以下文件；`agent.py` 使用下方示例，`__init__.py` 内容为 `from . import agent`
 
 ```text
 agents/
@@ -47,7 +47,7 @@ veadk frontend --dev --agents-dir ./agents --open
 选择 `ui_agent`，发送“请用卡片展示今天的三项待办”。成功时回复中出现结构化卡片。若只有文本，先检查是否发生 A2UI 工具调用，再检查前端是否识别返回的组件；模型不会保证每轮都生成界面
 
 
-A2UI 界面由前端渲染。用 [VeADK Frontend](/productions/veadk/preview/zh/components/frontend/veadk-frontend) 启动界面，与智能体对话即可看到返回的卡片等组件。
+A2UI 界面由前端渲染。用 [VeADK Frontend](/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-frontend) 启动界面，与智能体对话即可看到返回的卡片等组件。
 
 ## 自定义组件
 
@@ -56,7 +56,7 @@ A2UI 界面由前端渲染。用 [VeADK Frontend](/productions/veadk/preview/zh/
 - **后端**：声明一份组件清单，告诉模型有哪些可用组件；
 - **前端**：为每个组件提供一个渲染器。
 
-把自定义组件清单传给智能体的 `a2ui_catalog` 即可启用。前端渲染器的接入方式见 [VeADK Frontend · 添加企业自定义组件](/productions/veadk/preview/zh/components/frontend/veadk-frontend#添加企业自定义组件)。
+把自定义组件清单传给智能体的 `a2ui_catalog` 即可启用。前端渲染器的接入方式见 [VeADK Frontend · 添加企业自定义组件](/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-frontend#添加企业自定义组件)。
 
 <Note>
   未提供渲染器的组件会回退为可折叠的 JSON 视图，因此不会导致界面出错。

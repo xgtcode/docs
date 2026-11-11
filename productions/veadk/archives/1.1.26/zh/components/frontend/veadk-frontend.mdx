@@ -1,15 +1,15 @@
 ---
 title: "VeADK Frontend"
-en_link: "/productions/veadk/preview/en/components/frontend/veadk-frontend"
+en_link: "/productions/veadk/archives/1.1.26/en/components/frontend/veadk-frontend"
 ---
 
 VeADK 自带一个生产级 React 前端——一个面向企业的智能体应用工作台，通过 Google ADK API Server 与智能体通信：在界面中创建、调试、管理智能体，并将其接入使用。`veadk frontend` 是一个自包含的启动器：在默认模式下，它以单个进程同时提供这套 React 界面与智能体 API，两者同源，因此无需单独部署后端，也无需处理跨域配置。
 
 ## 功能一览
 
-- **创建智能体**：当前可通过自定义配置创建智能体，产出可运行的 VeADK 项目（`agent.py`、`requirements.txt` 等），并可在线预览、编辑与下载。其他创建方式及其可用范围见 [Studio](/productions/veadk/preview/zh/components/frontend/studio)。
+- **创建智能体**：当前可通过自定义配置创建智能体，产出可运行的 VeADK 项目（`agent.py`、`requirements.txt` 等），并可在线预览、编辑与下载。其他创建方式及其可用范围见 [Studio](/productions/veadk/archives/1.1.26/zh/components/frontend/studio)。
 - **多模态消息**：上传图片、TXT、Markdown、PDF 和视频；用户附件与模型返回的媒体均可预览并随历史会话重新加载。
-- **对话与调试**：与智能体多轮对话，展示思考过程、工具调用、子智能体移交、Token 与用时；对话支持渲染 ECharts 与 Mermaid 图表（含源码切换和放大查看）、图片放大、视频与音频播放、文件预览和长时任务进度；内置工具（网页搜索、图像生成、视频生成、长期记忆检索、知识库检索）在执行时显示专属图标与运行状态；对话中还会渲染智能体返回的 [A2UI](/productions/veadk/preview/zh/components/frontend/a2ui) 富界面卡片。
+- **对话与调试**：与智能体多轮对话，展示思考过程、工具调用、子智能体移交、Token 与用时；对话支持渲染 ECharts 与 Mermaid 图表（含源码切换和放大查看）、图片放大、视频与音频播放、文件预览和长时任务进度；内置工具（网页搜索、图像生成、视频生成、长期记忆检索、知识库检索）在执行时显示专属图标与运行状态；对话中还会渲染智能体返回的 [A2UI](/productions/veadk/archives/1.1.26/zh/components/frontend/a2ui) 富界面卡片。
 - **停止生成**：智能体回复过程中，输入框的发送按钮变为停止按钮，点击后中断当前回复。已接收的内容保留在对话中，停止后可立即在同一会话中发送下一条消息。该能力在 `veadk frontend` 与 `veadk studio` 的对话页面（含沙箱会话）均生效。
 - **上下文用量指示器**：输入框发送按钮旁显示当前模型的上下文窗口用量。悬停或聚焦时展开 100 格用量构成图，将上下文占用分为系统与工具（估算）、输入与历史、输出与思考、剩余容量四部分。系统与工具占用为估算值，因为模型使用量统计未单独报告该部分。上下文窗口大小按云服务商和模型名称确定。该能力在 `veadk frontend` 与 `veadk studio` 的智能体对话页面均生效。
 - **智能体选择器**：左上角切换智能体；悬停可查看该智能体的模型与挂载的工具。
@@ -33,7 +33,7 @@ VeADK 自带一个生产级 React 前端——一个面向企业的智能体应�
 
 ## 运行
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)与[模型配置](/productions/veadk/preview/zh/components/agent/model)。发行包已带界面，无需先安装 Node.js 或构建前端。准备一个包含 `agent.py` 和 `__init__.py` 的智能体目录，并在 `agent.py` 中暴露 `root_agent`；完整目录示例见 [A2UI](/productions/veadk/preview/zh/components/frontend/a2ui#项目准备)
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)与[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。发行包已带界面，无需先安装 Node.js 或构建前端。准备一个包含 `agent.py` 和 `__init__.py` 的智能体目录，并在 `agent.py` 中暴露 `root_agent`；完整目录示例见 [A2UI](/productions/veadk/archives/1.1.26/zh/components/frontend/a2ui#项目准备)
 
 ```bash
 veadk frontend --dev --agents-dir ./agents --open
@@ -214,7 +214,7 @@ VeADK Frontend 可能部署到公网，因此会限制用户可控制的地址�
 - AgentKit 部署文件必须位于本次项目目录内，绝对路径和跳出目录的相对路径会被拒绝。
 - 静态文件只允许从已构建的界面目录读取，不能通过路径跳转读取主机上的其他文件。
 
-这些限制不会代替身份认证。公网部署仍应启用 SSO 或受信任的上游网关，并按最小权限原则配置云资源凭证。只需要创建和管理能力时，可以使用[Studio 智能体工作台](/productions/veadk/preview/zh/components/frontend/studio)。
+这些限制不会代替身份认证。公网部署仍应启用 SSO 或受信任的上游网关，并按最小权限原则配置云资源凭证。只需要创建和管理能力时，可以使用[Studio 智能体工作台](/productions/veadk/archives/1.1.26/zh/components/frontend/studio)。
 
 ## 渲染流程
 
@@ -222,7 +222,7 @@ VeADK Frontend 可能部署到公网，因此会限制用户可控制的地址�
 
 ## 添加企业自定义组件
 
-一个自定义组件由两个部分组成，它们共享同一个 catalog id。后端部分见 [A2UI](/productions/veadk/preview/zh/components/frontend/a2ui#自定义组件)；前端部分如下。
+一个自定义组件由两个部分组成，它们共享同一个 catalog id。后端部分见 [A2UI](/productions/veadk/archives/1.1.26/zh/components/frontend/a2ui#自定义组件)；前端部分如下。
 
 **前端部分** —— 新建一个目录即可自动注册，无需修改任何中心文件：
 

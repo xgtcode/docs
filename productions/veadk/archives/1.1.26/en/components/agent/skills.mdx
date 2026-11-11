@@ -1,6 +1,6 @@
 ---
 title: "Skills"
-zh_link: "/productions/veadk/preview/zh/components/agent/skills"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/skills"
 ---
 
 Skills package task instructions, reference material, and optional scripts in reusable directories. Agents can discover skills before loading their full instructions. Code execution is involved only when a skill uses scripts and an executor is configured
@@ -10,9 +10,9 @@ Skills package task instructions, reference material, and optional scripts in re
 | Local skills maintained with the application | `load_skill_from_dir` and `SkillToolset` |
 | On-demand access to cloud skill spaces | `VeSkillRegistry` and `SkillToolset` |
 | Shared skills in a deployed Harness | Harness `skills` configuration |
-| Remote skill workflows | `skills_sandbox` mode or a [remote sandbox agent](/productions/veadk/preview/en/components/agent/remote-sandbox-agent) |
+| Remote skill workflows | `skills_sandbox` mode or a [remote sandbox agent](/productions/veadk/archives/1.1.26/en/components/agent/remote-sandbox-agent) |
 
-The `SkillToolset` examples use the Google ADK 2.2 API. Complete [installation and model configuration](/productions/veadk/preview/en/get-started/quickstart) first
+The `SkillToolset` examples use the Google ADK 2.2 API. Complete [installation and model configuration](/productions/veadk/archives/1.1.26/en/get-started/quickstart) first
 
 ## Local skills
 
@@ -200,7 +200,7 @@ export SKILL_SPACE_POLICY='{"spaces": {"ss-a": {"mode": "allow", "ids": ["skill-
 The policy value must not exceed 8192 bytes. A malformed policy disables all cloud skill loading to avoid accidentally exposing an unrestricted set of skills
 </Note>
 
-When `SKILL_SPACE_POLICY` is set, VeADK automatically forwards it to remote sandbox sessions so that skill loading inside the sandbox follows the same filter. No manual pass-through is needed when using `execute_skills`, `invoke_skill`, `poll_skill`, or `run_sandbox_agent`; see [Code sandboxes](/productions/veadk/preview/en/components/tools/code-sandbox)
+When `SKILL_SPACE_POLICY` is set, VeADK automatically forwards it to remote sandbox sessions so that skill loading inside the sandbox follows the same filter. No manual pass-through is needed when using `execute_skills`, `invoke_skill`, `poll_skill`, or `run_sandbox_agent`; see [Code sandboxes](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox)
 
 <Note>
 A `skill_space_policy` set on an individual `skillspace` entry in Harness `selected_skills` takes precedence over the `SKILL_SPACE_POLICY` environment variable; see [Harness skills center](#harness-skills-center)
@@ -208,7 +208,7 @@ A `skill_space_policy` set on an individual `skillspace` entry in Harness `selec
 
 ## Harness skills center
 
-Create a project and configure deployment credentials using [Harness deployment](/productions/veadk/preview/en/deploy/harness). Replace the example names and IDs with accessible skills. Plain names or slugs identify Skill Hub skills; the `space:` prefix identifies an AgentKit skill space
+Create a project and configure deployment credentials using [Harness deployment](/productions/veadk/archives/1.1.26/en/deploy/harness). Replace the example names and IDs with accessible skills. Plain names or slugs identify Skill Hub skills; the `space:` prefix identifies an AgentKit skill space
 
 ```bash  lines
 cd my-harness
@@ -240,7 +240,7 @@ If any skill cannot be downloaded, lacks a valid `SKILL.md`, or has an invalid f
 
 ### Harness skill space filtering
 
-Through `selected_skills` in `harness.yaml` (see [Harness deployment](/productions/veadk/preview/en/deploy/harness#structured-resource-configuration)), you can set a session-level filter policy for `skillspace`-source skill spaces. Add a `skill_space_policy` field to a `selected_skills` entry to filter skills by ID within that space without setting the `SKILL_SPACE_POLICY` environment variable
+Through `selected_skills` in `harness.yaml` (see [Harness deployment](/productions/veadk/archives/1.1.26/en/deploy/harness#structured-resource-configuration)), you can set a session-level filter policy for `skillspace`-source skill spaces. Add a `skill_space_policy` field to a `selected_skills` entry to filter skills by ID within that space without setting the `SKILL_SPACE_POLICY` environment variable
 
 `skill_space_policy` is only valid when `source` is `skillspace` and requires `skill_space_id` to be set
 
@@ -337,7 +337,7 @@ Use `references/` for material read on demand, `assets/` for templates or media,
 | `skills_sandbox` | Executes through `execute_skills` in a remote skill sandbox |
 | `aio_sandbox` | Uses an AgentKit All-in-one tool sandbox |
 
-Sandbox modes remain available. Before running this example, configure `SKILL_SOURCE_ID`, the model, and the credentials and Tool ID required by [code sandbox](/productions/veadk/preview/en/components/tools/code-sandbox). Confirm that the sandbox has the required skills and network permissions:
+Sandbox modes remain available. Before running this example, configure `SKILL_SOURCE_ID`, the model, and the credentials and Tool ID required by [code sandbox](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox). Confirm that the sandbox has the required skills and network permissions:
 
 ```python sandbox_skills.py lines
 import asyncio
@@ -365,4 +365,4 @@ if __name__ == "__main__":
 
 `enable_dynamic_load_skills=True` applies to the legacy `Agent.skills` entry. It rereads sources before each turn and updates skill lists, instructions, and tools. The toolset is initialized even if `skills` starts empty. Applications sharing a mutable agent across concurrent calls must manage refresh and invocation concurrency
 
-The flag does not hot-reload local objects passed directly to `SkillToolset(skills=[...])`. Registry-based loading does not require this flag. See [runtime compatibility](/productions/veadk/preview/en/components/agent/runtime#runtime-compatibility) for external-runtime restrictions on legacy skill modes
+The flag does not hot-reload local objects passed directly to `SkillToolset(skills=[...])`. Registry-based loading does not require this flag. See [runtime compatibility](/productions/veadk/archives/1.1.26/en/components/agent/runtime#runtime-compatibility) for external-runtime restrictions on legacy skill modes

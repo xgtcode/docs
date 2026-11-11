@@ -1,6 +1,6 @@
 ---
 title: "Code sandboxes"
-zh_link: "/productions/veadk/preview/zh/components/tools/code-sandbox"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox"
 ---
 
 ## Overview
@@ -26,7 +26,7 @@ Import paths:
 - `from veadk.tools.builtin_tools.poll_skill import poll_skill`
 
 <Note>
-If you need to delegate a complete task to the remote sandbox rather than having the coordinator agent call individual tools, use the `AgentkitRemoteSandboxAgent` sub-agent. See [Remote sandbox sub-agent](/productions/veadk/preview/en/components/agent/remote-sandbox-agent).
+If you need to delegate a complete task to the remote sandbox rather than having the coordinator agent call individual tools, use the `AgentkitRemoteSandboxAgent` sub-agent. See [Remote sandbox sub-agent](/productions/veadk/archives/1.1.26/en/components/agent/remote-sandbox-agent).
 </Note>
 
 ## Environment & prerequisites
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 </Warning>
 
 <Note>
-When `SKILL_SPACE_POLICY` is set, VeADK automatically forwards it to sandbox sessions created by `execute_skills`, `invoke_skill`, `poll_skill`, and `run_sandbox_agent`, so skill loading inside the sandbox follows the same filter as the local environment. No manual pass-through via `extra_env_vars` is needed. See [Skills](/productions/veadk/preview/en/components/agent/skills#skill-space-policy)
+When `SKILL_SPACE_POLICY` is set, VeADK automatically forwards it to sandbox sessions created by `execute_skills`, `invoke_skill`, `poll_skill`, and `run_sandbox_agent`, so skill loading inside the sandbox follows the same filter as the local environment. No manual pass-through via `extra_env_vars` is needed. See [Skills](/productions/veadk/archives/1.1.26/en/components/agent/skills#skill-space-policy)
 </Note>
 
 ## Skill sandbox execution
@@ -278,7 +278,7 @@ When `SKILL_SPACE_POLICY` is set, VeADK automatically forwards it to sandbox ses
 When `execute_skills` is called, VeADK reads the inbound identity credential from the credential service (credential key `inbound_auth`) and forwards it to the skills sandbox in the `inbound_auth` request header, so the sandbox workflow runs under the original user identity. If the current request carries no inbound credential, the header is omitted and that user identity is not forwarded; valid cloud credentials and permissions are still required to access the sandbox.
 
 <Note>
-For the source and configuration of inbound identity credentials, see [Inbound authentication](/productions/veadk/preview/en/components/security/inbound).
+For the source and configuration of inbound identity credentials, see [Inbound authentication](/productions/veadk/archives/1.1.26/en/components/security/inbound).
 </Note>
 
 ### Parameters
@@ -347,7 +347,7 @@ if __name__ == "__main__":
 
 ## Parallel call isolation
 
-When a [synchronous tool thread pool](/productions/veadk/preview/en/components/agent/runtime#parallel-synchronous-tool-execution) is configured and the model issues multiple `run_code` calls in the same turn, VeADK assigns each call a distinct sandbox session ID by appending its function-call identifier to the base session ID. This ensures that each `run_code` call runs in an isolated sandbox, with no interference between their file systems and runtime environments.
+When a [synchronous tool thread pool](/productions/veadk/archives/1.1.26/en/components/agent/runtime#parallel-synchronous-tool-execution) is configured and the model issues multiple `run_code` calls in the same turn, VeADK assigns each call a distinct sandbox session ID by appending its function-call identifier to the base session ID. This ensures that each `run_code` call runs in an isolated sandbox, with no interference between their file systems and runtime environments.
 
 <Note>
   Without a thread pool configured, multiple `run_code` calls in the same turn execute serially using the same base session ID and isolation does not apply.

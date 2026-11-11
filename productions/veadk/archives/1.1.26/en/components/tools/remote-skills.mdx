@@ -1,6 +1,6 @@
 ---
 title: "Remote skills proxy"
-zh_link: "/productions/veadk/preview/zh/components/tools/remote-skills"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/remote-skills"
 ---
 
 ## Overview
@@ -14,12 +14,12 @@ Remote skills are useful when you want to:
 - Manage the skill list through a declarative manifest instead of writing tool functions one by one in code.
 
 <Note>
-Remote skills reuse the sandbox infrastructure and credential configuration of `execute_skills`. Environment variables, Tool IDs, and other prerequisites are the same as those described on the [Code sandboxes](/productions/veadk/preview/en/components/tools/code-sandbox) page.
+Remote skills reuse the sandbox infrastructure and credential configuration of `execute_skills`. Environment variables, Tool IDs, and other prerequisites are the same as those described on the [Code sandboxes](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox) page.
 </Note>
 
 ## Prerequisites
 
-Complete [skills sandbox setup](/productions/veadk/preview/en/components/tools/code-sandbox), ensure the target Skill Space contains executable skills, and save the JSON in [Manifest format](#manifest-format) as `remote-skills.json` in the current directory. A manifest only describes capabilities; it does not upload or deploy a skill. Names and inputs must match deployed remote skills.
+Complete [skills sandbox setup](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox), ensure the target Skill Space contains executable skills, and save the JSON in [Manifest format](#manifest-format) as `remote-skills.json` in the current directory. A manifest only describes capabilities; it does not upload or deploy a skill. Names and inputs must match deployed remote skills.
 
 Loading definitions and building tools do not contact the cloud. Calling the default executor requires a valid tool context, model, and sandbox configuration.
 

@@ -1,6 +1,6 @@
 ---
 title: "Harness"
-zh_link: "/productions/veadk/preview/zh/components/extensions/harness"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/extensions/harness"
 ---
 
 Harness is a VeADK execution enhancement extension that provides two mutually exclusive integration modes: an in-process plugin mode and a managed Sidecar mode. The in-process mode loads Harness plugins into the application process to prepare context, compact tool results, and verify answers for each turn. The managed Sidecar mode runs all enhancement behavior in a separate managed runtime, and the application process does not load the related plugins.
@@ -42,7 +42,7 @@ runner = Runner(agent=agent, app_name="research", plugins=plugins)
 print("Plugins:", [plugin.name for plugin in plugins])
 print(asyncio.run(runner.run("Explain what evidence a research report needs")))
 ```
-Complete [model configuration](/productions/veadk/preview/en/components/agent/model), save as `app.py`, and run `python app.py`. It should print plugin names followed by an agent response. Response verification uses rules and does not guarantee factual correctness. Compression can remove detail, so evaluate it for your task
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model), save as `app.py`, and run `python app.py`. It should print plugin names followed by an agent response. Response verification uses rules and does not guarantee factual correctness. Compression can remove detail, so evaluate it for your task
 
 
 ### Plugin capabilities
@@ -230,4 +230,4 @@ bundle = builder.prepare_context(context, user_input="Summarize these tool resul
 
 After setting the environment, create `HarnessExtension` before constructing the agent. Call `close()` when finished or use a context manager. Inspect `sidecar_status_payload()`: `ok` indicates successful startup; `degraded` indicates fallback and does not prove enhancements are active. `HARNESS_SIDECAR_FAIL_OPEN=true` allows execution to continue after startup failure by default. Set it to `false` if Sidecar is mandatory
 
-See [Harness deployment](/productions/veadk/preview/en/deploy/harness) for the standalone service's HTTP API, sessions, and deployment. Sidecar bindings affect model and MCP request destinations; confirm upstream endpoints and credential sources before use
+See [Harness deployment](/productions/veadk/archives/1.1.26/en/deploy/harness) for the standalone service's HTTP API, sessions, and deployment. Sidecar bindings affect model and MCP request destinations; confirm upstream endpoints and credential sources before use

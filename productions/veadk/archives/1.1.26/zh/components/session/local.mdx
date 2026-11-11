@@ -1,6 +1,6 @@
 ---
 title: "使用本地内存"
-en_link: "/productions/veadk/preview/en/components/session/local"
+en_link: "/productions/veadk/archives/1.1.26/en/components/session/local"
 ---
 
 `local` 后端把会话保存在进程内存中。它不依赖任何外部服务，也不落盘——进程退出，会话即清空。这是 `ShortTermMemory` 的默认后端。
@@ -64,7 +64,7 @@ ShortTermMemory(backend="local")     # 显式指定
 | `after_create_session_callback` | `Callable \| None` | `None` | 生效 | 通过 `ShortTermMemory.create_session()` 首次创建会话后触发；支持同步或异步回调，接收新建的 `Session` |
 
 <Warning>
-`local` 后端不落盘，进程退出后所有会话数据都会丢失，切勿在生产环境用它保存需要长期保留的会话。需要持久化请改用 [SQLite](/productions/veadk/preview/zh/components/session/sqlite)、[MySQL](/productions/veadk/preview/zh/components/session/mysql) 或 [PostgreSQL](/productions/veadk/preview/zh/components/session/postgresql)。
+`local` 后端不落盘，进程退出后所有会话数据都会丢失，切勿在生产环境用它保存需要长期保留的会话。需要持久化请改用 [SQLite](/productions/veadk/archives/1.1.26/zh/components/session/sqlite)、[MySQL](/productions/veadk/archives/1.1.26/zh/components/session/mysql) 或 [PostgreSQL](/productions/veadk/archives/1.1.26/zh/components/session/postgresql)。
 </Warning>
 
 ## 环境变量

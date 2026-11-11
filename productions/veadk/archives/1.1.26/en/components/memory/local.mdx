@@ -1,6 +1,6 @@
 ---
 title: "Use in-memory storage"
-zh_link: "/productions/veadk/preview/zh/components/memory/local"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/memory/local"
 ---
 
 The `local` backend keeps long-term memory in **the current process's memory**. Memory text is embedded by an embedding model and written to a llama-index in-memory vector index; retrieval recalls by semantic similarity.
@@ -43,7 +43,7 @@ agent = Agent(
 )
 ```
 
-For a full cross-session example, see [Long-term memory · Cross-session example](/productions/veadk/preview/en/components/memory/index#cross-session-example).
+For a full cross-session example, see [Long-term memory · Cross-session example](/productions/veadk/archives/1.1.26/en/components/memory/index#cross-session-example).
 
 ## Parameters
 
@@ -95,7 +95,7 @@ If `MODEL_EMBEDDING_API_KEY` is not set separately, VeADK reuses `MODEL_AGENT_AP
 </Note>
 
 <Warning>
-The `local` backend keeps memory only in process memory; data is lost when the process exits and cannot be shared across processes. For persistence or multi-instance sharing, use [VikingDB](/productions/veadk/preview/en/components/memory/vikingdb), [Mem0](/productions/veadk/preview/en/components/memory/mem0), [OpenSearch](/productions/veadk/preview/en/components/memory/opensearch), or [Redis](/productions/veadk/preview/en/components/memory/redis).
+The `local` backend keeps memory only in process memory; data is lost when the process exits and cannot be shared across processes. For persistence or multi-instance sharing, use [VikingDB](/productions/veadk/archives/1.1.26/en/components/memory/vikingdb), [Mem0](/productions/veadk/archives/1.1.26/en/components/memory/mem0), [OpenSearch](/productions/veadk/archives/1.1.26/en/components/memory/opensearch), or [Redis](/productions/veadk/archives/1.1.26/en/components/memory/redis).
 </Warning>
 
 ## Verify writes and retrieval

@@ -1,11 +1,11 @@
 ---
 title: "System prompts"
-zh_link: "/productions/veadk/preview/zh/components/agent/system-prompt"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/system-prompt"
 ---
 
 System prompts define an agent's task, response style, and behavioral boundaries. Set `Agent.instruction` to fixed text, a template that reads session state, or a function that builds instructions from the current context
 
-Complete [installation and model configuration](/productions/veadk/preview/en/get-started/quickstart) before running these examples. Save each script with the indicated filename and run it with `python filename.py`
+Complete [installation and model configuration](/productions/veadk/archives/1.1.26/en/get-started/quickstart) before running these examples. Save each script with the indicated filename and run it with `python filename.py`
 
 ## Static prompts
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 | `{user_name?}` | Reads an optional key; a missing key becomes an empty string |
 | `{app:language}`, `{user:language}`, `{temp:language}` | Reads a state key in the corresponding namespace |
 
-A state value of `None` also becomes an empty string. Tools and other agents can update state during a run. See [session management](/productions/veadk/preview/en/components/session/index)
+A state value of `None` also becomes an empty string. Tools and other agents can update state during a run. See [session management](/productions/veadk/archives/1.1.26/en/components/session/index)
 
 ### Use an InstructionProvider
 
@@ -108,4 +108,4 @@ if __name__ == "__main__":
 | `description` | `str` | VeADK general capability description | Helps other agents select a transfer target |
 | `prompt_manager` | `BasePromptManager \| None` | `None` | Provides `instruction` through a manager, overriding explicitly supplied instructions |
 
-Give each agent specific instructions and a concise description in a multi-agent application. To maintain prompts in an external service, see [prompt management](/productions/veadk/preview/en/components/agent/prompt-management)
+Give each agent specific instructions and a concise description in a multi-agent application. To maintain prompts in an external service, see [prompt management](/productions/veadk/archives/1.1.26/en/components/agent/prompt-management)

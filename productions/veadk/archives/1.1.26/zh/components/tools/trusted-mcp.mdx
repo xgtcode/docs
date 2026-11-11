@@ -1,11 +1,11 @@
 ---
 title: "可信 MCP 工具集"
-en_link: "/productions/veadk/preview/en/components/tools/trusted-mcp"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/trusted-mcp"
 ---
 
 ## 功能说明
 
-`TrustedMcpToolset` 连接支持 Trusted MCP 协议的服务，需同时使用 Streamable HTTP 连接与 `x-trusted-mcp: true` 请求头。仅提供 `Authorization` 不会启用可信传输。服务端必须支持该协议，普通 MCP 服务使用[自定义 MCP Server](/productions/veadk/preview/zh/components/tools/custom-mcp)中的接入方式
+`TrustedMcpToolset` 连接支持 Trusted MCP 协议的服务，需同时使用 Streamable HTTP 连接与 `x-trusted-mcp: true` 请求头。仅提供 `Authorization` 不会启用可信传输。服务端必须支持该协议，普通 MCP 服务使用[自定义 MCP Server](/productions/veadk/archives/1.1.26/zh/components/tools/custom-mcp)中的接入方式
 
 ## 前提条件
 
@@ -41,6 +41,6 @@ asyncio.run(main())
 
 ## 参数
 
-`connection_params` 为必填，启用可信连接时使用 `StreamableHTTPConnectionParams`。其他关键字参数沿用已安装 Google ADK `McpToolset` 的参数与默认值，完整表见[自定义 MCP 参数](/productions/veadk/preview/zh/components/tools/custom-mcp#参数)。常用 `tool_filter` 限定工具范围，`header_provider` 按请求提供身份相关请求头；不要在多个用户之间复用固定用户令牌
+`connection_params` 为必填，启用可信连接时使用 `StreamableHTTPConnectionParams`。其他关键字参数沿用已安装 Google ADK `McpToolset` 的参数与默认值，完整表见[自定义 MCP 参数](/productions/veadk/archives/1.1.26/zh/components/tools/custom-mcp#参数)。常用 `tool_filter` 限定工具范围，`header_provider` 按请求提供身份相关请求头；不要在多个用户之间复用固定用户令牌
 
-可信传输不代替服务端授权，工具发现成功也不代表所有业务操作均已授权。部署要求和服务端配合方式见[可信 MCP 安全说明](/productions/veadk/preview/zh/components/security/trusted-mcp)
+可信传输不代替服务端授权，工具发现成功也不代表所有业务操作均已授权。部署要求和服务端配合方式见[可信 MCP 安全说明](/productions/veadk/archives/1.1.26/zh/components/security/trusted-mcp)

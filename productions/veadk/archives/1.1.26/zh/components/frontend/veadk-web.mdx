@@ -1,13 +1,13 @@
 ---
 title: "VeADK Web"
-en_link: "/productions/veadk/preview/en/components/frontend/veadk-web"
+en_link: "/productions/veadk/archives/1.1.26/en/components/frontend/veadk-web"
 ---
 
 `veadk web` 启动基于 Google ADK 的浏览器调试界面，用于选择本地智能体、发送消息和查看事件。它接入 VeADK 根智能体的记忆配置，提供可选的 OAuth2 登录，默认关闭 OpenAPI 展示页
 
 ## 启动
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)和[模型配置](/productions/veadk/preview/zh/components/agent/model)。在 `agents/assistant/` 中创建以下两个文件
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)和[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。在 `agents/assistant/` 中创建以下两个文件
 
 ```python title="agents/assistant/__init__.py"
 from . import agent
@@ -86,7 +86,7 @@ veadk web ./agents \
   --oauth2-redirect-uri http://127.0.0.1:8000/oauth2/callback
 ```
 
-该命令的 OAuth2 适配面向本地 HTTP 调试，会允许非 HTTPS Cookie。生产或公网入口应使用 [Frontend/Studio 的认证配置](/productions/veadk/preview/zh/components/frontend/veadk-frontend#认证)或自行配置 HTTPS 中间件
+该命令的 OAuth2 适配面向本地 HTTP 调试，会允许非 HTTPS Cookie。生产或公网入口应使用 [Frontend/Studio 的认证配置](/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-frontend#认证)或自行配置 HTTPS 中间件
 
 ## 记忆能力自动集成
 

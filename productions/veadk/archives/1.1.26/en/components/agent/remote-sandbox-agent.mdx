@@ -1,18 +1,18 @@
 ---
 title: "Remote sandbox agent"
-zh_link: "/productions/veadk/preview/zh/components/agent/remote-sandbox-agent"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/remote-sandbox-agent"
 ---
 
 `AgentkitRemoteSandboxAgent` sends a text task to an AgentKit Skill or CodeEnv sandbox and returns progress, tool events, and results. Use it directly as a root agent or as a coordinator's sub-agent. `SkillSandboxAgent` is a subclass that presets the Skill type and a dedicated Tool ID environment variable, suitable for skill-only sandbox scenarios
 
-Unlike [code sandbox tools](/productions/veadk/preview/en/components/tools/code-sandbox), this entry delegates an entire task and lets the remote agent choose the steps. `run_code` and `execute_skills` are individual tools called by the current agent
+Unlike [code sandbox tools](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox), this entry delegates an entire task and lets the remote agent choose the steps. `run_code` and `execute_skills` are individual tools called by the current agent
 
 ## Dependencies and prerequisites
 
 - Install VeADK and prepare an accessible AgentKit Tool ID, region, and account credentials
 - A Skill sandbox must expose a compatible A2A service; a CodeEnv image must support Codex Worker protocol v1 and `tool_events`
 - The caller must reach both the AgentKit control plane and the returned sandbox session endpoint
-- A local coordinator also needs [model configuration](/productions/veadk/preview/en/get-started/quickstart); when calling the remote agent directly, the remote service supplies model execution
+- A local coordinator also needs [model configuration](/productions/veadk/archives/1.1.26/en/get-started/quickstart); when calling the remote agent directly, the remote service supplies model execution
 
 <Warning>
 These examples create or reuse cloud sandbox sessions and may incur resource charges. Sandboxes can execute code, commands, and file operations and access reachable services. Use trusted images, restrict data, network, and permissions, and confirm that task content may be sent to the sandbox
@@ -200,7 +200,7 @@ An agent instance rejects overlapping calls to the same logical session instead 
 
 When the current context contains inbound credentials, the agent forwards them through the `inbound_auth` header to preserve the original user identity. Without those credentials, the header is omitted. This does not bypass the sandbox's own access authentication: `X-API-Key`, configured by `api_key`, serves a separate purpose
 
-Forward identity credentials only to trusted sandboxes. See [inbound authentication](/productions/veadk/preview/en/components/security/inbound)
+Forward identity credentials only to trusted sandboxes. See [inbound authentication](/productions/veadk/archives/1.1.26/en/components/security/inbound)
 
 ## Error handling
 

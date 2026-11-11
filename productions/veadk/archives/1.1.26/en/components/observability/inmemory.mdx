@@ -1,6 +1,6 @@
 ---
 title: "In-memory exporter"
-zh_link: "/productions/veadk/preview/zh/components/observability/inmemory"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/observability/inmemory"
 ---
 
 `InMemoryExporter` keeps span data in process memory instead of reporting it to an external platform. It organizes spans by `session_id`, which is useful for local debugging, testing, and dumping a session's trace data to a JSON file for offline analysis.
@@ -92,6 +92,6 @@ The dump file is named like `{name}_{user_id}_{session_id}_{trace_id}.json`, and
 
 ## Checking the export
 
-Complete [model configuration](/productions/veadk/preview/en/components/agent/model), save the example as `app.py`, and run `python app.py`. The printed file path should exist, and its JSON list should contain spans from this model call
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model), save the example as `app.py`, and run `python app.py`. The printed file path should exist, and its JSON list should contain spans from this model call
 
 In-memory data is lost when the process exits. Session filtering relies on session identifiers recorded by model-call spans. The file can be empty if no relevant model span was recorded, sampling omitted the data, or the session ID differs. `user_id` names the output file; it does not filter spans or enforce access control

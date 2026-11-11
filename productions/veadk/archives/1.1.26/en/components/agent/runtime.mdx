@@ -1,11 +1,11 @@
 ---
 title: "Runtime"
-zh_link: "/productions/veadk/preview/zh/components/agent/runtime"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/runtime"
 ---
 
 A runtime organizes model calls, tool execution, and results. VeADK uses Google ADK by default, with `codex` and `piagent` available for coding-oriented execution. Check model settings, tools, and callbacks before switching
 
-Complete [model configuration](/productions/veadk/preview/en/components/agent/model) first. Volcengine and BytePlus each require their own model endpoint and API Key
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model) first. Volcengine and BytePlus each require their own model endpoint and API Key
 
 ## Default runtime
 
@@ -61,7 +61,7 @@ Run `python parallel_tools.py` to query both products. The model decides whether
 | :--- | :--- | :--- | :--- |
 | `ToolThreadPoolConfig.max_workers` | `int` | `4` | Maximum workers, at least 1 |
 
-`RunConfig.tool_thread_pool_config` takes precedence over the agent setting. It affects ADK synchronous tools, not Codex or PiAgent execution. See [code sandbox](/productions/veadk/preview/en/components/tools/code-sandbox#parallel-call-isolation) for parallel `run_code` session isolation and `VEADK_RUN_CODE_ISOLATE_PARALLEL_CALLS`
+`RunConfig.tool_thread_pool_config` takes precedence over the agent setting. It affects ADK synchronous tools, not Codex or PiAgent execution. See [code sandbox](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox#parallel-call-isolation) for parallel `run_code` session isolation and `VEADK_RUN_CODE_ISOLATE_PARALLEL_CALLS`
 
 ## Switch the execution backend
 
@@ -446,7 +446,7 @@ Run `python transfer.py` to obtain an announcement. Transfers require `Runner`; 
 
 ## Output persistence
 
-`output_key` stores the final response in session state under ADK, Codex, PiAgent, and DSH. It does not independently persist data to disk; survival across processes depends on [session storage](/productions/veadk/preview/en/components/session/index)
+`output_key` stores the final response in session state under ADK, Codex, PiAgent, and DSH. It does not independently persist data to disk; survival across processes depends on [session storage](/productions/veadk/archives/1.1.26/en/components/session/index)
 
 ```python pipeline.py lines
 import asyncio
@@ -635,7 +635,7 @@ Alternatively, pass `runtime_provider.before_tool_callback` to `Agent.before_too
 
 `run_processor` wraps the event stream of `Runner.run` for authentication, timing, cleanup, or event transformation. Precedence is the current `Runner.run(run_processor=...)`, the `Runner` constructor, the root agent, then the default pass-through processor. Calling `run_async` directly does not apply this wrapper
 
-For authentication, pass `veadk.integrations.ve_identity.AuthRequestProcessor` to `Agent(run_processor=...)`. See [inbound authentication](/productions/veadk/preview/en/components/security/inbound) for identity setup
+For authentication, pass `veadk.integrations.ve_identity.AuthRequestProcessor` to `Agent(run_processor=...)`. See [inbound authentication](/productions/veadk/archives/1.1.26/en/components/security/inbound) for identity setup
 
 ### Custom processors
 

@@ -1,11 +1,11 @@
 ---
 title: "运行时"
-en_link: "/productions/veadk/preview/en/components/agent/runtime"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/runtime"
 ---
 
 运行时负责组织模型调用、工具执行和结果返回。VeADK 默认使用 Google ADK；需要编码类执行后端时，可以选择 `codex` 或 `piagent`。切换前应检查工具、模型配置和回调的兼容性
 
-以下示例均需先完成[模型配置](/productions/veadk/preview/zh/components/agent/model)。火山引擎与 BytePlus 分别使用对应平台的模型端点和 API Key
+以下示例均需先完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。火山引擎与 BytePlus 分别使用对应平台的模型端点和 API Key
 
 ## 默认运行时
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 | :--- | :--- | :--- | :--- |
 | `ToolThreadPoolConfig.max_workers` | `int` | `4` | 最大工作线程数，必须大于等于 1 |
 
-`RunConfig.tool_thread_pool_config` 优先于 `Agent` 上的配置。该设置只影响 ADK 同步工具，不控制 `codex` 或 `piagent` 的执行机制。并行 `run_code` 的会话隔离及 `VEADK_RUN_CODE_ISOLATE_PARALLEL_CALLS` 见[代码沙箱](/productions/veadk/preview/zh/components/tools/code-sandbox#并行调用隔离)
+`RunConfig.tool_thread_pool_config` 优先于 `Agent` 上的配置。该设置只影响 ADK 同步工具，不控制 `codex` 或 `piagent` 的执行机制。并行 `run_code` 的会话隔离及 `VEADK_RUN_CODE_ISOLATE_PARALLEL_CALLS` 见[代码沙箱](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox#并行调用隔离)
 
 ## 切换执行后端
 
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
 ## 输出持久化
 
-`output_key` 将最终回复保存到会话状态，ADK、Codex、PiAgent 和 DSH 均支持。它不是独立的磁盘持久化机制；跨进程保存取决于所选[会话存储](/productions/veadk/preview/zh/components/session/index)
+`output_key` 将最终回复保存到会话状态，ADK、Codex、PiAgent 和 DSH 均支持。它不是独立的磁盘持久化机制；跨进程保存取决于所选[会话存储](/productions/veadk/archives/1.1.26/zh/components/session/index)
 
 ```python pipeline.py lines
 import asyncio
@@ -636,7 +636,7 @@ if __name__ == "__main__":
 
 `run_processor` 包裹 `Runner.run` 的整轮事件流，用于鉴权、计时、清理或事件转换。优先级依次为：本次 `Runner.run(run_processor=...)`、`Runner` 构造配置、根智能体配置，最后是默认的透传处理器。直接调用 `run_async` 不会自动使用这一包装
 
-身份认证可使用 `veadk.integrations.ve_identity.AuthRequestProcessor`，并传给 `Agent(run_processor=...)`；所需身份配置见[入站认证](/productions/veadk/preview/zh/components/security/inbound)
+身份认证可使用 `veadk.integrations.ve_identity.AuthRequestProcessor`，并传给 `Agent(run_processor=...)`；所需身份配置见[入站认证](/productions/veadk/archives/1.1.26/zh/components/security/inbound)
 
 ### 自定义处理器
 
