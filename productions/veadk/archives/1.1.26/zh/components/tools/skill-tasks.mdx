@@ -1,6 +1,6 @@
 ---
 title: "技能任务"
-en_link: "/productions/veadk/preview/en/components/tools/skill-tasks"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/skill-tasks"
 ---
 
 ## 功能说明
@@ -22,7 +22,7 @@ en_link: "/productions/veadk/preview/en/components/tools/skill-tasks"
 - 需要对任务状态进行自定义的轮询控制。
 
 <Note>
-`invoke_skill` 和 `poll_skill` 复用 `execute_skills` 的沙箱基础设施与凭证配置。环境变量、Tool ID、入站身份凭证等前提条件与[代码沙箱](/productions/veadk/preview/zh/components/tools/code-sandbox)页面中的说明一致，此处不再重复。
+`invoke_skill` 和 `poll_skill` 复用 `execute_skills` 的沙箱基础设施与凭证配置。环境变量、Tool ID、入站身份凭证等前提条件与[代码沙箱](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)页面中的说明一致，此处不再重复。
 </Note>
 
 ## 使用方法
@@ -137,7 +137,7 @@ def poll_skill(
 ## 安全边界
 
 <Warning>
-`invoke_skill` 和 `poll_skill` 在远端技能沙箱中执行工作流，沙箱中的代码可以访问沙箱网络可达的服务并读写文件。运行前应确认技能来源可信，并限制沙箱可访问的数据、网络和权限。入站身份凭证（凭证键 `inbound_auth`）会以 `inbound_auth` 请求头转发给技能沙箱，使沙箱中的工作流能够以原始用户身份执行；当前请求未携带入站凭证时不附加该请求头，不转发该用户身份，但访问沙箱仍需有效的云服务凭证与权限。入站身份凭证的来源与配置方式参见[入站认证](/productions/veadk/preview/zh/components/security/inbound)。
+`invoke_skill` 和 `poll_skill` 在远端技能沙箱中执行工作流，沙箱中的代码可以访问沙箱网络可达的服务并读写文件。运行前应确认技能来源可信，并限制沙箱可访问的数据、网络和权限。入站身份凭证（凭证键 `inbound_auth`）会以 `inbound_auth` 请求头转发给技能沙箱，使沙箱中的工作流能够以原始用户身份执行；当前请求未携带入站凭证时不附加该请求头，不转发该用户身份，但访问沙箱仍需有效的云服务凭证与权限。入站身份凭证的来源与配置方式参见[入站认证](/productions/veadk/archives/1.1.26/zh/components/security/inbound)。
 </Warning>
 
 ## 任务查询的上下文

@@ -1,6 +1,6 @@
 ---
 title: "部署 MPA 智能体"
-en_link: "/productions/veadk/preview/en/deploy/mpa"
+en_link: "/productions/veadk/archives/1.1.26/en/deploy/mpa"
 ---
 
 MPA（Managed Production Agent）是 VeADK 提供的托管智能体运行模式。通过 `veadk mpa` 命令可以一键准备前置资源（网络、APIG、PostgreSQL、Skill Space、Worker）并部署智能体到 AgentKit Runtime，无需检出 `agentkit-mpa-agent` 源码。Studio 和 CLI 共用同一编排实现。
@@ -13,7 +13,7 @@ MPA 智能体使用预构建的容器镜像，支持账号共享 APIG 注册和�
 
 ## 前置条件
 
-- 已安装 `veadk-python`（Preview 源码安装方式见[安装](/productions/veadk/preview/zh/get-started/installation#安装-preview-源码)）。
+- 已安装 `veadk-python`（源码安装方式见[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation#从源码安装-1126)）。
 - 已配置火山引擎访问凭据（`VOLCENGINE_ACCESS_KEY`、`VOLCENGINE_SECRET_KEY`，可选 `VOLCENGINE_SESSION_TOKEN`）。
 - 已准备 PostgreSQL 数据库（可使用 AIDAP 自动准备，也可手动创建）。
 - 已准备预构建的 MPA 智能体容器镜像。

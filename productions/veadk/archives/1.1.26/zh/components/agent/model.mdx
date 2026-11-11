@@ -1,13 +1,13 @@
 ---
 title: "模型"
-en_link: "/productions/veadk/preview/en/components/agent/model"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/model"
 ---
 
 模型负责理解输入、选择工具并生成回答。智能体默认读取环境变量或 `config.yaml` 中的全局模型配置，也可以通过 `Agent` 参数为不同智能体分别配置模型、端点和凭证
 
 ## 为单个智能体指定模型
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)，并选择以下一种平台配置。模型需已在对应账号中开通；也可以将名称替换为有权访问的模型或推理接入点
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)，并选择以下一种平台配置。模型需已在对应账号中开通；也可以将名称替换为有权访问的模型或推理接入点
 
 <Tabs>
 <Tab title="火山引擎">
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
 ### 模型参数与全局配置
 
-显式构造参数覆盖对应的全局配置；未传入的字段沿用全局值。`config.yaml` 从当前目录向上查找，已有环境变量优先于配置文件中的同名设置。配置文件写法见[快速开始](/productions/veadk/preview/zh/get-started/quickstart)
+显式构造参数覆盖对应的全局配置；未传入的字段沿用全局值。`config.yaml` 从当前目录向上查找，已有环境变量优先于配置文件中的同名设置。配置文件写法见[快速开始](/productions/veadk/archives/1.1.26/zh/get-started/quickstart)
 
 | 参数 | 类型 | 默认值 | 对应环境变量或说明 |
 | :--- | :--- | :--- | :--- |
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 ### 回退限制
 
 - `enable_responses=True` 只接受字符串形式的同提供商回退；端点对象或字典会导致初始化失败
-- `codex` 和 `piagent` 运行时忽略回退链；需要该能力时使用 `adk`，参见[运行时](/productions/veadk/preview/zh/components/agent/runtime#切换执行后端)
+- `codex` 和 `piagent` 运行时忽略回退链；需要该能力时使用 `adk`，参见[运行时](/productions/veadk/archives/1.1.26/zh/components/agent/runtime#切换执行后端)
 - 在默认运行时显式传入自定义 `model` 对象时，`model_fallbacks` 不生效，应在该对象上配置回退
 
 ## Responses API
@@ -242,4 +242,4 @@ Responses 模式默认启用缓存。缓存命中取决于服务及请求内容�
 
 返回事件的 `usage_metadata.cached_content_token_count` 表示缓存命中的 token 数，`prompt_token_count` 表示输入 token 总数；后者大于零时才可计算两者之比。使用 `Runner.run_async` 读取事件以检查用量
 
-配置 `output_schema` 时，VeADK 会移除与结构化输出冲突的缓存设置，示例见[结构化输出](/productions/veadk/preview/zh/components/agent/structured-output)
+配置 `output_schema` 时，VeADK 会移除与结构化输出冲突的缓存设置，示例见[结构化输出](/productions/veadk/archives/1.1.26/zh/components/agent/structured-output)

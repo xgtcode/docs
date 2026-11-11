@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-zh_link: "/productions/veadk/preview/zh/components/security"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/security"
 ---
 
 Security configuration covers caller identity, tool permissions, and data handling. VeADK provides authentication middleware, Agent Identity integration, content moderation callbacks, and Trusted MCP connections. Select the capabilities required by your application
@@ -9,10 +9,10 @@ Security configuration covers caller identity, tool permissions, and data handli
 
 | Capability | Purpose | Integration point |
 | --- | --- | --- |
-| [Inbound authentication](/productions/veadk/preview/en/components/security/inbound) | Verify callers of the application | Application ingress or gateway |
-| [Outbound authentication](/productions/veadk/preview/en/components/security/outbound) | Provide credentials for tools calling external services | Function tools or MCP toolsets |
-| [Content safety](/productions/veadk/preview/en/components/security/content-safety) | Moderate text around model and tool calls | Agent callbacks |
-| [Trusted MCP](/productions/veadk/preview/en/components/security/trusted-mcp) | Connect to MCP services with remote attestation | MCP connection settings |
+| [Inbound authentication](/productions/veadk/archives/1.1.26/en/components/security/inbound) | Verify callers of the application | Application ingress or gateway |
+| [Outbound authentication](/productions/veadk/archives/1.1.26/en/components/security/outbound) | Provide credentials for tools calling external services | Function tools or MCP toolsets |
+| [Content safety](/productions/veadk/archives/1.1.26/en/components/security/content-safety) | Moderate text around model and tool calls | Agent callbacks |
+| [Trusted MCP](/productions/veadk/archives/1.1.26/en/components/security/trusted-mcp) | Connect to MCP services with remote attestation | MCP connection settings |
 
 ## Inbound and outbound authentication
 
@@ -20,7 +20,7 @@ Inbound authentication establishes who calls the application; the application mu
 
 ## Content safety
 
-Moderation depends on configured policies and service responses. The current guardrail can continue execution when requests time out or HTTP errors occur. It should not be the only mandatory blocking control; see [Content safety](/productions/veadk/preview/en/components/security/content-safety)
+Moderation depends on configured policies and service responses. The current guardrail can continue execution when requests time out or HTTP errors occur. It should not be the only mandatory blocking control; see [Content safety](/productions/veadk/archives/1.1.26/en/components/security/content-safety)
 
 ## Trusted execution
 

@@ -1,6 +1,6 @@
 ---
 title: "Studio agent workbench"
-zh_link: "/productions/veadk/preview/zh/components/frontend/studio"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/frontend/studio"
 ---
 
 AgentKit Studio uses the same service and complete UI as VeADK Frontend. It provides chat, search, session history, the resource library hub, video creation, automation integrations, and agent creation, testing, deployment, and management, and opens on the chat view by default. The agent workspace renders multi-agent topologies as a canvas, surfaces deployed Runtime versions and deployment status, and supports iterating on the same Runtime.
@@ -45,7 +45,7 @@ npm run build
 cd ..
 ```
 
-Python and Node.js are required; see [Installation](/productions/veadk/preview/en/get-started/installation). When starting from this source directory, pass `--frontend-dir ./frontend/dist` to use the UI you just built
+Python and Node.js are required; see [Installation](/productions/veadk/archives/1.1.26/en/get-started/installation). When starting from this source directory, pass `--frontend-dir ./frontend/dist` to use the UI you just built
 
 ## Start locally
 
@@ -75,7 +75,7 @@ export BYTEPLUS_SECRET_KEY="your-secret-key"
 veadk studio --provider byteplus --open
 ```
 
-To debug local agents, use `veadk studio --dev --agents-dir ./agents --open`; see [VeADK Web](/productions/veadk/preview/en/components/frontend/veadk-web#start) for the layout. `--dev` selects the local list; `--agents-dir` only supplies its directory
+To debug local agents, use `veadk studio --dev --agents-dir ./agents --open`; see [VeADK Web](/productions/veadk/archives/1.1.26/en/components/frontend/veadk-web#start) for the layout. `--dev` selects the local list; `--agents-dir` only supplies its directory
 
 After startup, confirm that the home page opens, then select an available agent and send a message to verify the model and Runtime connection. If the cloud list is empty, check provider, region, and permissions before changing local agent directories
 
@@ -148,11 +148,11 @@ Your language choice is persisted in browser local storage, so subsequent visits
 6. Select AgentKit deployment and monitor the build-image, deploy, and publish stages from the workspace. After deployment, the agent appears as published in the workspace and can be updated on the same Runtime.
 
 <Note>
-  In addition to the custom creation flow above, Studio supports a DeepSeek Harness creation mode: select "Quick create" from the creation menu, then choose "DeepSeek Harness" in the agent type dialog to enter the DeepSeek Harness configuration page. Configure DeepSeek model service, custom model providers, command execution, sub-agent model selection, and other parameters, then preview, export, or deploy as an AgentKit Runtime. See [DeepSeek Harness creation and deployment](/productions/veadk/preview/en/components/frontend/deepseek-harness).
+  In addition to the custom creation flow above, Studio supports a DeepSeek Harness creation mode: select "Quick create" from the creation menu, then choose "DeepSeek Harness" in the agent type dialog to enter the DeepSeek Harness configuration page. Configure DeepSeek model service, custom model providers, command execution, sub-agent model selection, and other parameters, then preview, export, or deploy as an AgentKit Runtime. See [DeepSeek Harness creation and deployment](/productions/veadk/archives/1.1.26/en/components/frontend/deepseek-harness).
 </Note>
 
 <Note>
-  Studio supports an MPA agent managed creation mode: select **Agents → MPA Agents → Create MPA Agent** to enter a three-step creation flow with basic information, PostgreSQL auto-provisioning details, and OpenViking preparation. Studio automatically reuses the deployed Studio's user pool, client, and callback URL, using code-built-in Beijing region default images and models without a YAML config file. New Beijing-region requests automatically create an independent OpenViking collection using default VLM and Embedding models, without requiring manual service URL and API Key entry; BytePlus and already-submitted manual requests still require OpenViking configuration. New MPA agents default to an independent business Workspace, with each agent using a dedicated business database, and the Runtime name availability is pre-checked before creation. After submission, it sequentially prepares account network, APIG, Worker, independent business database, and Skill Space, then deploys and checks Runtime readiness. See [Deploy MPA Agents](/productions/veadk/preview/en/deploy/mpa).
+  Studio supports an MPA agent managed creation mode: select **Agents → MPA Agents → Create MPA Agent** to enter a three-step creation flow with basic information, PostgreSQL auto-provisioning details, and OpenViking preparation. Studio automatically reuses the deployed Studio's user pool, client, and callback URL, using code-built-in Beijing region default images and models without a YAML config file. New Beijing-region requests automatically create an independent OpenViking collection using default VLM and Embedding models, without requiring manual service URL and API Key entry; BytePlus and already-submitted manual requests still require OpenViking configuration. New MPA agents default to an independent business Workspace, with each agent using a dedicated business database, and the Runtime name availability is pre-checked before creation. After submission, it sequentially prepares account network, APIG, Worker, independent business database, and Skill Space, then deploys and checks Runtime readiness. See [Deploy MPA Agents](/productions/veadk/archives/1.1.26/en/deploy/mpa).
 
 <Note>
   When MPA agent creation fails, Studio shows a localized safe reason with expandable and copyable stage, operation, and optional validated error code and request ID; raw SDK, SQL, or exception text is never displayed. Known quota, authorization, timeout, and resource-state errors get matching safe explanations, and missing details are explicitly marked as unknown. Successful creation and the general agent view are unaffected.
@@ -235,7 +235,7 @@ When configuring an LLM agent, you can add ordered fallback models for each agen
 - **Cross-provider fallbacks**: Specify a separate model provider, API base, and API key for each fallback endpoint. The generated project code uses `ModelFallbackEndpoint` objects passed via the `model_fallbacks` parameter.
 
 <Note>
-  For the full parameter reference and usage restrictions for model fallbacks, see [Model](/productions/veadk/preview/en/components/agent/model#configure-cross-provider-fallback-models).
+  For the full parameter reference and usage restrictions for model fallbacks, see [Model](/productions/veadk/archives/1.1.26/en/components/agent/model#configure-cross-provider-fallback-models).
 </Note>
 
 API keys for cross-provider fallbacks are passed through environment variables and are not stored in plain text in the generated source or draft. Each fallback endpoint corresponds to an environment variable named `FALLBACK_MODEL_<agent_name>_<index>_API_KEY`, listed as a placeholder in `.env.example`:
@@ -1085,12 +1085,12 @@ After enabling long-term memory for an agent, select one of these backends in St
 
 | Backend | When to use |
 | :--- | :--- |
-| [Local vector store](/productions/veadk/preview/en/components/memory/local) | In-process vector store for local debugging; not persistent and requires an embedding model. |
-| [OpenSearch](/productions/veadk/preview/en/components/memory/opensearch) | Uses a self-managed or managed OpenSearch cluster with your embedding model. |
-| [Redis](/productions/veadk/preview/en/components/memory/redis) | Uses Redis vector retrieval with your embedding model. |
-| [VikingDB Memory](/productions/veadk/preview/en/components/memory/vikingdb) | Managed Volcengine VikingDB memory store (supports user profiles) using Studio's Volcengine credentials. |
-| [OpenViking](/productions/veadk/preview/en/components/memory/openviking) | OpenViking long-term memory that stores and retrieves preferences, events, and entities per user. |
-| [mem0](/productions/veadk/preview/en/components/memory/mem0) | Mem0 hosted memory service. |
+| [Local vector store](/productions/veadk/archives/1.1.26/en/components/memory/local) | In-process vector store for local debugging; not persistent and requires an embedding model. |
+| [OpenSearch](/productions/veadk/archives/1.1.26/en/components/memory/opensearch) | Uses a self-managed or managed OpenSearch cluster with your embedding model. |
+| [Redis](/productions/veadk/archives/1.1.26/en/components/memory/redis) | Uses Redis vector retrieval with your embedding model. |
+| [VikingDB Memory](/productions/veadk/archives/1.1.26/en/components/memory/vikingdb) | Managed Volcengine VikingDB memory store (supports user profiles) using Studio's Volcengine credentials. |
+| [OpenViking](/productions/veadk/archives/1.1.26/en/components/memory/openviking) | OpenViking long-term memory that stores and retrieves preferences, events, and entities per user. |
+| [mem0](/productions/veadk/archives/1.1.26/en/components/memory/mem0) | Mem0 hosted memory service. |
 
 Connection and embedding-model parameters for the local, OpenSearch, Redis, and mem0 backends are written to the generated project as environment variables. VikingDB Memory and OpenViking use the Volcengine credential chain, forwarded by the Studio server to debug runs and AgentKit runtimes, so AK/SK do not need to be re-entered on the creation page. For full parameters, defaults, and limits, see each backend's component page.
 
@@ -1109,7 +1109,7 @@ When you select OpenViking, Studio collects the following settings on the creati
 | Memory policy | `DATABASE_OPENVIKING_MEMORY_POLICY` | No | — | Memory extraction and isolation policy as JSON; when left blank the OpenViking service applies its official default, with the structure following the [OpenViking session API](https://github.com/volcengine/OpenViking/blob/main/docs/zh/api/05-sessions.md). |
 
 <Note>
-  The OpenViking memory owner ID (`DATABASE_OPENVIKING_USER_ID`) and the runtime user identifier (`Runner.user_id`) are distinct concepts: the former isolates memories per application or tenant, while the latter serves as the OpenViking peer ID to isolate end-user memories. See [Store memory in OpenViking](/productions/veadk/preview/en/components/memory/openviking).
+  The OpenViking memory owner ID (`DATABASE_OPENVIKING_USER_ID`) and the runtime user identifier (`Runner.user_id`) are distinct concepts: the former isolates memories per application or tenant, while the latter serves as the OpenViking peer ID to isolate end-user memories. See [Store memory in OpenViking](/productions/veadk/archives/1.1.26/en/components/memory/openviking).
 </Note>
 
 <Warning>
@@ -1122,12 +1122,12 @@ After enabling a knowledge base for an agent, select one of these backends in St
 
 | Backend | When to use |
 | :--- | :--- |
-| [VikingDB Knowledge](/productions/veadk/preview/en/components/knowledge/viking) | The default. Uses the managed Volcengine knowledge base service for server-side splitting, embedding, and retrieval, without local embedding configuration. |
-| [OpenSearch](/productions/veadk/preview/en/components/knowledge/opensearch) | Uses a self-managed or managed OpenSearch cluster with your embedding configuration. |
-| [Context Search](/productions/veadk/preview/en/components/knowledge/context-search) | Uses the Volcengine Context Search service for retrieval. |
-| [OpenViking Knowledge](/productions/veadk/preview/en/components/knowledge/openviking) | Uses the OpenViking resource-tree knowledge base with server-side resource processing and retrieval, without local embedding configuration. |
+| [VikingDB Knowledge](/productions/veadk/archives/1.1.26/en/components/knowledge/viking) | The default. Uses the managed Volcengine knowledge base service for server-side splitting, embedding, and retrieval, without local embedding configuration. |
+| [OpenSearch](/productions/veadk/archives/1.1.26/en/components/knowledge/opensearch) | Uses a self-managed or managed OpenSearch cluster with your embedding configuration. |
+| [Context Search](/productions/veadk/archives/1.1.26/en/components/knowledge/context-search) | Uses the Volcengine Context Search service for retrieval. |
+| [OpenViking Knowledge](/productions/veadk/archives/1.1.26/en/components/knowledge/openviking) | Uses the OpenViking resource-tree knowledge base with server-side resource processing and retrieval, without local embedding configuration. |
 
-Studio does not offer the `local` backend because its creation flow cannot add documents to the in-process vector store. For local development, use the VeADK SDK to [configure a local knowledge base](/productions/veadk/preview/en/components/knowledge/local).
+Studio does not offer the `local` backend because its creation flow cannot add documents to the in-process vector store. For local development, use the VeADK SDK to [configure a local knowledge base](/productions/veadk/archives/1.1.26/en/components/knowledge/local).
 
 When you select VikingDB Knowledge, Studio lists collections visible to the current account in the `default` project in Beijing. Selecting an existing collection uses its name as the knowledge base index. If you do not select an existing collection, the index name defaults to `<agent_name>_kb`. Use the refresh button to reload the list.
 
@@ -1145,7 +1145,7 @@ When you select OpenViking Knowledge, Studio collects the following settings on 
 Studio also provides a "Resource index" field that sets the `KnowledgeBase` `index`. When left blank, the generated project auto-generates the index from the agent name (e.g., `my_agent_kb`). When `DATABASE_OPENVIKING_TARGET_URI` is not configured, the resource URI is built as `viking://user/<knowledge owner ID, or "default" if not set>/resources/<resource index>/`; once `DATABASE_OPENVIKING_TARGET_URI` is set, that full URI is used directly.
 
 <Note>
-  The OpenViking knowledge owner ID (`DATABASE_OPENVIKING_USER_ID`) and the runtime user identifier (`Runner.user_id`) are distinct concepts: the former isolates resource trees per application or tenant, while the latter identifies the end user. See [Store knowledge in OpenViking](/productions/veadk/preview/en/components/knowledge/openviking).
+  The OpenViking knowledge owner ID (`DATABASE_OPENVIKING_USER_ID`) and the runtime user identifier (`Runner.user_id`) are distinct concepts: the former isolates resource trees per application or tenant, while the latter identifies the end user. See [Store knowledge in OpenViking](/productions/veadk/archives/1.1.26/en/components/knowledge/openviking).
 </Note>
 
 <Warning>
@@ -1171,7 +1171,7 @@ Selecting **Code execution** in the custom agent's built-in tools adds the `run_
   Both values apply to local debug runs and deployed runtimes, and the generated `.env.example` includes both variables. The sandbox ID and region are used only on the Studio server and are never delivered to the browser.
 </Note>
 
-For the full parameters, shell execution, and credential requirements of `run_code`, see the [Code sandbox](/productions/veadk/preview/en/components/tools/code-sandbox).
+For the full parameters, shell execution, and credential requirements of `run_code`, see the [Code sandbox](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox).
 
 ## View sub-agent handoffs
 
@@ -1488,7 +1488,7 @@ When updating a Runtime, Studio performs safety checks before and after publishi
 Studio can deliver the source generated during custom creation to a GitHub repository with two delivery modes. "GitHub code sync" pushes the generated source directly to the target branch, while the Runtime is still published from the deploy button; "Attach continuous delivery" writes an AgentKit Runtime GitHub Actions workflow to the target branch, and subsequent pushes to that branch automatically build and publish to the bound Runtime. Both modes suit teams that need version control and continuous delivery.
 
 <Note>
-  "Attach continuous delivery" writes GitHub Actions Secrets to the repository and requires the `github-cicd` optional dependency group for encryption. See [Installation](/productions/veadk/preview/en/get-started/installation). "GitHub code sync" does not write Secrets and does not require this dependency.
+  "Attach continuous delivery" writes GitHub Actions Secrets to the repository and requires the `github-cicd` optional dependency group for encryption. See [Installation](/productions/veadk/archives/1.1.26/en/get-started/installation). "GitHub code sync" does not write Secrets and does not require this dependency.
 </Note>
 
 ### Delivery modes
@@ -1974,7 +1974,7 @@ When the connected Runtime exposes the session-scoped capability-overlay endpoin
 
 Mounted session capabilities can be removed from the same panel; once removed, the capability is no longer available in the current session. Conversations in the session run through a session-aware runner so that the overlaid tools and skills actually participate in calls.
 
-Listing and mounting remote skills requires Volcengine credentials; provide them locally with `VOLCENGINE_ACCESS_KEY` and `VOLCENGINE_SECRET_KEY`, and on VeFaaS use the bound IAM Role. For the complete overlay endpoints and parameters, see [Deploy to AgentKit](/productions/veadk/preview/en/deploy/agentkit).
+Listing and mounting remote skills requires Volcengine credentials; provide them locally with `VOLCENGINE_ACCESS_KEY` and `VOLCENGINE_SECRET_KEY`, and on VeFaaS use the bound IAM Role. For the complete overlay endpoints and parameters, see [Deploy to AgentKit](/productions/veadk/archives/1.1.26/en/deploy/agentkit).
 
 
 ## Automatic evaluation and optimization feedback
@@ -3042,7 +3042,7 @@ The following options take effect only when `--deploy-target vestack` is used; t
 When the connected AgentKit Runtime has enabled the Studio BFF dynamic tools host via `enable_studio_tools=True`, the Studio agent information rail shows **Add Studio tools to this conversation** below the agent's static tools. New chats start with every Studio tool disabled; users can toggle individual tools, and the selection persists across turns within the current browser process. The browser sends the selected tool ID list on each Runtime run; an empty or omitted list uses the ordinary run path. Tool code and credentials remain in the Studio BFF and are never sent to the Runtime or browser.
 
 <Note>
-This feature requires the Runtime to explicitly enable the `enable_studio_tools` parameter. See [Deploy to AgentKit](/productions/veadk/preview/en/deploy/agentkit).
+This feature requires the Runtime to explicitly enable the `enable_studio_tools` parameter. See [Deploy to AgentKit](/productions/veadk/archives/1.1.26/en/deploy/agentkit).
 </Note>
 
 ### Session sandbox environments

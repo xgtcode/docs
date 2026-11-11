@@ -1,6 +1,6 @@
 ---
 title: "DeepSeek Harness 创建与部署"
-en_link: "/productions/veadk/preview/en/components/frontend/deepseek-harness"
+en_link: "/productions/veadk/archives/1.1.26/en/components/frontend/deepseek-harness"
 ---
 
 DeepSeek Harness 创建模式是 Studio 中的一种智能体创建方式，用于配置、预览和部署基于 DeepSeek Harness 的容器化智能体运行时。该模式生成包含 Dockerfile、配置文件和运行时适配器的完整容器项目，可直接部署到 AgentKit Runtime，也可以导出为 ZIP 在本地构建和运行。
@@ -19,7 +19,7 @@ DeepSeek Harness 创建模式是 Studio 中的一种智能体创建方式，用�
 
 ## 准备条件
 
-先按 [Studio 启动说明](/productions/veadk/preview/zh/components/frontend/studio#在本地启动)运行工作台。准备可访问的模型服务与 API Key；本地构建需要 Docker，云端部署需要当前云服务商的构建、镜像仓库和 Runtime 权限
+先按 [Studio 启动说明](/productions/veadk/archives/1.1.26/zh/components/frontend/studio#在本地启动)运行工作台。准备可访问的模型服务与 API Key；本地构建需要 Docker，云端部署需要当前云服务商的构建、镜像仓库和 Runtime 权限
 
 <Warning>
 默认权限为 `workspace-write`，智能体可以修改工作目录并执行命令。仅在容器内挂载任务所需目录；选择 `danger-full-access` 会扩大访问权限并跳过确认，应先核对工具与凭据范围

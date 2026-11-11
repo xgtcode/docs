@@ -1,6 +1,6 @@
 ---
 title: "DeepSeek Harness creation and deployment"
-zh_link: "/productions/veadk/preview/zh/components/frontend/deepseek-harness"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/frontend/deepseek-harness"
 ---
 
 DeepSeek Harness creation mode is an agent creation method in Studio for configuring, previewing, and deploying a containerized agent runtime based on DeepSeek Harness. This mode generates a complete container project including a Dockerfile, configuration files, and a runtime adapter, which can be deployed directly to an AgentKit Runtime or exported as a ZIP for local build and execution.
@@ -19,7 +19,7 @@ DeepSeek Harness creation mode is an agent creation method in Studio for configu
 
 ## Prerequisites
 
-Start [Studio](/productions/veadk/preview/en/components/frontend/studio#start-locally). Prepare an accessible model service and API key. Local builds require Docker; cloud deployment requires build, registry, and Runtime permissions for the selected provider
+Start [Studio](/productions/veadk/archives/1.1.26/en/components/frontend/studio#start-locally). Prepare an accessible model service and API key. Local builds require Docker; cloud deployment requires build, registry, and Runtime permissions for the selected provider
 
 <Warning>
 The default `workspace-write` permission allows workspace changes and command execution. Mount only task-required directories into the container. `danger-full-access` expands access and skips confirmation, so review tool and credential scope before selecting it

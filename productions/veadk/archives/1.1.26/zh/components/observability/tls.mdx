@@ -1,6 +1,6 @@
 ---
 title: "TLS 日志服务"
-en_link: "/productions/veadk/preview/en/components/observability/tls"
+en_link: "/productions/veadk/archives/1.1.26/en/components/observability/tls"
 ---
 
 `TLSExporter` 将 span 数据以 OTLP（HTTP）协议上报至火山引擎日志服务 TLS。数据按 TLS 主题组织，适合集中存储、长期留存与跨服务的链路分析。
@@ -13,7 +13,7 @@ en_link: "/productions/veadk/preview/en/components/observability/tls"
 
 ## 接入前准备
 
-先完成[安装](/productions/veadk/preview/zh/get-started/installation)和[模型配置](/productions/veadk/preview/zh/components/agent/model)，再设置以下环境变量。占位符需要替换为有权限访问的实际资源和凭证；在启动 Python 前完成配置
+先完成[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)和[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)，再设置以下环境变量。占位符需要替换为有权限访问的实际资源和凭证；在启动 Python 前完成配置
 
 <Warning>
 TLS 会接收链路数据并可能产生存储费用。建议显式指定已有追踪主题 ID；省略时会调用 TLS 获取或创建默认追踪资源。此示例使用火山引擎 TLS 端点。`CLOUD_PROVIDER=byteplus` 时，凭据配置可以使用 BytePlus AK/SK；端点、区域和主题仍需与目标服务匹配，不能仅凭模型使用 BytePlus 判断 TLS 已完成配置

@@ -1,11 +1,11 @@
 ---
 title: "概述"
-en_link: "/productions/veadk/preview/en/components/knowledge"
+en_link: "/productions/veadk/archives/1.1.26/en/components/knowledge"
 ---
 
 知识库是智能体的外部知识来源，专门存放静态资料（产品文档、FAQ、文章等）。把它挂到智能体上，VeADK 会自动为智能体注入一个检索工具，让模型在需要资料时调用检索工具。是否检索由模型和指令决定；挂载知识库不保证每轮查询，也不能替代来源核实
 
-运行本页 local 示例前，安装 `veadk-python[extensions]` 并完成[embedding 配置](/productions/veadk/preview/zh/components/knowledge/local#环境变量配置)。包含 Agent 和 Runner 的示例还需完成[模型配置](/productions/veadk/preview/zh/components/agent/model)
+运行本页 local 示例前，安装 `veadk-python[extensions]` 并完成[embedding 配置](/productions/veadk/archives/1.1.26/zh/components/knowledge/local#环境变量配置)。包含 Agent 和 Runner 的示例还需完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)
 
 ## 统一入口：`KnowledgeBase`
 
@@ -54,14 +54,14 @@ kb.add_from_text(
 
 | 后端 | 存储 | 依赖 | 适用场景 | 文档 |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | 内存向量索引 | `extensions` + embedding | 本地调试（进程退出后数据丢失） | [本地内存](/productions/veadk/preview/zh/components/knowledge/local) |
-| `opensearch` | OpenSearch 向量库 | OpenSearch + `extensions` + embedding | 自建向量检索 | [OpenSearch](/productions/veadk/preview/zh/components/knowledge/opensearch) |
-| `redis` | Redis 向量库 | Redis(RediSearch) + `extensions` + embedding | 低延迟自建向量检索 | [Redis](/productions/veadk/preview/zh/components/knowledge/redis) |
-| `milvus` | Milvus collection | Milvus + `extensions` + embedding | 自建或托管 Milvus | [Milvus](/productions/veadk/preview/zh/components/knowledge/milvus) |
-| `tos_vector` | TOS 向量桶 | 火山引擎账号 + `extensions` + embedding | 火山引擎对象存储向量库 | [TOS 向量库](/productions/veadk/preview/zh/components/knowledge/tos-vector) |
-| `viking` | VikingDB 知识库（托管） | 火山引擎账号 | 生产推荐 | [VikingDB](/productions/veadk/preview/zh/components/knowledge/viking) |
-| `context_search` | Context Search（托管） | 火山引擎账号 | 生产推荐 | [Context Search](/productions/veadk/preview/zh/components/knowledge/context-search) |
-| `openviking` | OpenViking 资源目录 | OpenViking 服务 | 服务端资源解析与检索 | [OpenViking](/productions/veadk/preview/zh/components/knowledge/openviking) |
+| `local` | 内存向量索引 | `extensions` + embedding | 本地调试（进程退出后数据丢失） | [本地内存](/productions/veadk/archives/1.1.26/zh/components/knowledge/local) |
+| `opensearch` | OpenSearch 向量库 | OpenSearch + `extensions` + embedding | 自建向量检索 | [OpenSearch](/productions/veadk/archives/1.1.26/zh/components/knowledge/opensearch) |
+| `redis` | Redis 向量库 | Redis(RediSearch) + `extensions` + embedding | 低延迟自建向量检索 | [Redis](/productions/veadk/archives/1.1.26/zh/components/knowledge/redis) |
+| `milvus` | Milvus collection | Milvus + `extensions` + embedding | 自建或托管 Milvus | [Milvus](/productions/veadk/archives/1.1.26/zh/components/knowledge/milvus) |
+| `tos_vector` | TOS 向量桶 | 火山引擎账号 + `extensions` + embedding | 火山引擎对象存储向量库 | [TOS 向量库](/productions/veadk/archives/1.1.26/zh/components/knowledge/tos-vector) |
+| `viking` | VikingDB 知识库（托管） | 火山引擎账号 | 生产推荐 | [VikingDB](/productions/veadk/archives/1.1.26/zh/components/knowledge/viking) |
+| `context_search` | Context Search（托管） | 火山引擎账号 | 生产推荐 | [Context Search](/productions/veadk/archives/1.1.26/zh/components/knowledge/context-search) |
+| `openviking` | OpenViking 资源目录 | OpenViking 服务 | 服务端资源解析与检索 | [OpenViking](/productions/veadk/archives/1.1.26/zh/components/knowledge/openviking) |
 
 ## 绑定到智能体
 

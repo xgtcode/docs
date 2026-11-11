@@ -1,15 +1,15 @@
 ---
 title: "VeADK Frontend"
-zh_link: "/productions/veadk/preview/zh/components/frontend/veadk-frontend"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-frontend"
 ---
 
 VeADK ships a production-grade React frontend — an enterprise agent-application workbench that talks to agents over the Google ADK API server: create, debug, manage, and use agents from the UI. `veadk frontend` is a self-contained launcher: in the default mode it serves this React UI and the agent API from a single process on the same origin, so there is no separate backend to deploy and no cross-origin setup.
 
 ## What it can do
 
-- **Create agents**: custom configuration is the available project-creation flow, producing a runnable VeADK project (`agent.py`, `requirements.txt`, and so on) that you can preview, edit, and download. See [Studio](/productions/veadk/preview/en/components/frontend/studio) for other creation flows and availability.
+- **Create agents**: custom configuration is the available project-creation flow, producing a runnable VeADK project (`agent.py`, `requirements.txt`, and so on) that you can preview, edit, and download. See [Studio](/productions/veadk/archives/1.1.26/en/components/frontend/studio) for other creation flows and availability.
 - **Multimodal messages**: upload images, TXT, Markdown, PDF, and video; both user attachments and model-returned media can be previewed and restored from history.
-- **Chat and debug**: multi-turn conversations showing thinking, tool calls, sub-agent handoffs, token usage and timing; conversations render ECharts and Mermaid charts (with source-code switching and zoom), image zoom, video and audio playback, file previews, and long-running task progress; built-in tools (web search, image generation, video generation, memory retrieval, knowledge-base retrieval) display dedicated icons and running status while executing; conversations also render the [A2UI](/productions/veadk/preview/en/components/frontend/a2ui) rich-UI cards an agent returns.
+- **Chat and debug**: multi-turn conversations showing thinking, tool calls, sub-agent handoffs, token usage and timing; conversations render ECharts and Mermaid charts (with source-code switching and zoom), image zoom, video and audio playback, file previews, and long-running task progress; built-in tools (web search, image generation, video generation, memory retrieval, knowledge-base retrieval) display dedicated icons and running status while executing; conversations also render the [A2UI](/productions/veadk/archives/1.1.26/en/components/frontend/a2ui) rich-UI cards an agent returns.
 - **Stop generation**: while an agent is replying, the composer's send button becomes a stop button; clicking it cancels only the active response, preserves any content already received, and immediately enables the next turn in the same session. This applies to both the `veadk frontend` and `veadk studio` conversation pages, including sandbox conversations.
 - **Context usage meter**: a context usage indicator beside the Send button shows the current model's context window occupancy. Hovering or focusing it expands a 100-cell usage map that breaks down the context into system and tool overhead (estimated), input and history, output and reasoning, and remaining capacity. System and tool usage is an estimate because the model's usage metadata does not report it separately. The context window size is determined by the cloud provider and model name. This applies to both the `veadk frontend` and `veadk studio` agent conversation pages.
 - **Agent picker**: switch agents from the top-left; hover an agent to see its model and mounted tools.
@@ -33,7 +33,7 @@ The callback URL registered with the identity provider must match the tool confi
 
 ## Running
 
-Complete [installation](/productions/veadk/preview/en/get-started/installation) and [model configuration](/productions/veadk/preview/en/components/agent/model). The distribution includes the UI, so Node.js and a frontend build are not required. Prepare an agent directory with `agent.py`, `__init__.py`, and an exported `root_agent`. See [A2UI project setup](/productions/veadk/preview/en/components/frontend/a2ui#project-setup) for the layout
+Complete [installation](/productions/veadk/archives/1.1.26/en/get-started/installation) and [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model). The distribution includes the UI, so Node.js and a frontend build are not required. Prepare an agent directory with `agent.py`, `__init__.py`, and an exported `root_agent`. See [A2UI project setup](/productions/veadk/archives/1.1.26/en/components/frontend/a2ui#project-setup) for the layout
 
 ```bash
 veadk frontend --dev --agents-dir ./agents --open
@@ -214,7 +214,7 @@ VeADK Frontend can be deployed on a public endpoint, so it restricts user-contro
 - AgentKit deployment files must remain inside the current project directory. Absolute paths and relative paths that escape it are rejected.
 - Static files can be read only from the built UI directory; path traversal cannot read other host files.
 
-These restrictions do not replace authentication. Public deployments should still enable SSO or a trusted upstream gateway and use least-privilege cloud credentials. When you need only creation and management features, use the [Studio agent workbench](/productions/veadk/preview/en/components/frontend/studio).
+These restrictions do not replace authentication. Public deployments should still enable SSO or a trusted upstream gateway and use least-privilege cloud credentials. When you need only creation and management features, use the [Studio agent workbench](/productions/veadk/archives/1.1.26/en/components/frontend/studio).
 
 ## Rendering flow
 
@@ -222,7 +222,7 @@ The frontend talks to the Google ADK API server: it lists available agents, crea
 
 ## Adding a custom (enterprise) component
 
-A custom component has two halves that share one catalog id. For the backend half, see [A2UI](/productions/veadk/preview/en/components/frontend/a2ui#custom-components); the frontend half is below.
+A custom component has two halves that share one catalog id. For the backend half, see [A2UI](/productions/veadk/archives/1.1.26/en/components/frontend/a2ui#custom-components); the frontend half is below.
 
 **Frontend half** — drop in a new directory; it auto-registers, with no central edit:
 

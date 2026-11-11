@@ -1,13 +1,13 @@
 ---
 title: "Structured output"
-zh_link: "/productions/veadk/preview/zh/components/agent/structured-output"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/structured-output"
 ---
 
 Structured output asks an agent to return predefined fields for extraction, classification, and downstream processing. Pass a Pydantic model class to `output_schema` to provide structural constraints. Applications must still validate responses and handle empty output, invalid formats, and unmet business rules
 
 ## Define a schema and create an agent
 
-Complete [installation and model configuration](/productions/veadk/preview/en/get-started/quickstart) and select a model that supports structured output. This example uses `Literal` to constrain categories and priorities; listing values in a field description alone does not enforce them
+Complete [installation and model configuration](/productions/veadk/archives/1.1.26/en/get-started/quickstart) and select a model that supports structured output. This example uses `Literal` to constrain categories and priorities; listing values in a field description alone does not enforce them
 
 ```python ticket.py lines
 import asyncio
@@ -79,7 +79,7 @@ agent = Agent(
 
 VeADK converts the schema to the Responses API `json_schema` format with `strict: true`. Accepted schemas and supported constraints depend on the model and service. This does not guarantee successful requests or factually correct business data
 
-Responses caching has compatibility restrictions with structured output. VeADK removes conflicting cache settings from relevant requests. Setting `enable_responses_cache=False` makes this choice explicit. See [Responses API](/productions/veadk/preview/en/components/agent/model#responses-api) for other settings
+Responses caching has compatibility restrictions with structured output. VeADK removes conflicting cache settings from relevant requests. Setting `enable_responses_cache=False` makes this choice explicit. See [Responses API](/productions/veadk/archives/1.1.26/en/components/agent/model#responses-api) for other settings
 
 ## Tool and runtime limitations
 

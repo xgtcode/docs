@@ -1,6 +1,6 @@
 ---
 title: "Harness"
-en_link: "/productions/veadk/preview/en/components/extensions/harness"
+en_link: "/productions/veadk/archives/1.1.26/en/components/extensions/harness"
 ---
 
 Harness 是 VeADK 的执行增强扩展，提供两种互斥的接入模式：进程内插件模式和受管 Sidecar 模式。进程内模式在应用进程中加载 Harness 插件，为每轮调用准备上下文、压缩工具结果并校验回答；受管 Sidecar 模式在独立的受控运行时中执行全部增强行为，应用进程不加载相关插件。
@@ -42,7 +42,7 @@ runner = Runner(agent=agent, app_name="research", plugins=plugins)
 print("Plugins:", [plugin.name for plugin in plugins])
 print(asyncio.run(runner.run("Explain what evidence a research report needs")))
 ```
-先完成[模型配置](/productions/veadk/preview/zh/components/agent/model)。保存为 `app.py` 后执行 `python app.py`，应先输出插件名称，再输出智能体回复。回答校验是规则检查，不保证回答事实正确；压缩可能丢失细节，应按任务评估效果
+先完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)。保存为 `app.py` 后执行 `python app.py`，应先输出插件名称，再输出智能体回复。回答校验是规则检查，不保证回答事实正确；压缩可能丢失细节，应按任务评估效果
 
 
 ### 插件能力
@@ -230,4 +230,4 @@ bundle = builder.prepare_context(context, user_input="Summarize these tool resul
 
 设置环境变量后，在构造智能体前创建 `HarnessExtension`，结束时调用 `close()` 或退出上下文管理器。检查 `sidecar_status_payload()`：`ok` 表示启动成功，`degraded` 表示降级，不能据此认定优化已生效。`HARNESS_SIDECAR_FAIL_OPEN=true` 默认允许失败后继续运行；业务要求必须启用 Sidecar 时应设为 `false`
 
-独立 Harness 服务的 HTTP 接口、会话和部署步骤见[Harness 服务部署](/productions/veadk/preview/zh/deploy/harness)。Sidecar 绑定会影响模型和 MCP 请求的去向，接入前确认上游端点和凭据来源
+独立 Harness 服务的 HTTP 接口、会话和部署步骤见[Harness 服务部署](/productions/veadk/archives/1.1.26/zh/deploy/harness)。Sidecar 绑定会影响模型和 MCP 请求的去向，接入前确认上游端点和凭据来源

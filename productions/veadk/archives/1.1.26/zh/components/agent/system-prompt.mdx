@@ -1,11 +1,11 @@
 ---
 title: "系统提示词"
-en_link: "/productions/veadk/preview/en/components/agent/system-prompt"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/system-prompt"
 ---
 
 系统提示词定义智能体的任务、回答方式和行为边界。通过 `Agent.instruction` 提供固定文本、带会话状态的模板，或根据请求上下文生成提示词的函数
 
-运行以下示例前，先完成[安装与模型配置](/productions/veadk/preview/zh/get-started/quickstart)。将代码保存为标注的文件名，并使用 `python 文件名.py` 运行
+运行以下示例前，先完成[安装与模型配置](/productions/veadk/archives/1.1.26/zh/get-started/quickstart)。将代码保存为标注的文件名，并使用 `python 文件名.py` 运行
 
 ## 静态提示词
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
 | `{user_name?}` | 读取可选状态；缺少该键时替换为空字符串 |
 | `{app:language}`、`{user:language}`、`{temp:language}` | 读取对应命名空间中的状态键 |
 
-状态值为 `None` 时也会替换为空字符串。工具和其他智能体可以在运行过程中更新状态，参见[会话管理](/productions/veadk/preview/zh/components/session/index)
+状态值为 `None` 时也会替换为空字符串。工具和其他智能体可以在运行过程中更新状态，参见[会话管理](/productions/veadk/archives/1.1.26/zh/components/session/index)
 
 ### 使用 InstructionProvider
 
@@ -108,4 +108,4 @@ if __name__ == "__main__":
 | `description` | `str` | VeADK 通用能力描述 | 向其他智能体说明能力，帮助选择任务转交目标 |
 | `prompt_manager` | `BasePromptManager \| None` | `None` | 设置后由管理器提供 `instruction`，覆盖显式传入的提示词 |
 
-在多智能体应用中，为每个智能体分别提供具体的 `instruction` 和简洁的 `description`。需要从外部服务维护提示词时，参见[提示词管理](/productions/veadk/preview/zh/components/agent/prompt-management)
+在多智能体应用中，为每个智能体分别提供具体的 `instruction` 和简洁的 `description`。需要从外部服务维护提示词时，参见[提示词管理](/productions/veadk/archives/1.1.26/zh/components/agent/prompt-management)

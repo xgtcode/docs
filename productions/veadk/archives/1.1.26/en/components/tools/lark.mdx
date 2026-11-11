@@ -1,6 +1,6 @@
 ---
 title: "Feishu / Lark MCP"
-zh_link: "/productions/veadk/preview/zh/components/tools/lark"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/lark"
 ---
 
 ## Overview
@@ -8,7 +8,7 @@ zh_link: "/productions/veadk/preview/zh/components/tools/lark"
 `lark_tools` (`from veadk.tools.builtin_tools.lark import lark_tools`) lets you integrate an AI agent with Feishu / Lark open capabilities for cloud-document processing, chat management, calendar scheduling, and more. It launches a local MCP Server via `npx @larksuiteoapi/lark-mcp`, so `npx` and `lark-mcp` must be installed.
 
 <Note>
-This tool exposes Feishu capabilities **as tools the agent can call**. If instead you want to route inbound Feishu bot messages into a VeADK `Runner`, see the [Feishu Channel extension](/productions/veadk/preview/en/components/extensions/feishu-channel).
+This tool exposes Feishu capabilities **as tools the agent can call**. If instead you want to route inbound Feishu bot messages into a VeADK `Runner`, see the [Feishu Channel extension](/productions/veadk/archives/1.1.26/en/components/extensions/feishu-channel).
 </Note>
 
 ## Environment & prerequisites
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
 ## Verify tool discovery
 
-The prebuilt instance reads credentials at import time and configures a local MCP connection. List the available tools first; names and input schemas depend on the installed Lark MCP version. This instance has no cloud-region switch. `CLOUD_PROVIDER` does not configure platform differences between Feishu and Lark; use [custom MCP](/productions/veadk/preview/en/components/tools/custom-mcp) for custom endpoints or startup arguments.
+The prebuilt instance reads credentials at import time and configures a local MCP connection. List the available tools first; names and input schemas depend on the installed Lark MCP version. This instance has no cloud-region switch. `CLOUD_PROVIDER` does not configure platform differences between Feishu and Lark; use [custom MCP](/productions/veadk/archives/1.1.26/en/components/tools/custom-mcp) for custom endpoints or startup arguments.
 
 ```python lines
 import asyncio

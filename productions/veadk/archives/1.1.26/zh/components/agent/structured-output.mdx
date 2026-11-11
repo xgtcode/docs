@@ -1,13 +1,13 @@
 ---
 title: "结构化输出"
-en_link: "/productions/veadk/preview/en/components/agent/structured-output"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/structured-output"
 ---
 
 结构化输出让智能体按预先定义的字段返回结果，适合信息抽取、分类和后续程序处理。将 Pydantic 模型传给 `output_schema` 后，运行时会向模型提供结构约束；应用仍应校验返回内容，处理空响应、格式错误和不满足业务规则的结果
 
 ## 定义 schema 并创建智能体
 
-先完成[安装与模型配置](/productions/veadk/preview/zh/get-started/quickstart)，选择支持结构化输出的模型。下面使用 `Literal` 限定分类和优先级；仅在字段描述中列出取值不能形成同等的校验约束
+先完成[安装与模型配置](/productions/veadk/archives/1.1.26/zh/get-started/quickstart)，选择支持结构化输出的模型。下面使用 `Literal` 限定分类和优先级；仅在字段描述中列出取值不能形成同等的校验约束
 
 ```python ticket.py lines
 import asyncio
@@ -79,7 +79,7 @@ agent = Agent(
 
 VeADK 会将 schema 转换为 Responses API 的 `json_schema` 格式并设置 `strict: true`。服务是否接受该 schema、支持哪些约束，仍取决于所用模型和服务。不要将这种配置理解为请求永远成功或内容始终符合业务事实
 
-Responses 缓存与结构化输出存在兼容限制，VeADK 会在相关请求上移除冲突的缓存设置。显式设置 `enable_responses_cache=False` 可以让该选择更清楚，其他配置见[Responses API](/productions/veadk/preview/zh/components/agent/model#responses-api)
+Responses 缓存与结构化输出存在兼容限制，VeADK 会在相关请求上移除冲突的缓存设置。显式设置 `enable_responses_cache=False` 可以让该选择更清楚，其他配置见[Responses API](/productions/veadk/archives/1.1.26/zh/components/agent/model#responses-api)
 
 ## 工具与运行时限制
 

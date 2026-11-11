@@ -1,6 +1,6 @@
 ---
 title: "飞书 Lark MCP"
-en_link: "/productions/veadk/preview/en/components/tools/lark"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/lark"
 ---
 
 ## 功能说明
@@ -8,7 +8,7 @@ en_link: "/productions/veadk/preview/en/components/tools/lark"
 `lark_tools`（`from veadk.tools.builtin_tools.lark import lark_tools`）帮助快速集成 AI 智能体与飞书 / Lark 开放能力，实现云文档处理、会话管理、日历安排等自动化场景。它通过 `npx @larksuiteoapi/lark-mcp` 启动本地 MCP Server，因此需要预装 `npx` 与 `lark-mcp`。
 
 <Note>
-本工具是把飞书能力**作为工具提供给智能体**。若需把飞书机器人的入站消息接入 VeADK `Runner`，请看[飞书 Channel 扩展](/productions/veadk/preview/zh/components/extensions/feishu-channel)。
+本工具是把飞书能力**作为工具提供给智能体**。若需把飞书机器人的入站消息接入 VeADK `Runner`，请看[飞书 Channel 扩展](/productions/veadk/archives/1.1.26/zh/components/extensions/feishu-channel)。
 </Note>
 
 ## 环境变量与前提
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
 ## 验证工具发现
 
-内置实例在导入时读取凭证并创建本地 MCP 连接。先用以下代码列出当前可用工具，工具名与参数由所安装的 Lark MCP 版本决定。该内置实例没有云区域切换参数，`CLOUD_PROVIDER` 不会自动配置飞书与 Lark 的平台差异；需要自定义服务地址或启动参数时使用[自定义 MCP](/productions/veadk/preview/zh/components/tools/custom-mcp)
+内置实例在导入时读取凭证并创建本地 MCP 连接。先用以下代码列出当前可用工具，工具名与参数由所安装的 Lark MCP 版本决定。该内置实例没有云区域切换参数，`CLOUD_PROVIDER` 不会自动配置飞书与 Lark 的平台差异；需要自定义服务地址或启动参数时使用[自定义 MCP](/productions/veadk/archives/1.1.26/zh/components/tools/custom-mcp)
 
 ```python lines
 import asyncio

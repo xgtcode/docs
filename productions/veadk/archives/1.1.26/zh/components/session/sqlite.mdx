@@ -1,6 +1,6 @@
 ---
 title: "使用 SQLite 存储"
-en_link: "/productions/veadk/preview/en/components/session/sqlite"
+en_link: "/productions/veadk/archives/1.1.26/en/components/session/sqlite"
 ---
 
 `sqlite` 后端把会话持久化到一个本地 SQLite 文件。它不依赖外部数据库服务，但与 `local` 不同，会话会落盘，因此可以跨进程、跨重启保留。
@@ -64,6 +64,6 @@ stm = ShortTermMemory(db_url="sqlite+aiosqlite:///./test.db")
 
 `sqlite` 后端不读取任何环境变量，所有配置均通过构造参数提供。
 
-需要分布式持久化？请改用 [MySQL](/productions/veadk/preview/zh/components/session/mysql) 或 [PostgreSQL](/productions/veadk/preview/zh/components/session/postgresql)。
+需要分布式持久化？请改用 [MySQL](/productions/veadk/archives/1.1.26/zh/components/session/mysql) 或 [PostgreSQL](/productions/veadk/archives/1.1.26/zh/components/session/postgresql)。
 
 SQLite 文件应位于可写且持久的目录；容器重建后保留数据需要挂载持久卷。默认 `/tmp` 路径可能被系统清理，不能视为长期备份。通过 `db_url` 连接时应自行创建父目录

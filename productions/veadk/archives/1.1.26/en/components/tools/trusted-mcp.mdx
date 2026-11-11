@@ -1,11 +1,11 @@
 ---
 title: "Trusted MCP toolset"
-zh_link: "/productions/veadk/preview/zh/components/tools/trusted-mcp"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/trusted-mcp"
 ---
 
 ## Overview
 
-`TrustedMcpToolset` connects to services supporting the Trusted MCP protocol. Enable it with both a Streamable HTTP connection and the `x-trusted-mcp: true` header. An `Authorization` header alone does not enable trusted transport. The server must support this protocol; connect ordinary MCP servers using [Custom MCP servers](/productions/veadk/preview/en/components/tools/custom-mcp).
+`TrustedMcpToolset` connects to services supporting the Trusted MCP protocol. Enable it with both a Streamable HTTP connection and the `x-trusted-mcp: true` header. An `Authorization` header alone does not enable trusted transport. The server must support this protocol; connect ordinary MCP servers using [Custom MCP servers](/productions/veadk/archives/1.1.26/en/components/tools/custom-mcp).
 
 ## Prerequisites
 
@@ -41,6 +41,6 @@ The output lists tools available to the credential. When registering with `Agent
 
 ## Parameters
 
-`connection_params` is required; use `StreamableHTTPConnectionParams` for trusted transport. Other keyword arguments use the installed Google ADK `McpToolset` parameters and defaults; see the [complete parameter table](/productions/veadk/preview/en/components/tools/custom-mcp#parameters). Use `tool_filter` to restrict tools and `header_provider` for request-specific identity headers. Do not reuse a fixed user token across different users.
+`connection_params` is required; use `StreamableHTTPConnectionParams` for trusted transport. Other keyword arguments use the installed Google ADK `McpToolset` parameters and defaults; see the [complete parameter table](/productions/veadk/archives/1.1.26/en/components/tools/custom-mcp#parameters). Use `tool_filter` to restrict tools and `header_provider` for request-specific identity headers. Do not reuse a fixed user token across different users.
 
-Trusted transport does not replace server authorization, and successful discovery does not authorize every business operation. See [Trusted MCP security](/productions/veadk/preview/en/components/security/trusted-mcp) for deployment and server requirements.
+Trusted transport does not replace server authorization, and successful discovery does not authorize every business operation. See [Trusted MCP security](/productions/veadk/archives/1.1.26/en/components/security/trusted-mcp) for deployment and server requirements.

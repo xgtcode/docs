@@ -1,6 +1,6 @@
 ---
 title: "Skill tasks"
-zh_link: "/productions/veadk/preview/zh/components/tools/skill-tasks"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/skill-tasks"
 ---
 
 ## Overview
@@ -22,7 +22,7 @@ Use cases:
 - You need custom control over how and when to poll.
 
 <Note>
-`invoke_skill` and `poll_skill` reuse the sandbox infrastructure and credential configuration of `execute_skills`. Environment variables, Tool IDs, inbound identity credentials, and other prerequisites are the same as those described on the [Code sandbox](/productions/veadk/preview/en/components/tools/code-sandbox) page.
+`invoke_skill` and `poll_skill` reuse the sandbox infrastructure and credential configuration of `execute_skills`. Environment variables, Tool IDs, inbound identity credentials, and other prerequisites are the same as those described on the [Code sandbox](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox) page.
 </Note>
 
 ## Usage
@@ -137,7 +137,7 @@ def poll_skill(
 ## Security
 
 <Warning>
-`invoke_skill` and `poll_skill` execute workflows in a remote skills sandbox. Code in the sandbox can access services reachable from the sandbox network and read or write files. Before running, confirm that the skill source is trusted and restrict the data, network, and permissions available to the sandbox. The inbound identity credential (credential key `inbound_auth`) is forwarded to the skills sandbox in the `inbound_auth` request header so the sandbox workflow runs under the original user identity; when the current request carries no inbound credential, the header is omitted and that user identity is not forwarded; valid cloud credentials and permissions are still required to access the sandbox. See [Inbound authentication](/productions/veadk/preview/en/components/security/inbound) for the source and configuration of inbound identity credentials.
+`invoke_skill` and `poll_skill` execute workflows in a remote skills sandbox. Code in the sandbox can access services reachable from the sandbox network and read or write files. Before running, confirm that the skill source is trusted and restrict the data, network, and permissions available to the sandbox. The inbound identity credential (credential key `inbound_auth`) is forwarded to the skills sandbox in the `inbound_auth` request header so the sandbox workflow runs under the original user identity; when the current request carries no inbound credential, the header is omitted and that user identity is not forwarded; valid cloud credentials and permissions are still required to access the sandbox. See [Inbound authentication](/productions/veadk/archives/1.1.26/en/components/security/inbound) for the source and configuration of inbound identity credentials.
 </Warning>
 
 ## Context for task queries

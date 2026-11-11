@@ -1,6 +1,6 @@
 ---
 title: "Long-term memory"
-zh_link: "/productions/veadk/preview/zh/components/memory"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/memory"
 ---
 
 Long-term memory persists important information across sessions and over time — user preferences, task history, key facts, or long-lived state. Short-term memory restores a session history, while long-term memory retrieves relevant content by query; long-term memory lets an agent remember facts **across different sessions**.
@@ -43,13 +43,13 @@ Use `local` for debugging. In production, select `viking`, `mem0`, or `tos_conte
 
 | Backend | Storage | Requires | Use case | Docs |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | In-memory vector index | `extensions` + embedding | Local debugging | [In-memory](/productions/veadk/preview/en/components/memory/local) |
-| `viking` | VikingDB memory (managed) | Volcengine account | Managed memory | [VikingDB](/productions/veadk/preview/en/components/memory/vikingdb) |
-| `mem0` | Mem0 memory (managed) | Mem0 API key | Managed memory | [Mem0](/productions/veadk/preview/en/components/memory/mem0) |
-| `opensearch` | OpenSearch vector store | OpenSearch + embedding | Self-hosted vector search | [OpenSearch](/productions/veadk/preview/en/components/memory/opensearch) |
-| `redis` | Redis vector store | Redis (RediSearch) + embedding | Self-hosted vector search | [Redis](/productions/veadk/preview/en/components/memory/redis) |
-| `openviking` | OpenViking user memory | OpenViking service | Entity, event, and preference memory | [OpenViking](/productions/veadk/preview/en/components/memory/openviking) |
-| `tos_context` | TOS ContextBucket (managed) | Volcengine account and TOS SDK `>=2.9.4b1` | Managed memory inference with per-user isolation | [TOS ContextBucket](/productions/veadk/preview/en/components/memory/tos-context) |
+| `local` | In-memory vector index | `extensions` + embedding | Local debugging | [In-memory](/productions/veadk/archives/1.1.26/en/components/memory/local) |
+| `viking` | VikingDB memory (managed) | Volcengine account | Managed memory | [VikingDB](/productions/veadk/archives/1.1.26/en/components/memory/vikingdb) |
+| `mem0` | Mem0 memory (managed) | Mem0 API key | Managed memory | [Mem0](/productions/veadk/archives/1.1.26/en/components/memory/mem0) |
+| `opensearch` | OpenSearch vector store | OpenSearch + embedding | Self-hosted vector search | [OpenSearch](/productions/veadk/archives/1.1.26/en/components/memory/opensearch) |
+| `redis` | Redis vector store | Redis (RediSearch) + embedding | Self-hosted vector search | [Redis](/productions/veadk/archives/1.1.26/en/components/memory/redis) |
+| `openviking` | OpenViking user memory | OpenViking service | Entity, event, and preference memory | [OpenViking](/productions/veadk/archives/1.1.26/en/components/memory/openviking) |
+| `tos_context` | TOS ContextBucket (managed) | Volcengine account and TOS SDK `>=2.9.4b1` | Managed memory inference with per-user isolation | [TOS ContextBucket](/productions/veadk/archives/1.1.26/en/components/memory/tos-context) |
 
 ## Binding to an Agent
 
@@ -204,7 +204,7 @@ String presets provide a quick configuration shortcut. When you pass a `MemoryAu
 
 ## Cross-session example
 
-First complete [model configuration](/productions/veadk/preview/en/components/agent/model) and [local memory embedding configuration](/productions/veadk/preview/en/components/memory/local), then run this end-to-end flow: session #1 tells the agent a fact and auto-archives it, then a **brand-new** session #2 asks a question — and the agent recalls the fact via memory retrieval (not the context window). This uses the `local` backend, which needs `pip install "veadk-python[extensions]"`.
+First complete [model configuration](/productions/veadk/archives/1.1.26/en/components/agent/model) and [local memory embedding configuration](/productions/veadk/archives/1.1.26/en/components/memory/local), then run this end-to-end flow: session #1 tells the agent a fact and auto-archives it, then a **brand-new** session #2 asks a question — and the agent recalls the fact via memory retrieval (not the context window). This uses the `local` backend, which needs `pip install "veadk-python[extensions]"`.
 
 ```python lines
 import asyncio

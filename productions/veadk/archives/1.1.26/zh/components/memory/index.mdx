@@ -1,6 +1,6 @@
 ---
 title: "长期记忆"
-en_link: "/productions/veadk/preview/en/components/memory"
+en_link: "/productions/veadk/archives/1.1.26/en/components/memory"
 ---
 
 长期记忆跨会话、跨时间保存重要信息，包括用户偏好、任务历史、知识要点或长期状态。短期记忆按会话恢复历史，长期记忆按查询召回相关内容，而长期记忆让智能体在**不同会话**之间也能记住事实。
@@ -43,13 +43,13 @@ ltm = LongTermMemory(backend="viking", app_name="ltm_demo")
 
 | 后端 | 存储 | 依赖 | 适用场景 | 文档 |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | 内存向量索引 | `extensions` + embedding | 本地调试 | [本地内存](/productions/veadk/preview/zh/components/memory/local) |
-| `viking` | VikingDB 记忆库（托管） | 火山引擎账号 | 托管记忆 | [VikingDB](/productions/veadk/preview/zh/components/memory/vikingdb) |
-| `mem0` | Mem0 记忆库（托管） | Mem0 API Key | 托管记忆 | [Mem0](/productions/veadk/preview/zh/components/memory/mem0) |
-| `opensearch` | OpenSearch 向量库 | OpenSearch + embedding | 自建向量检索 | [OpenSearch](/productions/veadk/preview/zh/components/memory/opensearch) |
-| `redis` | Redis 向量库 | Redis(RediSearch) + embedding | 自建向量检索 | [Redis](/productions/veadk/preview/zh/components/memory/redis) |
-| `openviking` | OpenViking 用户记忆 | OpenViking 服务 | 实体、事件与偏好记忆 | [OpenViking](/productions/veadk/preview/zh/components/memory/openviking) |
-| `tos_context` | TOS ContextBucket（托管） | 火山引擎账号与 TOS SDK `>=2.9.4b1` | 托管记忆推理与按用户隔离 | [TOS ContextBucket](/productions/veadk/preview/zh/components/memory/tos-context) |
+| `local` | 内存向量索引 | `extensions` + embedding | 本地调试 | [本地内存](/productions/veadk/archives/1.1.26/zh/components/memory/local) |
+| `viking` | VikingDB 记忆库（托管） | 火山引擎账号 | 托管记忆 | [VikingDB](/productions/veadk/archives/1.1.26/zh/components/memory/vikingdb) |
+| `mem0` | Mem0 记忆库（托管） | Mem0 API Key | 托管记忆 | [Mem0](/productions/veadk/archives/1.1.26/zh/components/memory/mem0) |
+| `opensearch` | OpenSearch 向量库 | OpenSearch + embedding | 自建向量检索 | [OpenSearch](/productions/veadk/archives/1.1.26/zh/components/memory/opensearch) |
+| `redis` | Redis 向量库 | Redis(RediSearch) + embedding | 自建向量检索 | [Redis](/productions/veadk/archives/1.1.26/zh/components/memory/redis) |
+| `openviking` | OpenViking 用户记忆 | OpenViking 服务 | 实体、事件与偏好记忆 | [OpenViking](/productions/veadk/archives/1.1.26/zh/components/memory/openviking) |
+| `tos_context` | TOS ContextBucket（托管） | 火山引擎账号与 TOS SDK `>=2.9.4b1` | 托管记忆推理与按用户隔离 | [TOS ContextBucket](/productions/veadk/archives/1.1.26/zh/components/memory/tos-context) |
 
 ## 绑定到智能体
 
@@ -204,7 +204,7 @@ agent = Agent(
 
 ## 跨会话示例
 
-先完成[模型配置](/productions/veadk/preview/zh/components/agent/model)和[本地记忆 embedding 配置](/productions/veadk/preview/zh/components/memory/local)，再运行端到端流程：会话 #1 告诉智能体一个事实并自动归档，然后在**全新的**会话 #2 提问，智能体通过检索长期记忆（而非上下文窗口）回忆起该事实。这里用 `local` 后端，需要 `pip install "veadk-python[extensions]"`。
+先完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)和[本地记忆 embedding 配置](/productions/veadk/archives/1.1.26/zh/components/memory/local)，再运行端到端流程：会话 #1 告诉智能体一个事实并自动归档，然后在**全新的**会话 #2 提问，智能体通过检索长期记忆（而非上下文窗口）回忆起该事实。这里用 `local` 后端，需要 `pip install "veadk-python[extensions]"`。
 
 ```python lines
 import asyncio

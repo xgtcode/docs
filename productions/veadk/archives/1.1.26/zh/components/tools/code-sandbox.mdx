@@ -1,6 +1,6 @@
 ---
 title: "代码沙箱"
-en_link: "/productions/veadk/preview/en/components/tools/code-sandbox"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox"
 ---
 
 ## 功能说明
@@ -26,7 +26,7 @@ VeADK 提供一组在 [AgentKit 沙箱](https://console.volcengine.com/agentkit)
 - `from veadk.tools.builtin_tools.poll_skill import poll_skill`
 
 <Note>
-如果需要将完整的任务委派给远端沙箱，而非由协调智能体逐工具调用，可以使用 `AgentkitRemoteSandboxAgent` 子智能体。详见[远端沙箱子智能体](/productions/veadk/preview/zh/components/agent/remote-sandbox-agent)。
+如果需要将完整的任务委派给远端沙箱，而非由协调智能体逐工具调用，可以使用 `AgentkitRemoteSandboxAgent` 子智能体。详见[远端沙箱子智能体](/productions/veadk/archives/1.1.26/zh/components/agent/remote-sandbox-agent)。
 </Note>
 
 ## 环境变量与前提
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 </Warning>
 
 <Note>
-设置 `SKILL_SPACE_POLICY` 环境变量后，VeADK 会自动将其转发到 `execute_skills`、`invoke_skill`、`poll_skill` 和 `run_sandbox_agent` 创建的沙箱会话，使沙箱中的技能加载遵循与本地相同的筛选规则。无需通过 `extra_env_vars` 手动传递。详见[技能](/productions/veadk/preview/zh/components/agent/skills#技能空间策略)
+设置 `SKILL_SPACE_POLICY` 环境变量后，VeADK 会自动将其转发到 `execute_skills`、`invoke_skill`、`poll_skill` 和 `run_sandbox_agent` 创建的沙箱会话，使沙箱中的技能加载遵循与本地相同的筛选规则。无需通过 `extra_env_vars` 手动传递。详见[技能](/productions/veadk/archives/1.1.26/zh/components/agent/skills#技能空间策略)
 </Note>
 
 ## 技能沙箱执行
@@ -277,7 +277,7 @@ if __name__ == "__main__":
 调用 `execute_skills` 时，VeADK 会从凭证服务中读取当前请求的入站身份凭证（凭证键为 `inbound_auth`），并以 `inbound_auth` 请求头转发给技能沙箱，使沙箱中的工作流能够以原始用户身份执行。若当前请求未携带入站凭证，则不附加该请求头，不转发该用户身份；访问沙箱仍需有效的云服务凭证与权限。
 
 <Note>
-入站身份凭证的来源与配置方式参见[入站认证](/productions/veadk/preview/zh/components/security/inbound)。
+入站身份凭证的来源与配置方式参见[入站认证](/productions/veadk/archives/1.1.26/zh/components/security/inbound)。
 </Note>
 
 ### 参数
@@ -346,7 +346,7 @@ if __name__ == "__main__":
 
 ## 并行调用隔离
 
-当配置了[同步工具线程池](/productions/veadk/preview/zh/components/agent/runtime#同步工具并行执行)且模型在同一轮中发起多个 `run_code` 调用时，VeADK 默认为每个调用分配独立的沙箱会话标识：在基础会话标识后附加该调用的函数调用标识，使各 `run_code` 调用在相互隔离的沙箱中并行执行，互不影响彼此的文件系统和运行环境。
+当配置了[同步工具线程池](/productions/veadk/archives/1.1.26/zh/components/agent/runtime#同步工具并行执行)且模型在同一轮中发起多个 `run_code` 调用时，VeADK 默认为每个调用分配独立的沙箱会话标识：在基础会话标识后附加该调用的函数调用标识，使各 `run_code` 调用在相互隔离的沙箱中并行执行，互不影响彼此的文件系统和运行环境。
 
 <Note>
   未配置线程池时，同一轮中的多个 `run_code` 调用串行执行，均使用相同的基础会话标识，不触发隔离逻辑。

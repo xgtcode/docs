@@ -1,6 +1,6 @@
 ---
 title: "Use in-memory storage"
-zh_link: "/productions/veadk/preview/zh/components/session/local"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/session/local"
 ---
 
 The `local` backend keeps sessions in process memory. It needs no external service and never touches disk — when the process exits, sessions are gone. It is the default backend of `ShortTermMemory`.
@@ -64,7 +64,7 @@ If the `Runner` receives no `short_term_memory` or `session_service`, it automat
 | `after_create_session_callback` | `Callable \| None` | `None` | Yes | Runs after `ShortTermMemory.create_session()` creates a new session; accepts the new `Session` and can be synchronous or asynchronous |
 
 <Warning>
-The `local` backend does not persist to disk; all session data is lost when the process exits. Do not use it in production for sessions that must survive. For persistence use [SQLite](/productions/veadk/preview/en/components/session/sqlite), [MySQL](/productions/veadk/preview/en/components/session/mysql), or [PostgreSQL](/productions/veadk/preview/en/components/session/postgresql).
+The `local` backend does not persist to disk; all session data is lost when the process exits. Do not use it in production for sessions that must survive. For persistence use [SQLite](/productions/veadk/archives/1.1.26/en/components/session/sqlite), [MySQL](/productions/veadk/archives/1.1.26/en/components/session/mysql), or [PostgreSQL](/productions/veadk/archives/1.1.26/en/components/session/postgresql).
 </Warning>
 
 ## Environment variables

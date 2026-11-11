@@ -1,6 +1,6 @@
 ---
 title: "Feishu"
-zh_link: "/productions/veadk/preview/zh/components/extensions/feishu-channel"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/extensions/feishu-channel"
 ---
 
 ## Overview
@@ -8,7 +8,7 @@ zh_link: "/productions/veadk/preview/zh/components/extensions/feishu-channel"
 `FeishuChannelExtension` bridges inbound messages from a Feishu (Lark) bot into the VeADK `Runner`.
 
 <Note>
-This page treats Feishu as an **inbound message channel**: messages from Feishu users trigger the agent. To let the agent call Feishu capabilities, see [Feishu tools](/productions/veadk/preview/en/components/tools/lark).
+This page treats Feishu as an **inbound message channel**: messages from Feishu users trigger the agent. To let the agent call Feishu capabilities, see [Feishu tools](/productions/veadk/archives/1.1.26/en/components/tools/lark).
 </Note>
 
 It listens for the bot's message events and maps Feishu's session identity onto VeADK: the message sender becomes the `Runner`'s user identity, and the thread the message belongs to becomes the session identity; when there is no thread, it falls back to the current group or direct chat as the session. In 1.0.5 it extracts text from plain messages, interactive cards, and merged-forward messages and supports the synchronous Channel SDK lifecycle.

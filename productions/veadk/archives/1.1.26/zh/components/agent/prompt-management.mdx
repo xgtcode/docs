@@ -1,11 +1,11 @@
 ---
 title: "提示词管理"
-en_link: "/productions/veadk/preview/en/components/agent/prompt-management"
+en_link: "/productions/veadk/archives/1.1.26/en/components/agent/prompt-management"
 ---
 
 提示词管理器从外部来源提供系统提示词，适合独立维护提示词版本或按请求选择内容。设置 `Agent.prompt_manager` 后，管理器会替代 `instruction`；获取时机由运行时解析提示词的过程决定，不应假定每个用户请求只调用一次
 
-以下示例需要先完成[模型配置](/productions/veadk/preview/zh/get-started/quickstart)
+以下示例需要先完成[模型配置](/productions/veadk/archives/1.1.26/zh/get-started/quickstart)
 
 ## 使用 Cozeloop
 
@@ -110,4 +110,4 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-运行 `python file_prompt.py` 可看到使用文件提示词生成的回答。`context` 的可读字段见[系统提示词](/productions/veadk/preview/zh/components/agent/system-prompt)。接入数据库或配置中心时，需要自行定义超时、缓存、版本选择和失败策略；函数返回值中的模板变量也应由管理器自行处理
+运行 `python file_prompt.py` 可看到使用文件提示词生成的回答。`context` 的可读字段见[系统提示词](/productions/veadk/archives/1.1.26/zh/components/agent/system-prompt)。接入数据库或配置中心时，需要自行定义超时、缓存、版本选择和失败策略；函数返回值中的模板变量也应由管理器自行处理

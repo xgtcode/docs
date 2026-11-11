@@ -1,6 +1,6 @@
 ---
 title: "Bash Toolset"
-zh_link: "/productions/veadk/preview/zh/components/tools/bash-toolset"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/bash-toolset"
 ---
 
 <Note>
@@ -37,7 +37,7 @@ Import path: `from veadk.tools.builtin_tools.bash_toolset import BashToolset`
 
 ## When to use
 
-Use `BashToolset` when the agent needs to read files in the working directory, browse directory structures, search file contents, or compare file differences. Unlike the [code sandbox](/productions/veadk/preview/en/components/tools/code-sandbox), `BashToolset` executes within the local process without depending on a remote sandbox, making it suitable for scenarios that require fast, safe access to local files.
+Use `BashToolset` when the agent needs to read files in the working directory, browse directory structures, search file contents, or compare file differences. Unlike the [code sandbox](/productions/veadk/archives/1.1.26/en/components/tools/code-sandbox), `BashToolset` executes within the local process without depending on a remote sandbox, making it suitable for scenarios that require fast, safe access to local files.
 
 <Warning>
 `BashToolset` provides application-level access control, not an OS-level sandbox. The host must control directory renames, hard links, and mounts inside the allowed roots to prevent permission bypass. Timeouts cancel the caller and cooperatively stop the read worker, but a blocked filesystem call cannot be forcibly interrupted by a Python thread.

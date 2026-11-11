@@ -1,6 +1,6 @@
 ---
 title: "Use SQLite storage"
-zh_link: "/productions/veadk/preview/zh/components/session/sqlite"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/session/sqlite"
 ---
 
 The `sqlite` backend persists sessions to a local SQLite file. It needs no external database service, but unlike `local`, sessions are written to disk and therefore survive across processes and restarts.
@@ -64,6 +64,6 @@ stm = ShortTermMemory(db_url="sqlite+aiosqlite:///./test.db")
 
 The `sqlite` backend reads no environment variables; all configuration comes from constructor parameters.
 
-Need distributed persistence? Use [MySQL](/productions/veadk/preview/en/components/session/mysql) or [PostgreSQL](/productions/veadk/preview/en/components/session/postgresql).
+Need distributed persistence? Use [MySQL](/productions/veadk/archives/1.1.26/en/components/session/mysql) or [PostgreSQL](/productions/veadk/archives/1.1.26/en/components/session/postgresql).
 
 Store the SQLite file in a writable persistent directory. Containers need a persistent volume to retain it across replacement. The default `/tmp` path may be cleaned by the operating system and is not a backup. Create parent directories yourself when connecting through `db_url`

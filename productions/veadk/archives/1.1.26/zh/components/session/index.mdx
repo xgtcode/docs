@@ -1,6 +1,6 @@
 ---
 title: "概览"
-en_link: "/productions/veadk/preview/en/components/session"
+en_link: "/productions/veadk/archives/1.1.26/en/components/session"
 ---
 
 短期记忆保存会话中的消息、工具交互和状态，供后续轮次恢复上下文。会话由 `app_name`、`user_id` 和 `session_id` 共同标识；只有存储后端和这三个标识一致，后续运行才会继续已有会话
@@ -50,14 +50,14 @@ stm = ShortTermMemory(backend="sqlite", local_database_path="./stm.db")
 
 | 后端 | 是否持久化 | 依赖外部服务 | 适用场景 | 文档 |
 | :--- | :--- | :--- | :--- | :--- |
-| `local` | 否（仅内存） | 无 | 本地调试、临时会话 | [本地内存](/productions/veadk/preview/zh/components/session/local) |
-| `sqlite` | 是（本地文件） | 无 | 单机持久化 | [SQLite](/productions/veadk/preview/zh/components/session/sqlite) |
-| `mysql` | 是 | MySQL | 分布式持久化 | [MySQL](/productions/veadk/preview/zh/components/session/mysql) |
-| `postgresql` | 是 | PostgreSQL | 分布式持久化 | [PostgreSQL](/productions/veadk/preview/zh/components/session/postgresql) |
+| `local` | 否（仅内存） | 无 | 本地调试、临时会话 | [本地内存](/productions/veadk/archives/1.1.26/zh/components/session/local) |
+| `sqlite` | 是（本地文件） | 无 | 单机持久化 | [SQLite](/productions/veadk/archives/1.1.26/zh/components/session/sqlite) |
+| `mysql` | 是 | MySQL | 分布式持久化 | [MySQL](/productions/veadk/archives/1.1.26/zh/components/session/mysql) |
+| `postgresql` | 是 | PostgreSQL | 分布式持久化 | [PostgreSQL](/productions/veadk/archives/1.1.26/zh/components/session/postgresql) |
 
 ## 与 Runner 协作
 
-短期记忆通常传给 `Runner`，由 `Runner` 自动创建或恢复会话。运行前完成[模型配置](/productions/veadk/preview/zh/components/agent/model)，然后复用相同的应用、用户和会话标识以延续上下文
+短期记忆通常传给 `Runner`，由 `Runner` 自动创建或恢复会话。运行前完成[模型配置](/productions/veadk/archives/1.1.26/zh/components/agent/model)，然后复用相同的应用、用户和会话标识以延续上下文
 
 ```python lines
 import asyncio

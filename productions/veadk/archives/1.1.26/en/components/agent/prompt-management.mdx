@@ -1,11 +1,11 @@
 ---
 title: "Prompt management"
-zh_link: "/productions/veadk/preview/zh/components/agent/prompt-management"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/agent/prompt-management"
 ---
 
 A prompt manager supplies system instructions from an external source. Use one to maintain prompt versions separately or select content for each request. Setting `Agent.prompt_manager` replaces `instruction`. Fetch timing follows the runtime's instruction resolution, so do not assume exactly one call per user request
 
-Complete [model configuration](/productions/veadk/preview/en/get-started/quickstart) before running these examples
+Complete [model configuration](/productions/veadk/archives/1.1.26/en/get-started/quickstart) before running these examples
 
 ## Use Cozeloop
 
@@ -110,4 +110,4 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Run `python file_prompt.py` to generate a response using the file. See [system prompts](/productions/veadk/preview/en/components/agent/system-prompt) for readable context fields. Database and configuration-service integrations must define their own timeouts, caching, version selection, failure behavior, and template rendering
+Run `python file_prompt.py` to generate a response using the file. See [system prompts](/productions/veadk/archives/1.1.26/en/components/agent/system-prompt) for readable context fields. Database and configuration-service integrations must define their own timeouts, caching, version selection, failure behavior, and template rendering

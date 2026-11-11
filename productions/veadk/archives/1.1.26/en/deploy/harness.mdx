@@ -1,6 +1,6 @@
 ---
 title: "Harness Server Deployment"
-zh_link: "/productions/veadk/preview/zh/deploy/harness"
+zh_link: "/productions/veadk/archives/1.1.26/zh/deploy/harness"
 ---
 
 The Harness server is a standalone VeADK agent runtime that you create, configure, and deploy with the `veadk harness` command line. Once deployed, it runs as an AgentKit Runtime and provides conversation endpoints, session management, and runtime config override capabilities. It suits scenarios where you need to host an agent independently and call it through an HTTP API.
@@ -148,7 +148,7 @@ Set the component backend type before its connection settings. Connection option
 Although help lists `--builtin-tools`, `--mcp-router-id`, `--selected-skills`, `--mcp`, and `--registry`, this version of `add` does not persist them. Edit YAML directly for structured resources as shown below. OIDC options belong to `deploy`, not `add`
 </Note>
 
-A connection field accepted by the CLI is not necessarily used by every backend. Redis usernames work for knowledge bases but are ignored by long-term memory. OpenSearch secret_token is not used by current knowledge-base or memory connections. See [Redis memory](/productions/veadk/preview/en/components/memory/redis) and [OpenSearch knowledge bases](/productions/veadk/preview/en/components/knowledge/opensearch)
+A connection field accepted by the CLI is not necessarily used by every backend. Redis usernames work for knowledge bases but are ignored by long-term memory. OpenSearch secret_token is not used by current knowledge-base or memory connections. See [Redis memory](/productions/veadk/archives/1.1.26/en/components/memory/redis) and [OpenSearch knowledge bases](/productions/veadk/archives/1.1.26/en/components/knowledge/opensearch)
 
 ### harness.yaml configuration structure
 
@@ -247,7 +247,7 @@ A `selected_skills` entry with `source` set to `skillspace` can include a `skill
 | `mode` | `"allow" \| "deny"` | — | Filter mode |
 | `ids` | `list[str]` | `[]` | Skill IDs participating in the filter |
 
-When `mode` is `allow`, only skills whose IDs are in the list are loaded. When `mode` is `deny`, skills whose IDs are in the list are excluded. Multiple `skillspace` entries can each set their own `skill_space_policy` for independent per-space filtering. When any entry sets a `skill_space_policy`, the `SKILL_SPACE_POLICY` environment variable is ignored; see [Skills](/productions/veadk/preview/en/components/agent/skills#harness-skill-space-filtering)
+When `mode` is `allow`, only skills whose IDs are in the list are loaded. When `mode` is `deny`, skills whose IDs are in the list are excluded. Multiple `skillspace` entries can each set their own `skill_space_policy` for independent per-space filtering. When any entry sets a `skill_space_policy`, the `SKILL_SPACE_POLICY` environment variable is ignored; see [Skills](/productions/veadk/archives/1.1.26/en/components/agent/skills#harness-skill-space-filtering)
 
 ```yaml title="harness.yaml" lines
 harness:
@@ -288,7 +288,7 @@ harness_enhance:
 | `profile` | `str` | `default` | Plugin configuration profile |
 | `compression_provider` | `str` | `builtin` | Compression provider: builtin or headroom |
 
-HTTP callers can override these settings for one request through the top-level `harness_enhance` field, with `components` supplied as a comma-separated string. Compression can lose details and answer verification does not guarantee factual accuracy. See [Harness extension](/productions/veadk/preview/en/components/extensions/harness) for component behavior and limits
+HTTP callers can override these settings for one request through the top-level `harness_enhance` field, with `components` supplied as a comma-separated string. Compression can lose details and answer verification does not guarantee factual accuracy. See [Harness extension](/productions/veadk/archives/1.1.26/en/components/extensions/harness) for component behavior and limits
 
 ## View configuration
 

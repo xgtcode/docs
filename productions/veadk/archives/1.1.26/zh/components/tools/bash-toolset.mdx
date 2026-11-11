@@ -1,6 +1,6 @@
 ---
 title: "Bash 工具集"
-en_link: "/productions/veadk/preview/en/components/tools/bash-toolset"
+en_link: "/productions/veadk/archives/1.1.26/en/components/tools/bash-toolset"
 ---
 
 <Note>
@@ -37,7 +37,7 @@ python -m pip install "veadk-python @ git+https://github.com/volcengine/veadk-py
 
 ## 何时使用
 
-当智能体需要读取工作目录中的文件、浏览目录结构、搜索文件内容或比较文件差异时，使用 `BashToolset`。与[代码沙箱](/productions/veadk/preview/zh/components/tools/code-sandbox)不同，`BashToolset` 在本地进程内执行，不依赖远端沙箱，适合需要快速、安全地读取本地文件的场景。
+当智能体需要读取工作目录中的文件、浏览目录结构、搜索文件内容或比较文件差异时，使用 `BashToolset`。与[代码沙箱](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)不同，`BashToolset` 在本地进程内执行，不依赖远端沙箱，适合需要快速、安全地读取本地文件的场景。
 
 <Warning>
 `BashToolset` 提供的是应用层访问控制，而非操作系统级沙箱。主机仍需控制允许目录内的文件重命名、硬链接和挂载操作，防止权限绕过。超时会取消调用方并协作停止读取工作线程，但被阻塞的文件系统调用无法被 Python 线程强制中断。

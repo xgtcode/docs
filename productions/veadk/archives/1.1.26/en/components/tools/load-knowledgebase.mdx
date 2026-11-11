@@ -1,6 +1,6 @@
 ---
 title: "Knowledge base retrieval"
-zh_link: "/productions/veadk/preview/zh/components/tools/load-knowledgebase"
+zh_link: "/productions/veadk/archives/1.1.26/zh/components/tools/load-knowledgebase"
 ---
 
 ## Overview
@@ -9,11 +9,11 @@ Tool identifier `load_knowledgebase`.
 
 System tools are built-in tools that VeADK mounts **automatically** based on the agent's configuration — you don't add them to the `tools` list yourself. When you pass a `knowledgebase` to the agent, VeADK mounts the `load_knowledgebase` tool. The agent decides on its own when to query the knowledge base and which keywords to search with, then uses the retrieved knowledge as context for its answer.
 
-For backend types, initialization, and data ingestion, see the [knowledge base docs](/productions/veadk/preview/en/components/knowledge).
+For backend types, initialization, and data ingestion, see the [knowledge base docs](/productions/veadk/archives/1.1.26/en/components/knowledge).
 
 ## Prerequisites
 
-Install `python -m pip install "veadk-python[extensions]"`, then configure the [model](/productions/veadk/preview/en/components/agent/model) and [local backend](/productions/veadk/preview/en/components/knowledge/local). Local storage still sends text to the configured embedding service. Ingest data before the first search.
+Install `python -m pip install "veadk-python[extensions]"`, then configure the [model](/productions/veadk/archives/1.1.26/en/components/agent/model) and [local backend](/productions/veadk/archives/1.1.26/en/components/knowledge/local). Local storage still sends text to the configured embedding service. Ingest data before the first search.
 
 ## Usage
 

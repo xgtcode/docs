@@ -1,6 +1,6 @@
 ---
 title: "使用本地内存"
-en_link: "/productions/veadk/preview/en/components/memory/local"
+en_link: "/productions/veadk/archives/1.1.26/en/components/memory/local"
 ---
 
 `local` 后端把长期记忆保存在**当前进程的内存**中。记忆文本先经 embedding 模型向量化，再写入一个基于 llama-index 的内存向量索引，检索时按语义相似度召回。
@@ -43,7 +43,7 @@ agent = Agent(
 )
 ```
 
-完整跨会话示例见[长期记忆 · 跨会话示例](/productions/veadk/preview/zh/components/memory/index#跨会话示例)。
+完整跨会话示例见[长期记忆 · 跨会话示例](/productions/veadk/archives/1.1.26/zh/components/memory/index#跨会话示例)。
 
 ## 参数
 
@@ -95,7 +95,7 @@ export MODEL_EMBEDDING_API_KEY="your-ark-api-key"
 </Note>
 
 <Warning>
-`local` 后端仅将记忆保存在进程内存中，进程退出后数据即丢失，且无法跨进程共享。需要持久化或多实例共享，请改用 [VikingDB](/productions/veadk/preview/zh/components/memory/vikingdb)、[Mem0](/productions/veadk/preview/zh/components/memory/mem0)、[OpenSearch](/productions/veadk/preview/zh/components/memory/opensearch) 或 [Redis](/productions/veadk/preview/zh/components/memory/redis)。
+`local` 后端仅将记忆保存在进程内存中，进程退出后数据即丢失，且无法跨进程共享。需要持久化或多实例共享，请改用 [VikingDB](/productions/veadk/archives/1.1.26/zh/components/memory/vikingdb)、[Mem0](/productions/veadk/archives/1.1.26/zh/components/memory/mem0)、[OpenSearch](/productions/veadk/archives/1.1.26/zh/components/memory/opensearch) 或 [Redis](/productions/veadk/archives/1.1.26/zh/components/memory/redis)。
 </Warning>
 
 ## 验证写入和检索

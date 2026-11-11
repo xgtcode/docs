@@ -1,6 +1,6 @@
 ---
 title: "Studio 智能体工作台"
-en_link: "/productions/veadk/preview/en/components/frontend/studio"
+en_link: "/productions/veadk/archives/1.1.26/en/components/frontend/studio"
 ---
 
 AgentKit Studio 使用与 VeADK Frontend 相同的服务和完整界面，提供对话、搜索、历史会话、资源库、视频创作、自动化集成，以及智能体创建、测试、部署和管理功能，启动后默认进入对话页面。智能体工作台以画布形式呈现多智能体拓扑，并集中展示已部署 Runtime 的版本与部署状态，支持在同一 Runtime 上迭代更新。
@@ -45,7 +45,7 @@ npm run build
 cd ..
 ```
 
-需要 Python 与 Node.js 环境，依赖要求见[安装](/productions/veadk/preview/zh/get-started/installation)。从该源码目录启动时可通过 `--frontend-dir ./frontend/dist` 明确使用刚构建的界面
+需要 Python 与 Node.js 环境，依赖要求见[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)。从该源码目录启动时可通过 `--frontend-dir ./frontend/dist` 明确使用刚构建的界面
 
 ## 在本地启动
 
@@ -75,7 +75,7 @@ export BYTEPLUS_SECRET_KEY="your-secret-key"
 veadk studio --provider byteplus --open
 ```
 
-需要调试本地智能体时使用 `veadk studio --dev --agents-dir ./agents --open`，目录结构见 [VeADK Web](/productions/veadk/preview/zh/components/frontend/veadk-web#启动)。`--dev` 决定列表来源，`--agents-dir` 只指定本地目录
+需要调试本地智能体时使用 `veadk studio --dev --agents-dir ./agents --open`，目录结构见 [VeADK Web](/productions/veadk/archives/1.1.26/zh/components/frontend/veadk-web#启动)。`--dev` 决定列表来源，`--agents-dir` 只指定本地目录
 
 服务启动后应能打开首页；再选择一个可用智能体发送消息确认模型和 Runtime 连接。云端列表为空时检查云服务商、地域和访问权限，不要先改动本地智能体目录
 
@@ -148,11 +148,11 @@ Studio 支持简体中文（`zh-CN`）和英文（`en-US`）两种界面语言�
 6. 选择部署到 AgentKit，在工作台中观察构建镜像、部署和发布进度。部署完成后，智能体以已发布状态出现在工作台，后续可在同一 Runtime 上更新。
 
 <Note>
-  除了上述自定义创建流程，Studio 还支持 DeepSeek Harness 创建模式：在创建菜单中选择「快速创建」后，在 Agent 类型对话框中选择「DeepSeek Harness」可进入 DeepSeek Harness 配置页面，配置 DeepSeek 模型服务、自定义模型提供方、命令执行和子智能体模型选择等参数，然后预览、导出或部署为 AgentKit Runtime。详见[DeepSeek Harness 创建与部署](/productions/veadk/preview/zh/components/frontend/deepseek-harness)。
+  除了上述自定义创建流程，Studio 还支持 DeepSeek Harness 创建模式：在创建菜单中选择「快速创建」后，在 Agent 类型对话框中选择「DeepSeek Harness」可进入 DeepSeek Harness 配置页面，配置 DeepSeek 模型服务、自定义模型提供方、命令执行和子智能体模型选择等参数，然后预览、导出或部署为 AgentKit Runtime。详见[DeepSeek Harness 创建与部署](/productions/veadk/archives/1.1.26/zh/components/frontend/deepseek-harness)。
 </Note>
 
 <Note>
-  Studio 支持 MPA 智能体托管创建模式：选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程，依次填写基础信息、PostgreSQL 自动准备说明和 OpenViking 准备说明。Studio 自动复用已部署 Studio 的用户池、客户端和回调地址，使用代码内置的北京地域默认镜像和模型，无需创建 YAML 配置文件。北京地域新请求自动使用默认 VLM 和 Embedding 模型创建独立 OpenViking 库，无需手动填写服务地址和 API Key；BytePlus 和已提交的手动请求仍需填写 OpenViking 配置。新创建的 MPA 智能体默认使用独立业务 Workspace，每个智能体拥有独立的业务数据库，并在创建前校验 Runtime 名称可用性。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。详见[部署 MPA 智能体](/productions/veadk/preview/zh/deploy/mpa)。
+  Studio 支持 MPA 智能体托管创建模式：选择**智能体 → MPA 智能体 → 创建 MPA 智能体**进入三步创建流程，依次填写基础信息、PostgreSQL 自动准备说明和 OpenViking 准备说明。Studio 自动复用已部署 Studio 的用户池、客户端和回调地址，使用代码内置的北京地域默认镜像和模型，无需创建 YAML 配置文件。北京地域新请求自动使用默认 VLM 和 Embedding 模型创建独立 OpenViking 库，无需手动填写服务地址和 API Key；BytePlus 和已提交的手动请求仍需填写 OpenViking 配置。新创建的 MPA 智能体默认使用独立业务 Workspace，每个智能体拥有独立的业务数据库，并在创建前校验 Runtime 名称可用性。提交后依次准备账号网络、APIG、Worker、独立业务库和 Skill Space，然后部署并检查 Runtime 就绪状态。详见[部署 MPA 智能体](/productions/veadk/archives/1.1.26/zh/deploy/mpa)。
 
 <Note>
   创建 MPA 智能体失败时，Studio 会显示本地化的安全原因，并支持展开和复制失败阶段、操作，以及可选的已校验错误码与请求 ID；不展示原始 SDK、SQL 或异常文本。已知的配额、鉴权、超时和资源状态错误会给出对应的安全说明，缺失的细节会明确标注为未知。成功创建与通用智能体视图不受影响。
@@ -235,7 +235,7 @@ API Key 列表在每次打开页面时从云服务商实时读取，不在服务
 - **跨提供商回退**：为每个回退端点单独指定模型提供方、API 地址和 API Key。生成的项目代码使用 `ModelFallbackEndpoint` 对象，通过 `model_fallbacks` 参数传入。
 
 <Note>
-  模型回退的完整参数说明与使用限制参见[模型](/productions/veadk/preview/zh/components/agent/model#配置跨提供商回退模型)。
+  模型回退的完整参数说明与使用限制参见[模型](/productions/veadk/archives/1.1.26/zh/components/agent/model#配置跨提供商回退模型)。
 </Note>
 
 跨提供商回退的 API Key 通过环境变量传入，不在生成源码或草稿中保存明文。每个回退端点对应一个环境变量，命名规则为 `FALLBACK_MODEL_<智能体名称>_<序号>_API_KEY`，并在 `.env.example` 中以占位符形式列出：
@@ -1085,12 +1085,12 @@ Studio 调用 `doubao-seed-2-0-lite-260428` 模型，根据需求生成一份经
 
 | 后端 | 适用场景 |
 | :--- | :--- |
-| [本地向量库](/productions/veadk/preview/zh/components/memory/local) | 进程内向量库，适合本地调试，不持久化，需要配置向量化模型。 |
-| [OpenSearch](/productions/veadk/preview/zh/components/memory/opensearch) | 使用自建或托管的 OpenSearch 集群，并自行配置向量化模型。 |
-| [Redis](/productions/veadk/preview/zh/components/memory/redis) | 使用 Redis 向量检索，并自行配置向量化模型。 |
-| [VikingDB Memory](/productions/veadk/preview/zh/components/memory/vikingdb) | 火山 VikingDB 记忆库（支持用户画像），使用 Studio 的火山引擎凭证。 |
-| [OpenViking](/productions/veadk/preview/zh/components/memory/openviking) | OpenViking 长期记忆，按用户维度保存和检索偏好、事件与实体。 |
-| [mem0](/productions/veadk/preview/zh/components/memory/mem0) | Mem0 托管记忆服务。 |
+| [本地向量库](/productions/veadk/archives/1.1.26/zh/components/memory/local) | 进程内向量库，适合本地调试，不持久化，需要配置向量化模型。 |
+| [OpenSearch](/productions/veadk/archives/1.1.26/zh/components/memory/opensearch) | 使用自建或托管的 OpenSearch 集群，并自行配置向量化模型。 |
+| [Redis](/productions/veadk/archives/1.1.26/zh/components/memory/redis) | 使用 Redis 向量检索，并自行配置向量化模型。 |
+| [VikingDB Memory](/productions/veadk/archives/1.1.26/zh/components/memory/vikingdb) | 火山 VikingDB 记忆库（支持用户画像），使用 Studio 的火山引擎凭证。 |
+| [OpenViking](/productions/veadk/archives/1.1.26/zh/components/memory/openviking) | OpenViking 长期记忆，按用户维度保存和检索偏好、事件与实体。 |
+| [mem0](/productions/veadk/archives/1.1.26/zh/components/memory/mem0) | Mem0 托管记忆服务。 |
 
 本地向量库、OpenSearch、Redis 与 mem0 后端的连接和向量化模型参数以环境变量形式写入生成项目；VikingDB Memory 与 OpenViking 使用火山引擎凭证链，由 Studio 服务端转发到调试运行和 AgentKit 运行时，无需在创建页重复填写 AK/SK。各后端的完整参数、默认值和限制见对应组件页面。
 
@@ -1109,7 +1109,7 @@ Studio 调用 `doubao-seed-2-0-lite-260428` 模型，根据需求生成一份经
 | 记忆策略 | `DATABASE_OPENVIKING_MEMORY_POLICY` | 否 | — | 记忆的抽取与隔离策略，JSON 格式；不填写时由 OpenViking 服务应用其官方默认策略，结构以 [OpenViking 会话接口](https://github.com/volcengine/OpenViking/blob/main/docs/zh/api/05-sessions.md)为准。 |
 
 <Note>
-  OpenViking 的记忆归属 ID（`DATABASE_OPENVIKING_USER_ID`）与运行时用户标识（`Runner.user_id`）是不同的概念：前者隔离不同应用或租户的记忆，后者作为 OpenViking 的 peer ID 隔离终端用户记忆。详见[使用 OpenViking 存储](/productions/veadk/preview/zh/components/memory/openviking)。
+  OpenViking 的记忆归属 ID（`DATABASE_OPENVIKING_USER_ID`）与运行时用户标识（`Runner.user_id`）是不同的概念：前者隔离不同应用或租户的记忆，后者作为 OpenViking 的 peer ID 隔离终端用户记忆。详见[使用 OpenViking 存储](/productions/veadk/archives/1.1.26/zh/components/memory/openviking)。
 </Note>
 
 <Warning>
@@ -1122,12 +1122,12 @@ Studio 调用 `doubao-seed-2-0-lite-260428` 模型，根据需求生成一份经
 
 | 后端 | 适用场景 |
 | :--- | :--- |
-| [VikingDB Knowledge](/productions/veadk/preview/zh/components/knowledge/viking) | 默认选项。使用火山引擎托管知识库，由服务端完成切分、向量化和检索，无需配置本地 embedding。 |
-| [OpenSearch](/productions/veadk/preview/zh/components/knowledge/opensearch) | 使用自建或托管的 OpenSearch 集群，并自行配置 embedding。 |
-| [Context Search](/productions/veadk/preview/zh/components/knowledge/context-search) | 使用火山引擎 Context Search 服务完成检索。 |
-| [OpenViking Knowledge](/productions/veadk/preview/zh/components/knowledge/openviking) | 使用 OpenViking 资源目录知识库，由服务端完成资源解析与检索，无需配置本地 embedding。 |
+| [VikingDB Knowledge](/productions/veadk/archives/1.1.26/zh/components/knowledge/viking) | 默认选项。使用火山引擎托管知识库，由服务端完成切分、向量化和检索，无需配置本地 embedding。 |
+| [OpenSearch](/productions/veadk/archives/1.1.26/zh/components/knowledge/opensearch) | 使用自建或托管的 OpenSearch 集群，并自行配置 embedding。 |
+| [Context Search](/productions/veadk/archives/1.1.26/zh/components/knowledge/context-search) | 使用火山引擎 Context Search 服务完成检索。 |
+| [OpenViking Knowledge](/productions/veadk/archives/1.1.26/zh/components/knowledge/openviking) | 使用 OpenViking 资源目录知识库，由服务端完成资源解析与检索，无需配置本地 embedding。 |
 
-Studio 不提供 `local` 后端，因为创建页面不能为进程内向量库存入文档。如需本地调试，可使用 VeADK SDK [配置本地知识库](/productions/veadk/preview/zh/components/knowledge/local)。
+Studio 不提供 `local` 后端，因为创建页面不能为进程内向量库存入文档。如需本地调试，可使用 VeADK SDK [配置本地知识库](/productions/veadk/archives/1.1.26/zh/components/knowledge/local)。
 
 选择 VikingDB Knowledge 时，Studio 会列出北京地域 `default` 项目中当前账号可见的知识库集合。选择已有集合后，其名称将作为知识库索引；未选择已有集合时，索引名称默认为 `<智能体名称>_kb`。需要重新获取列表时，可使用刷新按钮。
 
@@ -1145,7 +1145,7 @@ Studio 不提供 `local` 后端，因为创建页面不能为进程内向量库�
 此外，Studio 提供「资源索引」字段，用于指定 `KnowledgeBase` 的 `index`。留空时生成项目使用智能体名称自动生成索引（如 `my_agent_kb`）。未配置 `DATABASE_OPENVIKING_TARGET_URI` 时，资源目录自动拼接为 `viking://user/<知识库归属 ID，未填则 default>/resources/<资源索引>/`；填写 `DATABASE_OPENVIKING_TARGET_URI` 后直接使用该完整 URI。
 
 <Note>
-  OpenViking 的知识库归属 ID（`DATABASE_OPENVIKING_USER_ID`）与运行时用户标识（`Runner.user_id`）是不同的概念：前者隔离不同应用或租户的资源目录，后者标识终端用户。详见[使用 OpenViking 存储](/productions/veadk/preview/zh/components/knowledge/openviking)。
+  OpenViking 的知识库归属 ID（`DATABASE_OPENVIKING_USER_ID`）与运行时用户标识（`Runner.user_id`）是不同的概念：前者隔离不同应用或租户的资源目录，后者标识终端用户。详见[使用 OpenViking 存储](/productions/veadk/archives/1.1.26/zh/components/knowledge/openviking)。
 </Note>
 
 <Warning>
@@ -1171,7 +1171,7 @@ Studio 不提供 `local` 后端，因为创建页面不能为进程内向量库�
   这两个值会同时用于本地调试运行和部署后的运行时，生成的 `.env.example` 也会包含这两个变量。沙箱 ID 与地域只在 Studio 服务端使用，不会下发到浏览器。
 </Note>
 
-关于 `run_code` 的完整参数、Shell 执行和凭证要求，参见[代码沙箱](/productions/veadk/preview/zh/components/tools/code-sandbox)。
+关于 `run_code` 的完整参数、Shell 执行和凭证要求，参见[代码沙箱](/productions/veadk/archives/1.1.26/zh/components/tools/code-sandbox)。
 
 ## 查看子智能体移交
 
@@ -1488,7 +1488,7 @@ Studio 支持两种 Runtime 更新模式，根据该 Runtime 的当前状态自�
 Studio 可将自定义创建生成的智能体源码交付到 GitHub 仓库，提供两种交付模式。「GitHub 代码同步」把生成的源码直接推送到目标分支，Runtime 仍由部署按钮发布；「挂载持续交付」在目标分支写入 AgentKit Runtime 的 GitHub Actions 工作流，后续向该分支推送代码会自动构建并发布到绑定的 Runtime。两种模式适用于需要版本管理与持续交付的团队。
 
 <Note>
-  「挂载持续交付」会向仓库写入 GitHub Actions Secret，需要安装 `github-cicd` 可选依赖组以提供加密能力，安装方式见[安装](/productions/veadk/preview/zh/get-started/installation)。「GitHub 代码同步」不写入 Secret，无需该依赖。
+  「挂载持续交付」会向仓库写入 GitHub Actions Secret，需要安装 `github-cicd` 可选依赖组以提供加密能力，安装方式见[安装](/productions/veadk/archives/1.1.26/zh/get-started/installation)。「GitHub 代码同步」不写入 Secret，无需该依赖。
 </Note>
 
 ### 交付模式
@@ -1974,7 +1974,7 @@ VeADK 1.0.9 起，连接的 Runtime 暴露会话级能力叠加接口时，Studi
 
 已挂载的会话能力可在同一面板中移除，移除后该能力在当前会话中不再可用。会话中的对话通过会话感知的运行接口执行，确保叠加的工具与技能实际参与调用。
 
-列举与挂载远程技能需要火山引擎凭证；本地通过 `VOLCENGINE_ACCESS_KEY` 与 `VOLCENGINE_SECRET_KEY` 提供，VeFaaS 部署使用绑定的 IAM Role。能力叠加接口的完整端点与参数见[部署到 AgentKit](/productions/veadk/preview/zh/deploy/agentkit)。
+列举与挂载远程技能需要火山引擎凭证；本地通过 `VOLCENGINE_ACCESS_KEY` 与 `VOLCENGINE_SECRET_KEY` 提供，VeFaaS 部署使用绑定的 IAM Role。能力叠加接口的完整端点与参数见[部署到 AgentKit](/productions/veadk/archives/1.1.26/zh/deploy/agentkit)。
 
 
 ## 自动评测与优化反馈
@@ -3040,7 +3040,7 @@ VeStack 环境中，各云服务的 OpenAPI 端点通常指向内部地址。部
 当连接的 AgentKit Runtime 通过 `enable_studio_tools=True` 启用了 Studio BFF 动态工具宿主时，Studio 智能体信息栏会在智能体静态工具下方显示「在此对话中添加 Studio 工具」。新会话默认禁用所有 Studio 工具，用户可按需勾选；选择状态在当前浏览器进程中跨轮次保留。浏览器在每次 Runtime 运行时发送选中的工具 ID 列表，空列表或省略时使用普通运行路径。工具代码和凭证保留在 Studio BFF 侧，不会下发到 Runtime 或浏览器。
 
 <Note>
-该功能需要 Runtime 侧显式启用 `enable_studio_tools` 参数，详见[部署到 AgentKit](/productions/veadk/preview/zh/deploy/agentkit)。
+该功能需要 Runtime 侧显式启用 `enable_studio_tools` 参数，详见[部署到 AgentKit](/productions/veadk/archives/1.1.26/zh/deploy/agentkit)。
 </Note>
 
 ### 会话沙箱环境
