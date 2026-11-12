@@ -87,6 +87,14 @@ func newSearchAgent() (agent.Agent, error) {
 - 设置 `LongTermMemory` 时，VeADK Go 会补 `loadmemorytool.New()`。
 - `LongTermMemory` 还会被记录到 agent 上，`runner.New` 在未显式传 `MemoryService` 时可以自动取出。
 
+## 推理内容与会话历史
+
+使用支持推理（思考链）的模型时，模型返回的内容可能包含推理部分和最终回复部分。在多轮对话中，VeADK Go 会将这两类内容分开处理：推理内容写入消息的 reasoning 字段，最终回复写入正文，不再将推理内容混入正文。
+
+这样做的目的是保证多轮对话中模型能看到清晰的推理上下文，同时避免推理内容污染正式回复文本。即使消息中同时包含推理内容、正文和工具调用，三者也各自独立保存。
+
+如果不需要推理输出，可以通过 `DisableThought` 关闭支持模型的思考内容。
+
 ## 编写建议
 
 - 新项目使用 `github.com/volcengine/veadk-go/v2` 模块路径；V1 维护线应参考对应的 V1 历史版本文档。
