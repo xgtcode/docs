@@ -87,6 +87,14 @@ func newSearchAgent() (agent.Agent, error) {
 - `LongTermMemory` adds `loadmemorytool.New()`.
 - `LongTermMemory` is also associated with the agent so `runner.New` can reuse it when `MemoryService` is not passed explicitly.
 
+## Reasoning Content and Conversation History
+
+When using models that support reasoning (chain-of-thought), the model's response may contain both a reasoning part and a final answer part. In multi-turn conversations, VeADK Go separates these two types of content: reasoning content is written to the message's reasoning field, and the final answer is written to the message body. Reasoning content is no longer mixed into the body text.
+
+This ensures that the model sees a clear reasoning context across turns while preventing reasoning content from polluting the formal reply text. Even when a message contains reasoning content, body text, and tool calls simultaneously, all three are stored independently.
+
+If reasoning output is not needed, use `DisableThought` to turn off thought content for supported models.
+
 ## Recommendations
 
 - Use the `github.com/volcengine/veadk-go/v2` module path for new projects. Use the corresponding V1 historical-version documentation for the V1 maintenance line.
