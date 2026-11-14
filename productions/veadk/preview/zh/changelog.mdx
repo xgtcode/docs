@@ -87,12 +87,20 @@ en_link: "/productions/veadk/preview/en/changelog"
 | MPA 智能体 | 新增 `veadk mpa` 命令组：支持一键准备前置资源（网络、APIG、PostgreSQL、Skill Space、Worker）并部署 MPA 智能体到 AgentKit Runtime，无需检出 `agentkit-mpa-agent` 源码。包含 `provision`（YAML 配置部署）、`create`（命令行创建）、`init-admin-db`（管理数据库初始化）和 `control`（控制面生命周期管理）子命令。 | [部署 MPA 智能体](/productions/veadk/preview/zh/deploy/mpa) |
 | Studio | Studio 支持 MPA 智能体托管创建：选择「MPA 智能体 → 创建 MPA 智能体」进入三步创建流程，自动复用已部署 Studio 的用户池和回调地址，使用内置北京地域默认镜像和模型，支持 PostgreSQL 自动准备和 OpenViking 自动创建。 | [Studio 智能体工作台](/productions/veadk/preview/zh/components/frontend/studio#创建智能体) · [部署 MPA 智能体](/productions/veadk/preview/zh/deploy/mpa) |
 | 依赖 | `agentkit-sdk-python` 最低版本从 0.8.0 提升至 0.8.5。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
-| 依赖 | `google-adk` 依赖从 `>=1.34.0` 收窄为 `>=2.7.0,<2.8.0`，`google-adk[eval]` 同步调整。此前使用 google-adk 1.x 或 2.7.x 以外 2.x 版本的环境需升级至 2.7.x。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `opentelemetry-exporter-otlp` 版本约束从 `==1.37.0` 调整为 `>=1.37.0,<1.43`；`opentelemetry-instrumentation-logging` 新增 `<0.64` 上限。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `tos` 版本约束新增 `<2.9` 上限：TOS 2.9.x 固定 wrapt 1.16.0，与 VeADK 的 wrapt 版本冲突。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `jsonschema` 版本约束从 `>=4.23,<5` 收窄为 `>=4.23,<4.24`：litellm 固定 jsonschema 4.23.0。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `fastmcp` 版本约束新增 `<4` 上限：fastmcp 4.x 要求 mcp>=2，与当前 mcp 版本不兼容。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `harness-sidecar` 可选依赖组中 `agentkit-sdk-python` 约束从 `>=0.8.1,<0.9.0` 调整为 `>=0.8.5`，移除版本上限。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
+
+## 1.1.27
+
+VeADK 1.1.27 发布于 2026 年 11 月 14 日。下表列出该版本的公开用户能力变化；完整提交记录见 [GitHub Release](https://github.com/volcengine/veadk-python/releases/tag/1.1.27)。
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| 依赖 | `google-adk` 依赖版本约束从 `>=2.7.0,<2.8.0` 放宽至 `>=2.7.0,<2.12.0`，`google-adk[eval]` 同步调整。此前仅支持 2.7.x，现支持 2.7.x 至 2.11.x。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
+| 动态智能体委派 | 修复 Google ADK 2.8.0 及以上版本中动态创建子智能体后 `transfer_to_agent` 移交路由不正确的问题：移交目标现按实际执行的智能体实例解析，而非模板智能体。 | [动态智能体委派](/productions/veadk/preview/zh/components/tools/dynamic-agent) |
 
 ## 1.1.26
 
