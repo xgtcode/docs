@@ -1,0 +1,103 @@
+---
+title: "Speech to text"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/speech-to-text"
+---
+
+## Function
+
+Tool identifier `speech_to_text`.
+
+`speech_to_text` calls the Volcengine recording-file speech recognition service to transcribe speech in an audio file into text. The spoken language is detected automatically, and the result contains the full text, duration, and timestamped utterances. The audio can be a local file path or a publicly accessible `http(s)` URL.
+
+The tool is an async function (`async def`). Its credentials are independent of the agent reasoning model and do not require `MODEL_AGENT_API_KEY`.
+
+Import path: `from veadk.tools.builtin_tools.speech_to_text import speech_to_text`
+
+## Prerequisites
+
+<Warning>
+Requirement: configure an API key for the speech recognition service. Resolution order is `TOOL_SPEECH_TO_TEXT_API_KEY`, then `TOOL_VESPEECH_API_KEY`, and finally `tool.vespeech.api_key` in the configuration file.
+</Warning>
+
+Environment variables:
+
+- `TOOL_SPEECH_TO_TEXT_API_KEY`: speech recognition API key, highest priority
+- `TOOL_VESPEECH_API_KEY`: VeSpeech service API key, used as a fallback
+- `tool.vespeech.api_key` in the configuration file: used when neither environment variable is set
+
+Supported audio formats are WAV, MP3, OGG, and OPUS, with local files up to 100 MB.
+
+## Usage
+
+```python title="examples/tools/speech_to_text/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.speech_to_text import speech_to_text
+
+agent = Agent(
+    name="asr_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that transcribes speech audio.",
+    instruction="When the user provides an audio file or link and asks for transcription, call the speech_to_text tool.",
+    tools=[speech_to_text],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Transcribe the speech in /tmp/meeting.mp3")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.speech_to_text import speech_to_text
+
+
+async def main():
+    result = await speech_to_text("/tmp/meeting.mp3", timeout=600)
+    if "error" in result:
+        print("Transcription failed:", result["error"])
+    else:
+        print(result["duration_ms"], result["log_id"])
+        print(result["text"])
+        for utterance in result["utterances"]:
+            print(utterance["start_time"], utterance["end_time"], utterance["text"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `audio` | `str` | Required | Local audio file path or publicly accessible `http(s)` URL |
+| `timeout` | `int` | `300` | Request timeout in seconds, from 1 to 600 |
+
+Success returns `{"text", "duration_ms", "utterances", "log_id"}`:
+
+- `text`: full transcript; the output includes punctuation and normalizes spoken numbers.
+- `duration_ms`: audio duration in milliseconds.
+- `utterances`: list of timestamped segments, each `{"start_time", "end_time", "text"}`, at most 200 items.
+- `log_id`: server-side request identifier for troubleshooting.
+
+A missing API key, unreadable audio, or service error produces an `error` field; some failure results also include `log_id`.
+
+## Notes
+
+<Note>
+- Local audio is Base64-encoded into the request, so larger files make the request bigger; check the network and timeout for long recordings.
+- Remote URLs pass an SSRF check first, blocking private and loopback addresses, and are then fetched by the recognition service over the public network, so the link must be reachable from that service.
+- The language is detected automatically and needs no configuration; unlike [`text_to_speech`](/productions/veadk/archives/1.1.28/en/components/tools/text-to-speech), this tool needs only the speech service API key—no App ID or model API key.
+</Note>

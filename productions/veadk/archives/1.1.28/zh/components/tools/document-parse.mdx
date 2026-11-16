@@ -1,0 +1,84 @@
+---
+title: "文档解析"
+en_link: "/productions/veadk/archives/1.1.28/en/components/tools/document-parse"
+---
+
+## 功能说明
+
+对应工具标识 `document_parse`。
+
+`document_parse` 把本地或公网文档解析为有长度上限的纯文本，供智能体阅读与总结。支持 PDF、Word、Excel、CSV、TXT、Markdown、JSON 与 HTML；格式可显式指定，也可按扩展名、响应头与文件内容自动识别。
+
+导入路径：`from veadk.tools.builtin_tools.document_parse import document_parse`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`document_parse` 工具本身无需额外凭证；读取本地文件不需要任何凭证）
+
+## 使用方法
+
+```python title="examples/tools/document_parse/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.document_parse import document_parse
+
+agent = Agent(
+    name="document_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that reads documents and answers questions.",
+    instruction="先调用 document_parse 解析用户给出的文件或链接，再基于解析出的文本回答。",
+    tools=[document_parse],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("解析 https://example.com/report.pdf 并总结要点")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用：
+
+```python lines
+from veadk.tools.builtin_tools.document_parse import document_parse
+
+result = document_parse("quarterly.xlsx", max_chars=50000)
+if "error" in result:
+    print("解析失败:", result["error"])
+else:
+    print(result["format"], result["metadata"])
+    print(result["truncated"])
+    print(result["text"][:500])
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `source` | `str` | 必填 | 本地文件路径或可公开访问的 `http(s)` URL |
+| `format` | `str \| None` | — | 显式指定格式：`pdf`、`docx`、`xlsx`、`csv`、`txt`、`md`、`json`、`html`；`markdown` 与 `htm` 分别视为 `md` 与 `html` |
+| `max_chars` | `int` | `200000` | 返回文本的字符上限，取 1000–1000000 |
+
+未显式指定 `format` 时，按以下顺序识别：文件扩展名、URL 响应的 `Content-Type`、文件魔数特征、HTML 特征嗅探，最后按 UTF-8 纯文本处理。
+
+成功返回 `{"format", "text", "truncated", "metadata"}`。`metadata` 固定包含 `source_kind`（`file` 或 `url`）、`size_bytes`、`download_truncated` 与最终识别出的 `format`；本地文件附 `path`，URL 附 `url`、`requested_url` 与 `content_type`，解析器还会补充 `pages`/`needs_ocr`（PDF）、`paragraphs`/`tables`（Word）、`sheets`/`total_rows`（Excel）或 `delimiter`/`rows`（CSV）等信息。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+限制与边界：
+
+- 本地文件超过 20,000,000 字节时直接返回错误；远程响应体在 20,000,000 字节处截断，并在 `metadata` 中置 `download_truncated: true`，下载超时 30 秒、最多跟随 3 次重定向。
+- Excel 仅解析前 50 个工作表、每个工作表前 1000 行；CSV 最多解析前 5000 行；超出 `max_chars` 的文本在 `truncated` 为 `true` 时被截断。
+- PDF 只抽取内嵌文字，不对扫描件做 OCR；扫描件返回的文本可能为空，且 `metadata` 中 `needs_ocr` 为 `true`，可先将页面转为图片，再用 [`ocr`](/productions/veadk/archives/1.1.28/zh/components/tools/ocr) 识别。
+- URL 下载与 [`http_request`](/productions/veadk/archives/1.1.28/zh/components/tools/http-request) 使用相同的 SSRF 防护，私网与环回地址会被拦截；下载请求不支持自定义请求头，需要登录的链接无法解析。
+</Note>

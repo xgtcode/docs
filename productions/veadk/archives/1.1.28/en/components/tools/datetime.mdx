@@ -1,0 +1,99 @@
+---
+title: "Date and time"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/datetime"
+---
+
+## Function
+
+Tool identifier `datetime`.
+
+`datetime` provides timezone-aware date and time operations: getting the current time, parsing common date/time strings, formatting output, converting between timezones, computing the difference between two timestamps, and adding or subtracting durations. All computation is local and accesses no external services.
+
+Import path: `from veadk.tools.builtin_tools.datetime_tool import datetime`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `datetime` tool itself needs no extra credentials and accesses no external services)
+
+## Usage
+
+```python title="examples/tools/datetime/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.datetime_tool import datetime
+
+agent = Agent(
+    name="datetime_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that answers date and time questions.",
+    instruction="Use the datetime tool for current time, timezone conversion, time differences, and date arithmetic.",
+    tools=[datetime],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("What is 09:00 Beijing time on 2026-11-16 in UTC?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls for each action:
+
+```python lines
+from veadk.tools.builtin_tools.datetime_tool import datetime
+
+datetime("now", timezone="Asia/Shanghai")
+datetime("parse", value="2026-11-16 09:30:00", timezone="Asia/Shanghai")
+datetime("format", value="2026-11-16T09:30:00+08:00", format="%Y/%m/%d")
+datetime(
+    "convert",
+    value="2026-11-16 09:00:00",
+    timezone="Asia/Shanghai",
+    target_timezone="UTC",
+)
+datetime("diff", value="2026-01-01", value2="2026-01-08")
+datetime("add", value="2026-01-01 00:00:00", amount=90, unit="minutes")
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `action` | `str` | Required | One of `now`, `parse`, `format`, `convert`, `diff`, `add` |
+| `value` | `str` | — | Primary date/time string; required by every action except `now` |
+| `value2` | `str` | — | Second timestamp for `diff`; the difference is computed as `value2 - value` |
+| `timezone` | `str` | `"UTC"` | IANA timezone name, for example `Asia/Shanghai`; applied when `value` has no offset |
+| `target_timezone` | `str` | — | Required for `convert`; the target IANA timezone name |
+| `format` | `str` | `"%Y-%m-%d %H:%M:%S"` | `strftime` format string used by the `format` action |
+| `amount` | `int \| float` | — | Required for `add`; numeric duration to add |
+| `unit` | `str` | — | Required for `add`; one of `seconds`, `minutes`, `hours`, `days`, `weeks` |
+
+Action behavior and returned fields:
+
+| Action | Behavior | Returned fields |
+| :--- | :--- | :--- |
+| `now` | Current time in the given timezone | `iso`, `timestamp`, `timezone`, `weekday` |
+| `parse` | Parses the string into date and time components | `iso`, `timestamp`, `timezone`, `year`, `month`, `day`, `hour`, `minute`, `second`, `weekday` |
+| `format` | Formats the time with `strftime` | `formatted`, `iso` |
+| `convert` | Converts to `target_timezone` | `iso`, `timestamp`, `timezone` |
+| `diff` | Computes the difference between two timestamps | `seconds`, `days`, `human` |
+| `add` | Adds a duration to the timestamp | `iso`, `timestamp` |
+
+Success returns a dictionary with the fields above; invalid parameters return `{"error": ...}`.
+
+## Notes
+
+<Note>
+- ISO 8601 strings are supported (including the trailing `Z` or `z` UTC notation), along with `YYYY-MM-DD`, `YYYY-MM-DD HH:MM:SS`, `YYYY/MM/DD`, and `YYYY/MM/DD HH:MM:SS`.
+- `timestamp` is Unix time in seconds; `weekday` ranges from `monday` to `sunday`; for `diff`, `human` gives a readable duration in days plus `HH:MM:SS`, with a minus sign when `value2` is earlier than `value`.
+- Timezones use IANA names, so the runtime must provide the timezone database; containers or minimal systems lacking timezone data need the system `tzdata` package installed.
+</Note>

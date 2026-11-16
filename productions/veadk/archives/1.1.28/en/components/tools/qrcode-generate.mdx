@@ -1,0 +1,95 @@
+---
+title: "QR code generation"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/qrcode-generate"
+---
+
+## Function
+
+Tool identifier `qrcode_generate`.
+
+`qrcode_generate` encodes text or a URL into a PNG QR code image. For agent calls the image is saved as a conversation artifact; direct calls write it to the system temporary directory and return the path. The tool only creates QR codes; it cannot read or decode them.
+
+The tool is an async function (`async def`). Generation happens locally and accesses no external services.
+
+Import path: `from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `qrcode_generate` tool itself needs no extra credentials and accesses no external services)
+
+## Usage
+
+```python title="examples/tools/qrcode_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate
+
+agent = Agent(
+    name="qrcode_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that generates QR codes.",
+    instruction="Use qrcode_generate when the user needs a QR code for a link or text.",
+    tools=[qrcode_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Generate a QR code for https://www.volcengine.com")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate
+
+
+async def main():
+    result = await qrcode_generate(
+        content="https://www.volcengine.com",
+        filename="volcengine.png",
+        box_size=12,
+        fill_color="#1f6feb",
+        back_color="white",
+    )
+    if "error" in result:
+        print("Generation failed:", result["error"])
+    else:
+        print(result["width"], result["height"], result["path"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `content` | `str` | Required | Text or URL to encode; non-empty and at most 2,000 characters |
+| `filename` | `str` | `"qrcode.png"` | Output filename; the extension is forced to `.png` |
+| `box_size` | `int` | `10` | Pixel size of each QR module, from 1 to 50 |
+| `border` | `int` | `4` | Quiet-zone size in modules around the code, from 0 to 20 |
+| `fill_color` | `str` | `"black"` | Color of the dark modules; a Pillow color name or hex value |
+| `back_color` | `str` | `"white"` | Background color; a Pillow color name or hex value |
+| `tool_context` | `ToolContext` | Injected | Injected automatically for agent calls; optional for direct calls |
+
+Success returns `{"filename", "format", "width", "height", "size_bytes", "mime_type", "artifact_saved", "path"}`, with `format` always `png`. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- QR codes use error-correction level M, which tolerates roughly 15% damage; use a dedicated QR library when stronger correction or higher-version features are required.
+- Longer content produces more modules; for a fixed print size, increase `box_size` accordingly so the code stays scannable.
+</Note>
