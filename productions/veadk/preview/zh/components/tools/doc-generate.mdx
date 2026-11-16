@@ -1,0 +1,135 @@
+---
+title: "文档生成"
+en_link: "/productions/veadk/preview/en/components/tools/doc-generate"
+---
+
+## 功能说明
+
+对应工具标识 `doc_generate`。
+
+`doc_generate` 生成 Word、Excel、CSV 或 Markdown 文档。智能体调用时，文档作为会话产物保存；在普通代码中直接调用时，文档写入系统临时目录并返回路径。
+
+该工具为异步函数（`async def`），注册到 `Agent` 后由框架自动等待结果。
+
+导入路径：`from veadk.tools.builtin_tools.doc_generate import doc_generate`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`doc_generate` 工具本身无需额外凭证，也不访问外部服务）
+
+读写 Word 与 Excel 所需的 `python-docx`、`openpyxl` 已随 VeADK 基础依赖安装，无需安装 extras。
+
+## 使用方法
+
+```python title="examples/tools/doc_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+agent = Agent(
+    name="doc_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that generates documents.",
+    instruction="需要生成 Word、Excel、CSV 或 Markdown 文件时调用 doc_generate。",
+    tools=[doc_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("生成一份 Markdown 周报，包含本周进展和下周计划两节")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用需使用 `await`：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+
+async def main():
+    result = await doc_generate(
+        format="docx",
+        title="项目周报",
+        content="## 本周进展\n- 完成需求评审\n- 修复 3 个缺陷\n\n## 下周计划\n- 启动联调",
+        filename="weekly.docx",
+    )
+    if "error" in result:
+        print("生成失败:", result["error"])
+    else:
+        print(result["filename"], result["size_bytes"], result["path"])
+
+
+asyncio.run(main())
+```
+
+生成 Excel 时通过 `sheets` 传入工作表，生成 CSV 时通过 `rows` 传入行：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+
+async def generate_more():
+    await doc_generate(
+        format="xlsx",
+        title="销售台账",
+        sheets=[
+            {
+                "name": "一月",
+                "rows": [["商品", "销量"], ["铅笔", 12], ["笔记本", 8]],
+            }
+        ],
+        filename="sales.xlsx",
+    )
+
+    await doc_generate(
+        format="csv",
+        title="",
+        rows=[["name", "score"], ["Alice", 95]],
+        filename="scores.csv",
+    )
+
+
+asyncio.run(generate_more())
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `format` | `str` | 必填 | `docx`、`xlsx`、`csv`、`md` 之一，大小写不敏感 |
+| `title` | `str` | 必填 | 文档标题，用作 Word 标题与 Markdown 一级标题；CSV 忽略 |
+| `content` | `str` | `""` | `docx`、`md` 的正文，支持 `#`–`###` 标题与 `-`、`*`、`+` 列表；`csv` 未传 `rows` 时作为原始 CSV 文本 |
+| `sheets` | `list[dict]` | — | 仅 `xlsx` 使用，元素为 `{"name": str, "rows": list[list]}` |
+| `rows` | `list[list]` | — | 仅 `csv` 使用，每一行为一个列表 |
+| `filename` | `str \| None` | — | 输出文件名，扩展名自动校正为目标格式；省略时使用 `document.<格式>` |
+| `tool_context` | `ToolContext` | 自动注入 | 智能体调用时自动注入，独立调用可省略 |
+
+格式相关上限：
+
+- Excel 最多 20 个工作表，每个工作表最多 5000 行、100 列。
+- CSV 最多 10000 行，输出为不带 BOM 的 UTF-8。
+- 文件名最长 120 个字符，路径部分会被移除。
+
+成功返回 `{"filename", "format", "size_bytes", "mime_type", "truncated", "artifact_saved", "path"}`：智能体调用时产物已保存，`artifact_saved` 为 `true`；直接调用时文件写入临时目录，路径在 `path` 中返回。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 为防止电子表格公式注入，以 `=`、`+`、`-`、`@` 开头的单元格在 Excel 中按文本写入；CSV 中会在这类值前补一个单引号，使其在表格软件中按文本打开。
+- `truncated` 为 `true` 表示工作表、行或列超过上限，生成的文件少于输入内容。
+- 直接调用产生的临时文件不会自动清理，应用应在使用后自行删除临时目录。
+</Note>
