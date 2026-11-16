@@ -1,0 +1,102 @@
+---
+title: "HTTP 请求"
+en_link: "/productions/veadk/preview/en/components/tools/http-request"
+---
+
+## 功能说明
+
+对应工具标识 `http_request`。
+
+`http_request` 代表智能体发起一次通用的 HTTP 或 HTTPS 请求，适用于调用开放 HTTP API、提交表单或下载体积可控的资源。工具内置 SSRF 防护、重定向校验、敏感请求头处理和响应体积上限，不能访问内网地址。
+
+导入路径：`from veadk.tools.builtin_tools.http_request import http_request`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`http_request` 工具本身无需额外凭证）
+- `TOOL_HTTP_ALLOWLIST`：可选的主机白名单，多个域名以英文逗号分隔；设置后只允许请求精确匹配或属于其子域的主机
+
+## 使用方法
+
+```python title="examples/tools/http_request/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.http_request import http_request
+
+agent = Agent(
+    name="http_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that calls public HTTP APIs.",
+    instruction="需要调用外部 HTTP API 时使用 http_request 工具，密钥通过 env: 形式的请求头传入。",
+    tools=[http_request],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run(
+        "调用 https://api.example.com/v1/weather?city=beijing 查询天气"
+    )
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用时，可通过 `env:NAME` 从环境变量读取请求头值，避免在参数中明文传递密钥：
+
+```python lines
+import os
+
+from veadk.tools.builtin_tools.http_request import http_request
+
+os.environ["MY_API_TOKEN"] = "replace-with-real-token"
+
+result = http_request(
+    "https://api.example.com/v1/items",
+    method="POST",
+    headers={"Authorization": "env:MY_API_TOKEN", "Accept": "application/json"},
+    params={"verbose": "1"},
+    json_body={"q": "veadk"},
+    timeout=30,
+)
+if "error" in result:
+    print("请求失败:", result["error"])
+else:
+    print(result["status_code"], result["content_type"])
+    print(result["body"])
+    print("Truncated:", result["truncated"])
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `url` | `str` | 必填 | 绝对 `http(s)` URL，目标必须为公网地址 |
+| `method` | `str` | `"GET"` | `GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD` 之一，大小写不敏感 |
+| `headers` | `dict[str, str]` | — | 请求头；值写成 `env:NAME` 时从环境变量 `NAME` 读取 |
+| `params` | `dict` | — | 查询字符串参数 |
+| `json_body` | 任意可 JSON 序列化值 | — | JSON 请求体，与 `body` 互斥 |
+| `body` | `str` | — | 原始字符串请求体，与 `json_body` 互斥 |
+| `timeout` | `int` | `30` | 请求超时秒数，取 1–120 |
+| `max_bytes` | `int` | `5000000` | 响应体字节上限，取 1000–20000000；超出部分截断 |
+| `follow_redirects` | `bool` | `False` | 是否跟随 `301`、`302`、`303`、`307`、`308` 重定向 |
+
+成功返回 `{"status_code", "url", "headers", "content_type", "body", "bytes", "truncated"}`，其中响应头名称统一小写，`body` 为按响应编码解码的文本；`HEAD` 请求不返回响应体。请求被拒绝或网络失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Warning>
+安全边界：
+
+- **SSRF 防护**：域名解析后拦截私网、环回、链路本地和保留地址；开启重定向后每一跳都重新校验，最多跟随 3 跳。
+- **敏感请求头**：`Authorization`、`Cookie`、`Proxy-Authorization` 以及所有经 `env:` 解析的请求头，在跨源重定向或 HTTPS 降级为 HTTP 时会被移除；同源跳转或同主机 HTTP 升级为 HTTPS 时保留。
+- `host` 与 `content-length` 请求头被禁止设置；请求头名称和值不允许包含回车换行。
+- 设置了 `TOOL_HTTP_ALLOWLIST` 但目标主机不在白名单内时，请求直接返回错误；`env:NAME` 引用的环境变量未设置时同样返回错误。
+</Warning>

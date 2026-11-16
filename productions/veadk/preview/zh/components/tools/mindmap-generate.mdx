@@ -1,0 +1,99 @@
+---
+title: "思维导图生成"
+en_link: "/productions/veadk/preview/en/components/tools/mindmap-generate"
+---
+
+## 功能说明
+
+对应工具标识 `mindmap_generate`。
+
+`mindmap_generate` 把 Markdown 大纲转换为 Mermaid mindmap 文本，并同时生成一张可独立查看的 SVG 图片。标题（`#` 至 `######`）按级别嵌套，无序列表项按两个空格的缩进嵌套。智能体调用时两个文件作为会话产物保存，直接调用时写入系统临时目录。
+
+该工具为异步函数（`async def`），在本地完成全部生成，不需要 Node.js 或其他外部服务。
+
+导入路径：`from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`mindmap_generate` 工具本身无需额外凭证，也不访问外部服务）
+
+## 使用方法
+
+```python title="examples/tools/mindmap_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate
+
+agent = Agent(
+    name="mindmap_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that creates mindmaps.",
+    instruction="用户需要梳理结构或生成思维导图时，用 Markdown 大纲调用 mindmap_generate。",
+    tools=[mindmap_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("根据：VeADK 包含模型、工具、会话与记忆，生成一张思维导图")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate
+
+
+async def main():
+    markdown = """# 模型
+  - 模型配置
+  - 结构化输出
+# 工具
+  - 内置工具
+  - 自定义工具
+"""
+    result = await mindmap_generate(
+        title="VeADK",
+        markdown=markdown,
+        filename="veadk.mmd",
+    )
+    if "error" in result:
+        print("生成失败:", result["error"])
+    else:
+        print(result["nodes"])
+        print(result["mmd_path"], result["svg_path"])
+
+
+asyncio.run(main())
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `title` | `str` | 必填 | 根节点文字 |
+| `markdown` | `str` | 必填 | Markdown 大纲，由标题和缩进的无序列表项组成 |
+| `filename` | `str \| None` | — | 可选基础文件名，自动生成同名 `.mmd` 与 `.svg`；省略时使用 `mindmap` |
+| `tool_context` | `ToolContext` | 自动注入 | 智能体调用时自动注入，独立调用可省略 |
+
+成功返回 `{"title", "mermaid", "mmd_filename", "svg_filename", "nodes", "artifact_saved", "mmd_path", "svg_path"}`：`mermaid` 为 Mermaid mindmap 文本，`nodes` 为实际节点数。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 最多 500 个节点（含根节点）、最大层级深度 8 层；超出上限的大纲行会被忽略，标签超过 80 个字符时截断。
+- 空行与不属于标题、列表项的普通文本行会被忽略；列表项以两个空格为一级缩进，`-`、`*`、`+` 均可作为列表标记。
+- SVG 由工具直接绘制，不依赖 Mermaid 运行环境，可单独在浏览器或图片查看器中打开；直接调用产生的临时文件需由应用自行清理。
+</Note>

@@ -1,0 +1,135 @@
+---
+title: "Document generation"
+zh_link: "/productions/veadk/preview/zh/components/tools/doc-generate"
+---
+
+## Function
+
+Tool identifier `doc_generate`.
+
+`doc_generate` creates Word, Excel, CSV, or Markdown documents. When called by an agent, the document is saved as a conversation artifact; when called directly from code, it is written to the system temporary directory and the path is returned.
+
+The tool is an async function (`async def`); once registered with `Agent`, the framework awaits it automatically.
+
+Import path: `from veadk.tools.builtin_tools.doc_generate import doc_generate`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `doc_generate` tool itself needs no extra credentials and accesses no external services)
+
+`python-docx` and `openpyxl`, required for Word and Excel, ship with the base VeADK dependencies, so no extras are needed.
+
+## Usage
+
+```python title="examples/tools/doc_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+agent = Agent(
+    name="doc_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that generates documents.",
+    instruction="Use doc_generate whenever the user needs a Word, Excel, CSV, or Markdown file.",
+    tools=[doc_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Create a Markdown weekly report with sections for progress and next week's plan")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls require `await`:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+
+async def main():
+    result = await doc_generate(
+        format="docx",
+        title="Weekly Report",
+        content="## This week\n- Finished the review\n- Fixed 3 bugs\n\n## Next week\n- Start integration testing",
+        filename="weekly.docx",
+    )
+    if "error" in result:
+        print("Generation failed:", result["error"])
+    else:
+        print(result["filename"], result["size_bytes"], result["path"])
+
+
+asyncio.run(main())
+```
+
+For Excel, pass worksheets through `sheets`; for CSV, pass rows through `rows`:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.doc_generate import doc_generate
+
+
+async def generate_more():
+    await doc_generate(
+        format="xlsx",
+        title="Sales ledger",
+        sheets=[
+            {
+                "name": "January",
+                "rows": [["Item", "Qty"], ["Pencil", 12], ["Notebook", 8]],
+            }
+        ],
+        filename="sales.xlsx",
+    )
+
+    await doc_generate(
+        format="csv",
+        title="",
+        rows=[["name", "score"], ["Alice", 95]],
+        filename="scores.csv",
+    )
+
+
+asyncio.run(generate_more())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `format` | `str` | Required | One of `docx`, `xlsx`, `csv`, `md`; case-insensitive |
+| `title` | `str` | Required | Document title, used as the Word title and the Markdown heading; ignored for CSV |
+| `content` | `str` | `""` | Body for `docx` and `md`, supporting `#`–`###` headings and `-`, `*`, `+` bullets; for `csv`, used as raw CSV text when `rows` is omitted |
+| `sheets` | `list[dict]` | — | `xlsx` only; each item is `{"name": str, "rows": list[list]}` |
+| `rows` | `list[list]` | — | `csv` only; each item is one row |
+| `filename` | `str \| None` | — | Output filename; the extension is forced to the target format; defaults to `document.<format>` |
+| `tool_context` | `ToolContext` | Injected | Injected automatically for agent calls; optional for direct calls |
+
+Format-specific caps:
+
+- Excel allows at most 20 sheets, 5,000 rows per sheet, and 100 columns.
+- CSV allows at most 10,000 rows and is written as UTF-8 without a byte-order mark.
+- Filenames are at most 120 characters and any directory portion is removed.
+
+Success returns `{"filename", "format", "size_bytes", "mime_type", "truncated", "artifact_saved", "path"}`. For agent calls the artifact is saved and `artifact_saved` is `true`; for direct calls the file is written to a temporary directory and its path is returned in `path`. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- To prevent spreadsheet formula injection, cells starting with `=`, `+`, `-`, or `@` are written as text in Excel; in CSV such values get a leading apostrophe so spreadsheet applications open them as text.
+- `truncated` is `true` when sheets, rows, or columns exceeded the caps, so the generated file contains less than the input.
+- Temporary files created by direct calls are not cleaned up automatically; the application should delete the temporary directory after use.
+</Note>

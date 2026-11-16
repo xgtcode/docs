@@ -43,3 +43,21 @@ VeADK 的工具按接入方式与用途分为以下几类。
 `Agent(tools=[...])` 只注册能力，不会执行工具。通过 `Runner.run()` 发起请求后，在执行事件或工具结果中确认实际调用以及返回状态；模型生成一段回答并不能证明外部操作成功。同步工具直接返回普通值，异步工具需要等待结果，MCP 工具集还需要在应用退出时调用 `await toolset.close()` 释放连接
 
 首次验证可先使用[自定义计算器](/productions/veadk/preview/zh/components/tools/custom-function)验证调用流程；连接 MCP 服务时先列出工具，再在所需权限范围内调用具体能力。代码沙箱、手机操作与第三方服务工具可能产生真实的文件或账户变更，应在工具指令中写明允许的操作
+
+## 通用内置工具
+
+除上述按服务封装的内置工具外，VeADK 还提供一组面向通用数据处理、办公文档与多模态场景的内置工具，不绑定单一业务服务：
+
+| 工具 | 功能 | 文档 |
+| :--- | :--- | :--- |
+| `http_request` | 带 SSRF 防护与体积上限的通用 HTTP 请求 | [HTTP 请求](/productions/veadk/preview/zh/components/tools/http-request) |
+| `document_parse` | 解析 PDF / Word / Excel / CSV / HTML 等文档文本 | [文档解析](/productions/veadk/preview/zh/components/tools/document-parse) |
+| `doc_generate` | 生成 Word / Excel / CSV / Markdown 文档 | [文档生成](/productions/veadk/preview/zh/components/tools/doc-generate) |
+| `mindmap_generate` | 由 Markdown 大纲生成思维导图 | [思维导图生成](/productions/veadk/preview/zh/components/tools/mindmap-generate) |
+| `qrcode_generate` | 生成二维码 PNG | [二维码生成](/productions/veadk/preview/zh/components/tools/qrcode-generate) |
+| `image_transform` | 图片缩放、裁剪、旋转、翻转、格式转换 | [图片转换](/productions/veadk/preview/zh/components/tools/image-transform) |
+| `image_understand` | 复用当前模型配置理解图片 | [图片理解](/productions/veadk/preview/zh/components/tools/image-understand) |
+| `ocr` | 复用当前模型配置识别图片文字 | [文字识别](/productions/veadk/preview/zh/components/tools/ocr) |
+| `speech_to_text` | 语音识别 | [语音识别](/productions/veadk/preview/zh/components/tools/speech-to-text) |
+| `calculator` | 安全的算术表达式计算 | [计算器](/productions/veadk/preview/zh/components/tools/calculator) |
+| `datetime` | 日期时间解析、格式化、时区转换与计算 | [日期时间](/productions/veadk/preview/zh/components/tools/datetime) |

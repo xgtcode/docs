@@ -43,3 +43,21 @@ Complete [installation](/productions/veadk/preview/en/get-started/installation) 
 `Agent(tools=[...])` registers capabilities without executing them. After `Runner.run()`, inspect execution events or tool results to confirm the call and its status. A model answer alone does not prove an external operation succeeded. Await asynchronous tools, and call `await toolset.close()` when shutting down an MCP application.
 
 Start with the [custom calculator](/productions/veadk/preview/en/components/tools/custom-function) to check the calling flow. For MCP, discover tools before invoking a capability with the required permissions. Sandbox, mobile, and third-party service tools can change real files or account data; specify the allowed operations in the tool instructions.
+
+## General-purpose built-in tools
+
+In addition to the service-specific built-in tools above, VeADK provides a set of general-purpose tools for data processing, office documents, and multimodal scenarios that are not tied to a single service:
+
+| Tool | Function | Docs |
+| :--- | :--- | :--- |
+| `http_request` | Generic HTTP request with SSRF protection and size limits | [HTTP request](/productions/veadk/preview/en/components/tools/http-request) |
+| `document_parse` | Parse PDF / Word / Excel / CSV / HTML documents into text | [Document parsing](/productions/veadk/preview/en/components/tools/document-parse) |
+| `doc_generate` | Generate Word / Excel / CSV / Markdown documents | [Document generation](/productions/veadk/preview/en/components/tools/doc-generate) |
+| `mindmap_generate` | Generate mindmaps from Markdown outlines | [Mindmap generation](/productions/veadk/preview/en/components/tools/mindmap-generate) |
+| `qrcode_generate` | Generate QR code PNG images | [QR code generation](/productions/veadk/preview/en/components/tools/qrcode-generate) |
+| `image_transform` | Image resize, crop, rotate, flip, and format conversion | [Image transform](/productions/veadk/preview/en/components/tools/image-transform) |
+| `image_understand` | Understand images using the current model configuration | [Image understanding](/productions/veadk/preview/en/components/tools/image-understand) |
+| `ocr` | Extract text from images using the current model configuration | [OCR](/productions/veadk/preview/en/components/tools/ocr) |
+| `speech_to_text` | Speech recognition | [Speech to text](/productions/veadk/preview/en/components/tools/speech-to-text) |
+| `calculator` | Safe arithmetic expression evaluation | [Calculator](/productions/veadk/preview/en/components/tools/calculator) |
+| `datetime` | Date/time parsing, formatting, timezone conversion, and arithmetic | [Date and time](/productions/veadk/preview/en/components/tools/datetime) |
