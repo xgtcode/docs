@@ -83,18 +83,11 @@ The `tool.content_safety` block maps to `ContentSafetyConfig`; its full fields:
 | `provider` | `none` \| `decision` \| `llm_shield` | `none` | Moderation backend selection. `none` mounts no plugin. |
 | `on_error` | `allow` \| `block` | `allow` | Policy when the moderation service errors. `allow` lets content through and marks it degraded; `block` fails closed. Requests rejected for being too large are always treated as `block`. |
 | `block_message` | `string` | `Your request was blocked by the content safety policy. Please modify your input and try again.` | Fixed message returned when a risk is hit. |
-| `decision` | `DecisionConfig` | see below | Connection configuration for the decision service, used when `provider=decision`. |
 | `use_default_questions` | `bool` | `true` | Whether to merge the built-in question set. When `true`, built-ins form the base and same-named entries in `questions` override them while new names are appended. When `false`, only the questions declared in `questions` are used. |
 | `questions` | `dict[string, QuestionConfig]` | built-in question set (when `provider=decision` and `use_default_questions=true`) | Custom questions. Keys are question names; values are question configurations. |
 | `llm_shield_app_id` | `string` | — | AppID of the LLM Shield instance, used when `provider=llm_shield`. Falls back to the `TOOL_LLM_SHIELD_APP_ID` environment variable when unset. |
 
-`DecisionConfig` fields:
-
-| Parameter | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `api_url` | `string` | derived as `/api/v1/systemone` from the current Ark API base | Full URL of the System One decision API. A custom URL requires `api_key` to be supplied as well; the SDK never reuses Ark credentials for a third-party endpoint. |
-| `api_key` | `string` | reuses the Ark API key | Authentication key for System One. |
-| `model` | `string` | `doubao-seed-2-1-lite-260915` | Model used for the decision. |
+The decision service connection configuration has moved to the root-level `decision` block, shared by query routing and content safety. Import `DecisionConfig` from `veadk.decision` and pass it through `Agent(decision=...)` or `build_content_safety(config, decision=...)`. See [model configuration](/productions/veadk/preview/en/components/agent/model#shared-decision-connection) for all connection fields.
 
 `QuestionConfig` fields:
 
@@ -103,16 +96,14 @@ The `tool.content_safety` block maps to `ContentSafetyConfig`; its full fields:
 | `instructions` | `string` | — (required) | Instruction text sent to the decision service. |
 | `threshold` | `float` | tiered by question category | Hit threshold, range `[0, 1]`. A risk probability greater than or equal to this value counts as a hit. |
 
-Decision service connection fields can be overridden from environment variables:
+The connection fields can also be overridden with `DECISION_API_URL`, `DECISION_API_KEY`, and `DECISION_MODEL`.
 
-| Environment variable | Description |
-| :--- | :--- |
-| `TOOL_CONTENT_SAFETY_DECISION_API_URL` | Overrides `decision.api_url`. |
-| `TOOL_CONTENT_SAFETY_DECISION_API_KEY` | Overrides `decision.api_key`. |
-| `TOOL_CONTENT_SAFETY_DECISION_MODEL` | Overrides `decision.model`. |
+<Callout type="warning" title="Migrating from 1.1.27 and earlier">
+The released `tool.content_safety.decision.{api_url,api_key,model}` block and the `TOOL_CONTENT_SAFETY_DECISION_{API_URL,API_KEY,MODEL}` environment variables remain accepted; when `provider` is `decision` they are still used and log a deprecation warning. The released `from veadk.content_safety import DecisionConfig, DEFAULT_DECISION_MODEL` imports also keep working for one release with a `DeprecationWarning`; import them from `veadk.decision` instead. Move them to the root `decision` block and `DECISION_*` variables. A root `decision` block, or any `DECISION_*` variable, takes precedence over the legacy location; the two locations are never merged. Remove the legacy connection fields when both are present so the effective endpoint and key are unambiguous.
+</Callout>
 
 <Note>
-The `tool.content_safety` block is structured runtime configuration and is not flattened into environment variables. Nested values such as `questions` and `decision` are passed to the plugin verbatim.
+The `tool.content_safety` block is structured runtime configuration and is not flattened into environment variables. Nested values such as `questions` are passed to the plugin verbatim.
 </Note>
 
 ## LLM Shield backend
@@ -319,15 +310,19 @@ content_safety = LLMShieldPlugin(timeout=30)
 Configure it in `config.yaml`; agents run through `Runner` or deployed through AgentKit mount the plugin automatically:
 
 ```yaml title="config.yaml"
+decision:
+  # Optional; derived from the current Ark API base when omitted
+  api_url: https://ark.cn-beijing.volces.com/api/v1/systemone
+  # Optional; reuses the Ark API key when omitted
+  api_key: <your_api_key>
+  # Optional; defaults to doubao-seed-2-1-lite-260915
+  model: doubao-seed-2-1-lite-260915
+
 tool:
   content_safety:
     provider: decision
     on_error: allow
     block_message: "Your request was blocked by the content safety policy."
-    decision:
-      api_url: https://ark.cn-beijing.volces.com/api/v1/systemone
-      api_key: <your_api_key>
-      model: doubao-seed-2-1-lite-260915
     use_default_questions: true
     questions:
       prompt_injection:
@@ -335,7 +330,9 @@ tool:
         threshold: 0.5
 ```
 
-The connection fields can also be overridden with `TOOL_CONTENT_SAFETY_DECISION_API_URL`, `TOOL_CONTENT_SAFETY_DECISION_API_KEY`, and `TOOL_CONTENT_SAFETY_DECISION_MODEL`.
+The root `decision` block is shared connection configuration; it does not enable either feature or share mutable clients. Content-safety questions and thresholds remain local. See [model configuration](/productions/veadk/preview/en/components/agent/model#shared-decision-connection) for all connection fields.
+
+The connection fields can also be overridden with `DECISION_API_URL`, `DECISION_API_KEY`, and `DECISION_MODEL`.
 
 <Warning>
 When a custom `decision.api_url` is configured, `decision.api_key` must also be supplied explicitly; the SDK never reuses Ark credentials for a third-party endpoint. When `api_url` is omitted, the System One URL is derived from the current Ark API base, and only known Ark endpoints are accepted, so audited content is never sent to a non-Ark model endpoint.
@@ -362,7 +359,7 @@ agent = Agent(
 runner = Runner(agent=agent)  # mounted automatically
 ```
 
-You can also call `build_content_safety(config)` to get the plugin and pass it to a manually created ADK `App(plugins=[...])`.
+You can also call `build_content_safety(config, decision=...)` to get the plugin and pass it to a manually created ADK `App(plugins=[...])`.
 
 ### Built-in question set
 

@@ -83,18 +83,11 @@ app = App(name="my_app", root_agent=agent, plugins=agent.content_safety_plugins)
 | `provider` | `none` \| `decision` \| `llm_shield` | `none` | 审查后端选择。`none` 不挂载插件。 |
 | `on_error` | `allow` \| `block` | `allow` | 审查服务出错时的处理策略。`allow` 放行并标记降级，`block` 失败关闭。请求体过大被服务拒绝时始终按 `block` 处理。 |
 | `block_message` | `string` | `Your request was blocked by the content safety policy. Please modify your input and try again.` | 命中风险时返回的固定拦截文案。 |
-| `decision` | `DecisionConfig` | 见下表 | `provider=decision` 时的判定服务连接配置。 |
 | `use_default_questions` | `bool` | `true` | 是否合并内置问题集。`true` 时以内置问题为基础，`questions` 中的同名问题覆盖内置项，新名称追加。`false` 时仅使用 `questions` 中声明的问题。 |
 | `questions` | `dict[string, QuestionConfig]` | 内置问题集（`provider=decision` 且 `use_default_questions=true` 时） | 自定义问题。键为问题名称，值为问题配置。 |
 | `llm_shield_app_id` | `string` | — | `provider=llm_shield` 时的 LLM Shield 实例 AppID。未设置时回退到环境变量 `TOOL_LLM_SHIELD_APP_ID`。 |
 
-`DecisionConfig` 字段：
-
-| 参数 | 类型 | 默认值 | 说明 |
-| :--- | :--- | :--- | :--- |
-| `api_url` | `string` | 由当前 Ark API Base 推导 `/api/v1/systemone` | System One 判定 API 完整地址。配置自定义地址时必须同时提供 `api_key`，SDK 不会把 Ark 凭证复用给第三方地址。 |
-| `api_key` | `string` | 复用 Ark API Key | System One 鉴权密钥。 |
-| `model` | `string` | `doubao-seed-2-1-lite-260915` | 执行判定的大模型名称。 |
+判定服务的连接配置已移至根级 `decision` 块，由查询路由和内容安全共用。从 `veadk.decision` 导入 `DecisionConfig`，通过 `Agent(decision=...)` 或 `build_content_safety(config, decision=...)` 传入。完整连接项见[模型配置](/productions/veadk/preview/zh/components/agent/model#公共决策连接)。
 
 `QuestionConfig` 字段：
 
@@ -103,16 +96,14 @@ app = App(name="my_app", root_agent=agent, plugins=agent.content_safety_plugins)
 | `instructions` | `string` | —（必填） | 发送给判定服务的判断说明文本。 |
 | `threshold` | `float` | 按问题类别分级 | 命中阈值，取值范围 `[0, 1]`。风险概率大于等于该值即判为命中。 |
 
-判定服务连接字段可通过环境变量覆盖 `config.yaml`：
+判定服务连接字段可通过环境变量覆盖 YAML：`DECISION_API_URL`、`DECISION_API_KEY`、`DECISION_MODEL`。
 
-| 环境变量 | 说明 |
-| :--- | :--- |
-| `TOOL_CONTENT_SAFETY_DECISION_API_URL` | 覆盖 `decision.api_url`。 |
-| `TOOL_CONTENT_SAFETY_DECISION_API_KEY` | 覆盖 `decision.api_key`。 |
-| `TOOL_CONTENT_SAFETY_DECISION_MODEL` | 覆盖 `decision.model`。 |
+<Callout type="warning" title="从 1.1.27 及更早版本迁移">
+旧版的 `tool.content_safety.decision.{api_url,api_key,model}` 与 `TOOL_CONTENT_SAFETY_DECISION_{API_URL,API_KEY,MODEL}` 环境变量仍然兼容；当 `provider` 为 `decision` 时它们仍会生效并打印弃用警告。旧版的 `from veadk.content_safety import DecisionConfig, DEFAULT_DECISION_MODEL` 导入也可继续使用一个版本，但会产生 `DeprecationWarning`；请改为从 `veadk.decision` 导入。请迁移到根级 `decision` 与 `DECISION_*`；根级 `decision` 或任一 `DECISION_*` 一旦存在就优先于旧位置，两者不会合并字段。两处同时配置时，请把旧位置的连接字段删除，避免误判实际使用的地址或密钥。
+</Callout>
 
 <Note>
-`tool.content_safety` 块是结构化运行时配置，不会被展开为环境变量。其嵌套的 `questions`、`decision` 等值保持原样传递给插件。
+`tool.content_safety` 块是结构化运行时配置，不会被展开为环境变量。其嵌套的 `questions` 等值保持原样传递给插件。
 </Note>
 
 ## LLM Shield 后端
@@ -319,15 +310,19 @@ content_safety = LLMShieldPlugin(timeout=30)
 在 `config.yaml` 中配置后，通过 `Runner` 运行或部署智能体时会自动挂载插件：
 
 ```yaml title="config.yaml"
+decision:
+  # 可选；省略时由当前 Ark API Base 推导 /api/v1/systemone
+  api_url: https://ark.cn-beijing.volces.com/api/v1/systemone
+  # 可选；省略时复用 Ark API Key
+  api_key: <your_api_key>
+  # 可选；默认 doubao-seed-2-1-lite-260915
+  model: doubao-seed-2-1-lite-260915
+
 tool:
   content_safety:
     provider: decision
     on_error: allow
     block_message: "Your request was blocked by the content safety policy."
-    decision:
-      api_url: https://ark.cn-beijing.volces.com/api/v1/systemone
-      api_key: <your_api_key>
-      model: doubao-seed-2-1-lite-260915
     use_default_questions: true
     questions:
       prompt_injection:
@@ -335,7 +330,9 @@ tool:
         threshold: 0.5
 ```
 
-连接字段也可通过环境变量覆盖 YAML：`TOOL_CONTENT_SAFETY_DECISION_API_URL`、`TOOL_CONTENT_SAFETY_DECISION_API_KEY`、`TOOL_CONTENT_SAFETY_DECISION_MODEL`。
+根级 `decision` 是公共连接配置，本身不启用功能，也不共享可变客户端；内容安全问题和阈值仍独立管理。完整连接项见[模型配置](/productions/veadk/preview/zh/components/agent/model#公共决策连接)。
+
+连接字段也可通过环境变量覆盖 YAML：`DECISION_API_URL`、`DECISION_API_KEY`、`DECISION_MODEL`。
 
 <Warning>
 配置了自定义 `decision.api_url` 时，必须同时显式提供 `decision.api_key`；SDK 不会把 Ark 凭证复用给第三方地址。省略 `api_url` 时，由当前 Ark API Base 推导 System One 地址，且仅接受已知 Ark 端点，避免把审查内容发送到非 Ark 模型端点。
@@ -362,7 +359,7 @@ agent = Agent(
 runner = Runner(agent=agent)  # 自动挂载
 ```
 
-也可调用 `build_content_safety(config)` 得到插件，再传给手动创建的 ADK `App(plugins=[...])`。
+也可调用 `build_content_safety(config, decision=...)` 得到插件，再传给手动创建的 ADK `App(plugins=[...])`。
 
 ### 内置问题集
 
