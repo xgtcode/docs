@@ -1,0 +1,95 @@
+---
+title: "二维码生成"
+en_link: "/productions/veadk/archives/1.1.28/en/components/tools/qrcode-generate"
+---
+
+## 功能说明
+
+对应工具标识 `qrcode_generate`。
+
+`qrcode_generate` 把文本或链接编码为 PNG 二维码图片。智能体调用时图片作为会话产物保存，直接调用时写入系统临时目录并返回路径。工具只负责生成二维码，不具备识别或解码能力。
+
+该工具为异步函数（`async def`），在本地完成生成，不访问外部服务。
+
+导入路径：`from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`qrcode_generate` 工具本身无需额外凭证，也不访问外部服务）
+
+## 使用方法
+
+```python title="examples/tools/qrcode_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate
+
+agent = Agent(
+    name="qrcode_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that generates QR codes.",
+    instruction="用户需要把链接或文本生成二维码时，调用 qrcode_generate。",
+    tools=[qrcode_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("为 https://www.volcengine.com 生成一个二维码")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.qrcode_generate import qrcode_generate
+
+
+async def main():
+    result = await qrcode_generate(
+        content="https://www.volcengine.com",
+        filename="volcengine.png",
+        box_size=12,
+        fill_color="#1f6feb",
+        back_color="white",
+    )
+    if "error" in result:
+        print("生成失败:", result["error"])
+    else:
+        print(result["width"], result["height"], result["path"])
+
+
+asyncio.run(main())
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `content` | `str` | 必填 | 待编码的文本或 URL，非空，最长 2000 个字符 |
+| `filename` | `str` | `"qrcode.png"` | 输出文件名，扩展名强制为 `.png` |
+| `box_size` | `int` | `10` | 每个二维码模块的像素边长，取 1–50 |
+| `border` | `int` | `4` | 四周留白区的模块数，取 0–20 |
+| `fill_color` | `str` | `"black"` | 深色模块颜色，支持 Pillow 颜色名或十六进制色值 |
+| `back_color` | `str` | `"white"` | 背景颜色，支持 Pillow 颜色名或十六进制色值 |
+| `tool_context` | `ToolContext` | 自动注入 | 智能体调用时自动注入，独立调用可省略 |
+
+成功返回 `{"filename", "format", "width", "height", "size_bytes", "mime_type", "artifact_saved", "path"}`，其中 `format` 固定为 `png`。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 二维码使用 M 级容错，允许约 15% 的污损仍可识别；需要更强容错或更高版本特性时，应在应用中使用专门的二维码库。
+- 内容越长，生成的二维码模块越多；固定打印尺寸下应同步增大 `box_size`，避免扫码困难。
+</Note>

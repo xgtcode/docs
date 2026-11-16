@@ -1,0 +1,102 @@
+---
+title: "HTTP request"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/http-request"
+---
+
+## Function
+
+Tool identifier `http_request`.
+
+`http_request` makes a generic HTTP or HTTPS request on behalf of the agent, suitable for calling open HTTP APIs, submitting forms, or downloading resources of bounded size. It includes SSRF protection, redirect validation, sensitive-header handling, and a response size cap, and it cannot reach internal addresses.
+
+Import path: `from veadk.tools.builtin_tools.http_request import http_request`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `http_request` tool itself needs no extra credentials)
+- `TOOL_HTTP_ALLOWLIST`: optional host allowlist as comma-separated domains; when set, only exact matches and their subdomains can be requested
+
+## Usage
+
+```python title="examples/tools/http_request/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.http_request import http_request
+
+agent = Agent(
+    name="http_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that calls public HTTP APIs.",
+    instruction="Use the http_request tool to call external HTTP APIs, and pass secrets through env: header values.",
+    tools=[http_request],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run(
+        "Call https://api.example.com/v1/weather?city=beijing for the weather"
+    )
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+For direct calls, a header value can be read from an environment variable with `env:NAME`, avoiding plaintext secrets in the arguments:
+
+```python lines
+import os
+
+from veadk.tools.builtin_tools.http_request import http_request
+
+os.environ["MY_API_TOKEN"] = "replace-with-real-token"
+
+result = http_request(
+    "https://api.example.com/v1/items",
+    method="POST",
+    headers={"Authorization": "env:MY_API_TOKEN", "Accept": "application/json"},
+    params={"verbose": "1"},
+    json_body={"q": "veadk"},
+    timeout=30,
+)
+if "error" in result:
+    print("Request failed:", result["error"])
+else:
+    print(result["status_code"], result["content_type"])
+    print(result["body"])
+    print("Truncated:", result["truncated"])
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `url` | `str` | Required | Absolute `http(s)` URL; the target must be a public address |
+| `method` | `str` | `"GET"` | One of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`; case-insensitive |
+| `headers` | `dict[str, str]` | — | Request headers; a value of `env:NAME` is read from environment variable `NAME` |
+| `params` | `dict` | — | Query string parameters |
+| `json_body` | any JSON-serializable value | — | JSON request body; mutually exclusive with `body` |
+| `body` | `str` | — | Raw string request body; mutually exclusive with `json_body` |
+| `timeout` | `int` | `30` | Request timeout in seconds, from 1 to 120 |
+| `max_bytes` | `int` | `5000000` | Response body cap in bytes, from 1,000 to 20,000,000; extra bytes are truncated |
+| `follow_redirects` | `bool` | `False` | Whether to follow `301`, `302`, `303`, `307`, `308` redirects |
+
+Success returns `{"status_code", "url", "headers", "content_type", "body", "bytes", "truncated"}`; response header names are lowercased and `body` is text decoded with the response encoding. `HEAD` responses carry no body. A rejected request or network failure returns `{"error": ...}`.
+
+## Notes
+
+<Warning>
+Security boundaries:
+
+- **SSRF protection**: after DNS resolution, private, loopback, link-local, and reserved addresses are blocked; when redirects are enabled every hop is re-validated, with at most 3 hops.
+- **Sensitive headers**: `Authorization`, `Cookie`, `Proxy-Authorization`, and every header resolved via `env:` are dropped on cross-origin redirects and on HTTPS-to-HTTP downgrades; they are kept for same-origin hops and same-host HTTP-to-HTTPS upgrades.
+- The `host` and `content-length` headers cannot be set, and header names or values containing CR/LF characters are rejected.
+- When `TOOL_HTTP_ALLOWLIST` is set and the target host is not listed, the request returns an error; an unset environment variable referenced by `env:NAME` likewise returns an error.
+</Warning>

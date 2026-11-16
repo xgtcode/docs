@@ -1,0 +1,98 @@
+---
+title: "OCR"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/ocr"
+---
+
+## Function
+
+Tool identifier `ocr`.
+
+`ocr` uses the configured vision model to transcribe the text visible in an image verbatim, without translating or summarizing; an image without text returns an empty string. The image can be a local path or a publicly accessible `http(s)` URL.
+
+The tool is an async function (`async def`) and shares its model configuration, API key, and size limits with `image_understand`.
+
+Import path: `from veadk.tools.builtin_tools.ocr import ocr`
+
+## Prerequisites
+
+<Warning>
+Requirement: configure the API key for the agent's reasoning model; the selected model must support vision understanding.
+</Warning>
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key used for the vision request; falls back to `model.api_key` in the configuration file when unset
+- `MODEL_VISION_NAME`: optional vision model name; the agent model name is used when unset
+- The endpoint is taken from `model.api_base` in the configuration file
+
+Model-name resolution order is the `model_name` argument, then the `MODEL_VISION_NAME` environment variable, then the agent model name.
+
+## Usage
+
+```python title="examples/tools/ocr/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.ocr import ocr
+
+agent = Agent(
+    name="ocr_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that extracts text from images.",
+    instruction="Use the ocr tool when the user needs the text in an image.",
+    tools=[ocr],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Extract all text from /tmp/receipt.jpg")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.ocr import ocr
+
+
+async def main():
+    result = await ocr(
+        image="https://example.com/sign.png",
+        language="en",
+    )
+    if "error" in result:
+        print("Recognition failed:", result["error"])
+    else:
+        print(result["model"], result["language"])
+        print(result["text"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `image` | `str` | Required | Local image path or publicly accessible `http(s)` URL |
+| `language` | `str` | `"auto"` | Expected text language, passed to the model as a hint; `auto` lets the model decide |
+| `model_name` | `str \| None` | — | Overrides the vision model for this call; otherwise the resolution order applies |
+
+Success returns `{"text": ..., "language": ..., "model": ...}`; `language` echoes the value passed in and `model` is the model actually used. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- Local images must not exceed 20 MB; remote URLs pass an SSRF check before being forwarded to the model, so private and loopback addresses are blocked, and the model service fetches them over the public network.
+- `language` is only a hint: it neither restricts the model output nor represents the detected language. For scene description or questions about an image, use [`image_understand`](/productions/veadk/archives/1.1.28/en/components/tools/image-understand).
+- [`document_parse`](/productions/veadk/archives/1.1.28/en/components/tools/document-parse) only extracts embedded text from scanned PDFs and does not run OCR; convert PDF pages to images first and then use this tool.
+</Note>

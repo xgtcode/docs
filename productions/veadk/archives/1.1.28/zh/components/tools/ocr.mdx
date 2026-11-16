@@ -1,0 +1,98 @@
+---
+title: "文字识别"
+en_link: "/productions/veadk/archives/1.1.28/en/components/tools/ocr"
+---
+
+## 功能说明
+
+对应工具标识 `ocr`。
+
+`ocr` 使用当前配置的视觉模型逐字提取图片中的文字，不翻译、不总结；图片中没有文字时返回空字符串。图片来源支持本地路径或可公开访问的 `http(s)` URL。
+
+该工具为异步函数（`async def`），与 `image_understand` 共用模型配置、API Key 与大小限制。
+
+导入路径：`from veadk.tools.builtin_tools.ocr import ocr`
+
+## 环境变量与前提
+
+<Warning>
+附加要求：配置用于智能体推理模型的 API Key；所选模型需具备视觉理解能力。
+</Warning>
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：视觉请求使用的 API Key；未设置时回退到配置文件中的 `model.api_key`
+- `MODEL_VISION_NAME`：可选，视觉模型名称；未设置时使用智能体模型名称
+- 接口地址取配置文件中的 `model.api_base`
+
+模型名解析顺序为：调用参数 `model_name`、环境变量 `MODEL_VISION_NAME`、智能体模型名称。
+
+## 使用方法
+
+```python title="examples/tools/ocr/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.ocr import ocr
+
+agent = Agent(
+    name="ocr_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that extracts text from images.",
+    instruction="用户需要识别图片中的文字时，调用 ocr 工具。",
+    tools=[ocr],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("识别 /tmp/receipt.jpg 里的全部文字")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.ocr import ocr
+
+
+async def main():
+    result = await ocr(
+        image="https://example.com/sign.png",
+        language="zh",
+    )
+    if "error" in result:
+        print("识别失败:", result["error"])
+    else:
+        print(result["model"], result["language"])
+        print(result["text"])
+
+
+asyncio.run(main())
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `image` | `str` | 必填 | 本地图片路径或可公开访问的 `http(s)` URL |
+| `language` | `str` | `"auto"` | 期望的文字语言，作为提示传给模型；`auto` 表示由模型自行判断 |
+| `model_name` | `str \| None` | — | 覆盖本次使用的视觉模型；省略时按模型名解析顺序确定 |
+
+成功返回 `{"text": ..., "language": ..., "model": ...}`，其中 `language` 回显调用时传入的值，`model` 为实际使用的模型名。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 本地图片不超过 20 MB；远程 URL 在转发给模型前会经过 SSRF 校验，私网与环回地址会被拦截，并由模型服务端公网拉取。
+- `language` 只作为提示，不限制模型输出，也不代表实际检测到的语言；需要画面描述或问答时使用 [`image_understand`](/productions/veadk/archives/1.1.28/zh/components/tools/image-understand)。
+- [`document_parse`](/productions/veadk/archives/1.1.28/zh/components/tools/document-parse) 解析扫描版 PDF 时只抽取内嵌文字，不做 OCR；可先将 PDF 页面转为图片，再用本工具识别。
+</Note>

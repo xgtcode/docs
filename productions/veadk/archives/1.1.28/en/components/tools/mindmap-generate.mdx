@@ -1,0 +1,99 @@
+---
+title: "Mindmap generation"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/mindmap-generate"
+---
+
+## Function
+
+Tool identifier `mindmap_generate`.
+
+`mindmap_generate` converts a Markdown outline into Mermaid mindmap text and, at the same time, renders a standalone SVG image. Headings (`#` through `######`) nest by level, and bullet items nest by two-space indentation. For agent calls both files are saved as conversation artifacts; direct calls write them to the system temporary directory.
+
+The tool is an async function (`async def`). All generation happens locally and requires neither Node.js nor any external service.
+
+Import path: `from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `mindmap_generate` tool itself needs no extra credentials and accesses no external services)
+
+## Usage
+
+```python title="examples/tools/mindmap_generate/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate
+
+agent = Agent(
+    name="mindmap_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that creates mindmaps.",
+    instruction="When the user needs to organize a structure as a mindmap, call mindmap_generate with a Markdown outline.",
+    tools=[mindmap_generate],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Make a mindmap: VeADK consists of models, tools, sessions, and memory")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.mindmap_generate import mindmap_generate
+
+
+async def main():
+    markdown = """# Models
+  - Model configuration
+  - Structured output
+# Tools
+  - Built-in tools
+  - Custom tools
+"""
+    result = await mindmap_generate(
+        title="VeADK",
+        markdown=markdown,
+        filename="veadk.mmd",
+    )
+    if "error" in result:
+        print("Generation failed:", result["error"])
+    else:
+        print(result["nodes"])
+        print(result["mmd_path"], result["svg_path"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `title` | `str` | Required | Root node label |
+| `markdown` | `str` | Required | Markdown outline made of headings and indented bullet items |
+| `filename` | `str \| None` | — | Optional base filename; matching `.mmd` and `.svg` files are produced; defaults to `mindmap` |
+| `tool_context` | `ToolContext` | Injected | Injected automatically for agent calls; optional for direct calls |
+
+Success returns `{"title", "mermaid", "mmd_filename", "svg_filename", "nodes", "artifact_saved", "mmd_path", "svg_path"}`; `mermaid` is the Mermaid mindmap text and `nodes` is the number of nodes actually created. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- At most 500 nodes (including the root) and a depth of 8 levels are kept; outline lines beyond the caps are ignored, and labels longer than 80 characters are truncated.
+- Blank lines and plain text that is neither a heading nor a bullet are ignored; bullets indent by two spaces per level and may use `-`, `*`, or `+` as the marker.
+- The SVG is drawn directly by the tool without a Mermaid runtime, so it can be opened on its own in a browser or image viewer; temporary files from direct calls should be cleaned up by the application.
+</Note>

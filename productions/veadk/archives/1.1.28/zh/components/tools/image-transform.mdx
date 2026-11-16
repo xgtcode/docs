@@ -1,0 +1,110 @@
+---
+title: "图片转换"
+en_link: "/productions/veadk/archives/1.1.28/en/components/tools/image-transform"
+---
+
+## 功能说明
+
+对应工具标识 `image_transform`。
+
+`image_transform` 对图片按顺序执行缩放、裁剪、旋转、翻转、缩略图、灰度化和格式转换等操作，并保存结果。图片来源可以是本地路径或可公开访问的 `http(s)` URL。智能体调用时结果作为会话产物保存，直接调用时写入系统临时目录并返回路径。
+
+该工具为异步函数（`async def`），基于 Pillow 在本地处理。
+
+导入路径：`from veadk.tools.builtin_tools.image_transform import image_transform`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`image_transform` 工具本身无需额外凭证）
+
+## 使用方法
+
+```python title="examples/tools/image_transform/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.image_transform import image_transform
+
+agent = Agent(
+    name="image_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that transforms images.",
+    instruction="用户需要缩放、裁剪、旋转或转换图片格式时，调用 image_transform。",
+    tools=[image_transform],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("把 https://example.com/photo.jpg 缩放到宽度 800 并转成 WebP")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+直接调用时，按需要的顺序给出操作列表：
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.image_transform import image_transform
+
+
+async def main():
+    result = await image_transform(
+        source="photo.jpg",
+        operations=[
+            {"type": "resize", "width": 800, "height": 800, "keep_aspect": True},
+            {"type": "grayscale"},
+            {"type": "convert", "format": "webp"},
+        ],
+        quality=85,
+        filename="photo-gray.webp",
+    )
+    if "error" in result:
+        print("处理失败:", result["error"])
+    else:
+        print(result["width"], result["height"], result["format"], result["path"])
+
+
+asyncio.run(main())
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `source` | `str` | 必填 | 本地图片路径或可公开访问的 `http(s)` URL |
+| `operations` | `list[dict]` | 必填 | 按顺序执行的操作列表，非空，最多 20 个 |
+| `output_format` | `str \| None` | — | 输出格式：`png`、`jpeg`、`webp`；缺省时取源图格式，源图不支持则用 `png` |
+| `quality` | `int` | `90` | 编码质量，取 1–100，仅对 JPEG 与 WebP 生效 |
+| `filename` | `str \| None` | — | 输出文件名，扩展名自动校正；省略时由工具生成 |
+| `tool_context` | `ToolContext` | 自动注入 | 智能体调用时自动注入，独立调用可省略 |
+
+`operations` 中每个字典以 `type` 区分操作：
+
+| 操作类型 | 字段 | 行为 |
+| :--- | :--- | :--- |
+| `resize` | `width`、`height`（正整数，至少给一个）、`keep_aspect` | 只给一边时按比例缩放；两边都给且 `keep_aspect` 为 `true`（默认）时缩放到能放入该矩形的最大尺寸，为 `false` 时拉伸到指定尺寸 |
+| `crop` | `left`、`top`、`right`、`bottom` | 按像素坐标裁剪，裁剪框必须完全位于图片范围内 |
+| `rotate` | `degrees`（数值） | 按角度旋转并自动扩展画布；RGB 图片以白色填充，RGBA 图片以透明填充 |
+| `flip` | `direction` | `horizontal` 水平翻转或 `vertical` 垂直翻转 |
+| `thumbnail` | `max_size`（正整数） | 保持宽高比缩放到边长不超过 `max_size` |
+| `grayscale` | — | 转为灰度图 |
+| `convert` | `format`（`png`、`jpeg`、`webp`） | 在所有操作完成后指定输出格式 |
+
+成功返回 `{"filename", "format", "width", "height", "size_bytes", "mime_type", "artifact_saved", "path"}`。失败时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 网络图片下载上限 20 MB，超时 30 秒，最多跟随 3 次重定向，并使用与 [`http_request`](/productions/veadk/archives/1.1.28/zh/components/tools/http-request) 相同的 SSRF 防护，私网与环回地址会被拦截。
+- 输出画布总像素不超过 40,000,000，旋转扩展后的尺寸同样受此限制，超出时返回错误。
+- 输出格式的优先级为 `output_format` 参数、`convert` 操作、源图格式；源图不是 PNG/JPEG/WebP 时默认输出 PNG。保存为 JPEG 时透明区域会合成到白色背景。
+</Note>

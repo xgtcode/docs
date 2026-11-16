@@ -1,0 +1,86 @@
+---
+title: "Calculator"
+zh_link: "/productions/veadk/archives/1.1.28/zh/components/tools/calculator"
+---
+
+## Function
+
+Tool identifier `calculator`.
+
+`calculator` safely evaluates arithmetic expressions for the agent, including the four basic operations, percentage conversions, powers and roots, logarithms, and common trigonometric functions. The expression is parsed and reduced to numbers, arithmetic operators, constants, and a function allowlist; it cannot reference variables, access attributes, or run arbitrary Python code.
+
+Import path: `from veadk.tools.builtin_tools.calculator import calculator`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `calculator` tool itself needs no extra credentials and accesses no external services)
+
+## Usage
+
+```python title="examples/tools/calculator/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.calculator import calculator
+
+agent = Agent(
+    name="calculator_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that evaluates arithmetic expressions.",
+    instruction="Use the calculator tool for arithmetic questions instead of computing complex expressions mentally.",
+    tools=[calculator],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("What is (1 + 2) * 3?")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+It can also be called directly from plain Python:
+
+```python lines
+from veadk.tools.builtin_tools.calculator import calculator
+
+result = calculator("(1 + 2) * 3")
+if "error" in result:
+    print("Calculation failed:", result["error"])
+else:
+    print(result)  # {'expression': '(1 + 2) * 3', 'result': 9}
+
+calculator("sqrt(16) + pi", precision=4)  # round the float result to 4 decimals
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `expression` | `str` | Required | Arithmetic expression, at most 1,000 characters |
+| `precision` | `int` | `10` | Decimal places kept for a float result, an integer from 0 to 15 |
+
+Supported expression syntax:
+
+- Operators: `+`, `-`, `*`, `/`, `//`, `%`, `**`, plus unary signs
+- Constants: `pi`, `e`
+- Functions: `abs`, `round`, `min`, `max`, `sqrt`, `log`, `log10`, `exp`, `sin`, `cos`, `tan`, `floor`, `ceil`
+
+Success returns `{"expression": ..., "result": ...}`: integer results stay integers and float results are rounded to `precision` decimal places. An invalid or out-of-limits expression returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+Security and limits:
+
+- The absolute value of a power exponent must not exceed 100; intermediate and final results must be finite real numbers with an absolute value no greater than 1×10¹⁰⁰, and division by zero returns an error.
+- `log` is the natural logarithm; functions accept positional arguments only, not keyword arguments.
+- Strings, booleans, complex numbers, name references, attribute access, subscripts, and comprehensions are rejected; the tool neither reads or writes files nor makes network requests.
+</Note>
