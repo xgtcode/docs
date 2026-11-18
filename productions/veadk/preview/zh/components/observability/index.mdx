@@ -160,13 +160,16 @@ VeADK 使用 OpenTelemetry Span 原生起止时间表达执行边界。VeADK Age
 | `gen_ai.request.model` | 实际请求的模型。 |
 | `gen_ai.request.stream` | 布尔值，表示实际 SDK 流式模式，不依赖 HTTP SSE 或 Runner 配置。 |
 | `gen_ai.chat_completions.streaming_time_to_first_token` | 从 SDK 请求开始到首个生成增量到达的浮点秒数。 |
+| `gen_ai.chat_completions.streaming_time_per_output_token` | 流式生成期间每个输出 token 的平均耗时（浮点秒数）。 |
 
 首个非空文本、推理或工具调用增量触发一次 TTFT 记录。元数据、空增量、usage、心跳和仅完成时返回的聚合内容不计入。非流式、无输出或未埋点路径省略 TTFT；SDK 模式未知时不从 Runner 配置推导。一个 chunk 可含多个 token，因此这是 SDK 侧观测耗时，不是供应商侧逐 token 时间戳。
+
+流式请求正常完成后，若 SDK 返回了可信的输出 token 数量，VeADK 计算首尾增量之间的总耗时除以输出 token 数减一，得到每个输出 token 的平均耗时（TPOT），作为 `gen_ai.chat_completions.streaming_time_per_output_token` 属性写入 `model_request` Span，并通过全局 MeterProvider 在同名 Histogram 记录一次，单位为 `s`，维度为 `gen_ai.request.model` 和 `gen_ai.operation.name=chat`。该指标仅在以下条件同时满足时记录：流式请求、至少观测到两次输出增量、SDK 返回了有效的输出 token 数量且与实际增量类型一致。多候选（`n > 1`）、推理摘要增量、非 `stop`/`tool_calls`/`function_call` 结束原因、音频输出、加密推理内容以及非 OpenAI 兼容 provider 的流不记录 TPOT。请求失败、取消或生成器提前关闭时同样省略。与 TTFT 一样，TPOT 不依赖 token usage 或 Trace 采样；导出需要配置指标链路。
 
 同一个值通过现有全局 MeterProvider，在 `gen_ai.chat_completions.streaming_time_to_first_token` Histogram 记录一次，单位为 `s`。维度为 `gen_ai.request.model` 和 `gen_ai.operation.name=chat`。指标不依赖 token usage 或 Trace 采样；导出需要配置指标链路。负时钟间隔省略并产生诊断；真正测得的零值有效。
 
 失败模型请求设置原生 Span Status 为 `ERROR`，`error.type` 为 `llm_error`、`timeout` 或 `cancelled`。请求 Span 使用 `request_error`、`timeout` 或 `cancelled`；HTTP 5xx 响应使用 `http_error`。主动关闭生成器不算错误。已观测的 TTFT 在中断后保留，本埋点不添加异常正文。
 
 <Note>
-此埋点替代了此前的自定义计时字段，不再导出自定义 `veadk.request.*`、`veadk.model.*` 属性或自定义首 Token 事件，不保留兼容别名。客户端渲染计时和 TPOT Histogram 上报不在本功能范围内。
+此埋点替代了此前的自定义计时字段，不再导出自定义 `veadk.request.*`、`veadk.model.*` 属性或自定义首 Token 事件，不保留兼容别名。客户端渲染计时不在本功能范围内。
 </Note>
