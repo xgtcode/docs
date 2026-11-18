@@ -160,13 +160,16 @@ Each LiteLLM Chat or Ark Responses SDK request creates a `model_request` client 
 | `gen_ai.request.model` | Actual requested model. |
 | `gen_ai.request.stream` | Boolean actual SDK streaming mode, independent of HTTP SSE or Runner configuration. |
 | `gen_ai.chat_completions.streaming_time_to_first_token` | Floating-point seconds from SDK request start to its first generated delta. |
+| `gen_ai.chat_completions.streaming_time_per_output_token` | Mean seconds per output token during streaming (floating-point seconds). |
 
 The first nonempty text, reasoning, or tool-call delta records TTFT once. Metadata, empty deltas, usage, heartbeats, and completion-only aggregates do not count. Non-streaming, no-output, or uninstrumented paths omit TTFT; unknown SDK mode is not inferred from Runner configuration. One chunk can contain multiple tokens, so this is an SDK-observed duration, not a provider-side per-token timestamp.
+
+When a streaming request completes successfully and the SDK returns a trusted output token count, VeADK divides the total time between the first and last output deltas by the output token count minus one to obtain the mean time per output token (TPOT). This value is written as the `gen_ai.chat_completions.streaming_time_per_output_token` attribute on the `model_request` span and recorded once in a same-named Histogram via the global MeterProvider, unit `s`, with dimensions `gen_ai.request.model` and `gen_ai.operation.name=chat`. TPOT is recorded only when all of the following hold: the request is streaming, at least two output deltas were observed, and the SDK returned a valid output token count whose components match the observed delta types. Multi-candidate (`n > 1`), reasoning-summary deltas, finish reasons other than `stop`, `tool_calls`, or `function_call`, audio output, encrypted reasoning content, and non-OpenAI-compatible providers omit TPOT. Failed, cancelled, or prematurely closed requests also omit it. Like TTFT, TPOT does not depend on token usage or trace sampling; export requires a configured metrics pipeline.
 
 The same value is recorded once in the `gen_ai.chat_completions.streaming_time_to_first_token` Histogram, unit `s`, using the existing global MeterProvider. Dimensions are `gen_ai.request.model` and `gen_ai.operation.name=chat`. Metrics do not depend on token usage or trace sampling; export requires a configured metrics pipeline. Negative wall-clock intervals are omitted with a diagnostic; genuine measured zero is valid.
 
 Failed model requests set native Span Status to `ERROR` and `error.type` to `llm_error`, `timeout`, or `cancelled`. Request spans use `request_error`, `timeout`, or `cancelled`; HTTP 5xx responses use `http_error`. Explicit generator closure is not an error. Already observed TTFT survives interruption, and exception text is not added by this instrumentation.
 
 <Note>
-This instrumentation replaces the previous custom timing fields. It no longer exports custom `veadk.request.*` or `veadk.model.*` attributes or a custom first-token event, without compatibility aliases. Client-render timing and TPOT histogram reporting remain outside this feature.
+This instrumentation replaces the previous custom timing fields. It no longer exports custom `veadk.request.*` or `veadk.model.*` attributes or a custom first-token event, without compatibility aliases. Client-render timing remains outside this feature.
 </Note>
