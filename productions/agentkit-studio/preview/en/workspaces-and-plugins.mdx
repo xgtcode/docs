@@ -1,0 +1,31 @@
+---
+title: "Workspaces and plugins"
+zh_link: "/productions/agentkit-studio/preview/zh/workspaces-and-plugins"
+---
+
+Use a workspace to edit and run project source code. Use plugins to give agents reusable skills, knowledge, conversation cards, or execution environments. You do not need a code project just to attach knowledge or a skill to an existing agent.
+
+## Develop or migrate a project
+
+<Warning>
+Project code is uploaded to a cloud workspace and may execute in a sandbox. Exclude secrets, production configuration, and source you are not authorized to upload. Sandboxes, model calls, and runtime deployments may incur charges.
+</Warning>
+
+1. Check the cloud account, region, and project. Make sure Studio has a development sandbox configured, then open **Workspaces** in the sidebar.
+2. To work directly with source, create a regular project from an empty project, a ZIP, or a GitHub repository. Private repositories require GitHub App authorization. To convert an existing application, create a migration project, upload the source, and review the result.
+3. Open the project, inspect its files in the editor, and send a test message in the project debug panel. Reload the agent after changing its code and repeat the test. For a migration, open the output project to continue editing; the source project retains the migration record.
+4. Run an evaluation in the project and inspect the sample results before deciding whether to deploy. A successful debug run does not publish a service. Check the target runtime, region, and project permissions before deployment.
+
+## Choose plugins for an agent
+
+| Plugin | How to use it |
+| --- | --- |
+| Skills | In a skill library, choose the GitHub import option. Review the repository and skill before importing, then select it in the agent configuration. For example, reuse your team's weekly reporting instructions across agents. |
+| Knowledge | Prepare a knowledge base for a product manual and check document processing status. Attach it to an agent and test retrieval with a question from the manual. |
+| Conversation cards | Preview an official card or create a personal one in simple mode. In the preview, new conversations and regular debug sessions start with no cards selected. To use an approval card, select it under **Configure → Additional capabilities → Chat cards** in the composer, then ask a compatible agent to request approval. Existing conversations retain their selections. |
+| Environments | Select an execution environment for processing files or running tools in a sandbox. You can install and update official environments. Mount only the data the task requires. |
+| Artifacts | Find and preview files produced by a task in the artifacts list to review its output after the conversation ends. |
+
+## Add a sidebar app
+
+A conversation card displays content in a reply. If you need a separate page that you can reopen, create or import an app under **More → Studio extensions**. After building and saving it, load the app from its details page. It appears under **Apps** in your sidebar. Unloading removes the sidebar entry without deleting the extension.

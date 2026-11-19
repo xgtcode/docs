@@ -86,7 +86,7 @@ veadk web ./agents \
   --oauth2-redirect-uri http://127.0.0.1:8000/oauth2/callback
 ```
 
-该命令的 OAuth2 适配面向本地 HTTP 调试，会允许非 HTTPS Cookie。生产或公网入口应使用 [Frontend/Studio 的认证配置](/productions/veadk/preview/zh/components/frontend/veadk-frontend#认证)或自行配置 HTTPS 中间件
+该命令的 OAuth2 适配面向本地 HTTP 调试，允许非 HTTPS Cookie。不要直接将调试入口暴露到公网；生产环境应配置 HTTPS 和访问控制。
 
 ## 记忆能力自动集成
 

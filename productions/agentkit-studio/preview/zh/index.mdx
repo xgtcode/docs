@@ -1,0 +1,25 @@
+---
+title: "AgentKit Studio 概述"
+en_link: "/productions/agentkit-studio/preview/en"
+---
+
+AgentKit Studio 是在浏览器中开发、运行和评测智能体的工作台。没有代码项目时，可以从一段任务说明创建智能体，边对话边调整配置。已有源码时，可以把项目导入云上工作区，在沙箱里修改、调试，再部署到 AgentKit 运行时。
+
+使用 `aks deploy --preview` 可部署独立工作台的预览版。本文按 2026 年 11 月 19 日火山引擎北京地域的[预览版发行清单](https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/channels/main.json)核对，版本标识为 `20261119152320`。不加 `--preview` 会部署正式版；核对时的[正式版为 0.6.6](https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/versions/0.6.6.json)。不同地域的预览版本可能不同。
+
+## 按任务阅读
+
+| 你要完成的任务 | 从这里开始 |
+| --- | --- |
+| 在自己的云账号中部署工作台，让团队可以登录 | [安装与部署](/productions/agentkit-studio/preview/zh/installation) |
+| 创建一个智能体，验证回答，再配置工具或长期记忆 | [创建并调试智能体](/productions/agentkit-studio/preview/zh/first-agent) |
+| 导入已有项目、接入知识库或技能、在对话中展示交互卡片 | [工作区与插件](/productions/agentkit-studio/preview/zh/workspaces-and-plugins) |
+| 用一批样本验证改动，或让智能体定时执行任务 | [评测与自动化](/productions/agentkit-studio/preview/zh/evaluation-and-automation) |
+| 从自己的后端调用智能体，或接入飞书、网页和 MCP | [调用协议与集成](/productions/agentkit-studio/preview/zh/api-access) |
+| 按工作台功能查找 HTTP 方法、请求路径和用途 | [BFF 接口列表](/productions/agentkit-studio/preview/zh/api-references/bff) |
+
+## 预览版使用场景
+
+- **把现有服务部署为智能体**：管理员可以在「智能体」中上传代码包，指定启动脚本和端口，创建独立的 Runtime，而不必先创建工作区。参见[从代码包部署 Runtime 智能体](/productions/agentkit-studio/preview/zh/first-agent#从代码包部署-runtime-智能体)。
+- **检查智能体的执行步骤**：除了评估最终答案，还可以用文字描述预期步骤，让评审模型对照实际轨迹评分。参见[评测与自动化](/productions/agentkit-studio/preview/zh/evaluation-and-automation)。
+- **查看自己的飞书私聊**：关联飞书身份后，可在 Studio 会话列表回看与机器人的私聊，在飞书中继续回复或另开会话。参见[飞书私聊](/productions/agentkit-studio/preview/zh/api-access#飞书私聊)。

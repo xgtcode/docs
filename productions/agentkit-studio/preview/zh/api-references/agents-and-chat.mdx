@@ -1,0 +1,200 @@
+---
+title: "智能体与对话接口"
+en_link: "/productions/agentkit-studio/preview/en/api-references/agents-and-chat"
+---
+
+通用智能体使用 `agent_id`，运行时智能体使用 `runtime_id`。会话、附件和记忆可能包含用户数据。删除前请核对资源标识；向智能体发送消息可能产生模型调用费用。
+
+路径以默认挂载位置 `/studio` 为例。参数、响应和权限见 [BFF 接口列表](/productions/agentkit-studio/preview/zh/api-references/bff)。
+
+## 通用智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/harness_agent` | 查询当前可见的智能体列表 |
+| `POST` | `/studio/api/v1/harness_agent/delete` | 删除指定智能体 |
+| `POST` | `/studio/api/v1/harness_agent/create` | 创建智能体并保存其配置 |
+| `POST` | `/studio/api/v1/harness_agent/update` | 更新指定智能体的配置 |
+| `POST` | `/studio/api/v1/harness_agent/callbacks/discover` | 发现智能体可使用的回调能力 |
+| `GET` | `/studio/api/v1/harness_agent/builtin` | 列出 Studio 提供的内置智能体 |
+| `POST` | `/studio/api/v1/harness_agent/builtin/prepare` | 准备指定内置智能体的使用配置 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/code` | 导出指定智能体的代码 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/statistics` | 读取指定智能体的统计数据 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/memory` | 读取智能体为当前用户保存的记忆 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}/traces` | 列出指定会话的调用追踪记录 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}/traces/{trace_id}` | 读取指定会话调用追踪的详细信息 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/messages` | 通过 Messages 协议调用智能体并生成回复 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/messages/count_tokens` | 计算 Messages 请求内容的 Token 数量 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/responses` | 通过 Responses 协议调用智能体并生成响应 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/chat/completions` | 通过 Chat Completions 协议调用智能体生成回复 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/a2a` | 通过 A2A 协议调用指定智能体 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/a2a/.well-known/agent-card.json` | 获取智能体的 A2A 能力描述卡片 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/invoke` | 通过对外调用入口执行指定智能体 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/mcp-service` | 查询智能体的 MCP 服务配置 |
+| `POST` | `/studio/api/v1/harness_agent/mcp-service` | 为智能体部署 MCP 服务入口 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-history` | 列出当前用户与智能体的飞书私聊会话 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-history/{session_id}` | 读取当前用户指定的飞书私聊会话 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-channel` | 读取智能体绑定的即时通讯渠道 |
+| `POST` | `/studio/api/v1/harness_agent/im-channel` | 为智能体绑定即时通讯渠道 |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/unbind` | 解除智能体与消息渠道的绑定 |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/rebind` | 重新绑定智能体的消息渠道 |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/update` | 更新智能体的消息渠道配置 |
+| `POST` | `/studio/api/v1/harness_agent/debug/run_sse` | 调试智能体并以事件流返回运行结果 |
+| `POST` | `/studio/api/v1/harness_agent/debug/thinking-capabilities` | 查询调试配置支持的思考能力 |
+| `POST` | `/studio/api/v1/harness_agent/debug/answer_sse` | 继续智能体调试中的交互请求 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/tools` | 查询指定智能体可使用的工具 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/thinking-capabilities` | 查询指定智能体支持的思考能力 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/cronjob-sessions` | 列出智能体的定时任务会话 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/cronjob-sessions/{session_id}` | 读取指定定时任务会话的详细信息 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions` | 查询指定资源的会话列表 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions` | 创建新的会话 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}` | 读取指定会话的详细信息 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions/update` | 更新指定会话的信息 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions/delete` | 删除指定会话 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/run_sse` | 运行智能体并以事件流返回执行结果 |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/answer_sse` | 回复智能体运行中的交互请求并继续执行 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/versions` | 查询智能体已保存的配置版本 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/versions/{version}` | 读取智能体指定版本的配置 |
+| `POST` | `/studio/api/v1/harness_agent/workflows/configuration` | 根据输入生成工作流配置 |
+| `POST` | `/studio/api/v1/harness_agent/workflows/restore` | 恢复工作流的编辑配置 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}` | 读取指定智能体的详细信息 |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/default-dataset` | 查询智能体的默认评测数据集 |
+| `POST` | `/studio/api/v1/harness_agent/default-dataset/generate` | 为智能体生成默认评测数据集 |
+
+## 运行时智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/runtime_agent` | 查询当前可见的智能体列表 |
+| `POST` | `/studio/api/v1/runtime_agent` | 从代码包创建运行时智能体 |
+| `POST` | `/studio/api/v1/runtime_agent/uploads` | 获取运行时代码包的上传地址 |
+| `POST` | `/studio/api/v1/runtime_agent/delete` | 删除指定智能体 |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}` | 读取指定智能体的详细信息 |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/connection` | 获取运行时智能体的连接信息 |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions` | 查询指定资源的会话列表 |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions` | 创建新的会话 |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions/{session_id}` | 读取指定会话的详细信息 |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions/delete` | 删除指定会话 |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/run_sse` | 运行指定智能体会话并返回事件流 |
+
+## 智能体配置
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/agents/harness/generate` | 根据输入生成通用智能体配置 |
+| `POST` | `/studio/api/v1/agents/configuration/prepare` | 准备智能体创建或编辑所需的配置 |
+
+## 智能体调试
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/agents/debug/run_sse` | 执行智能体调试并以事件流返回结果 |
+| `GET` | `/studio/api/v1/models` | 查询可使用的模型列表 |
+| `GET` | `/studio/api/v1/plan_models` | 查询计划模式可使用的模型 |
+
+## 智能体能力挂载
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/agents/mounts/a2a-spaces` | 查询智能体可挂载的 A2A 空间 |
+| `GET` | `/studio/api/v1/agents/mounts/mcp-toolsets` | 查询智能体可挂载的 MCP 工具集 |
+
+## 智能体对话
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/chat/extensions/validate` | 校验对话扩展包 |
+| `POST` | `/studio/api/v1/chat/extensions/resolve` | 解析对话使用的卡片 |
+| `GET` | `/studio/api/v1/studio_tools` | 查询 Studio 提供的工具目录 |
+| `GET` | `/studio/api/v1/agents/chat/runs/{run_id}/events` | 读取指定对话运行的事件流 |
+| `POST` | `/studio/api/v1/agents/chat/runs/cancel` | 请求取消正在执行的对话运行 |
+| `POST` | `/studio/api/v1/chat/suggestions` | 根据对话内容生成后续提问建议 |
+| `POST` | `/studio/api/v1/chat/session_title` | 根据对话内容生成会话标题 |
+
+## 对话产物
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifacts` | 列出指定对话会话生成的产物 |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifacts/{artifact_path}` | 查询指定会话产物的信息 |
+| `GET` | `/studio/api/v1/artifacts` | 查询当前可见的产物列表 |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifact-content/{artifact_path}` | 读取指定会话产物的内容 |
+| `POST` | `/studio/api/v1/artifacts/downloads` | 记录产物的下载行为 |
+| `POST` | `/studio/api/v1/artifacts/delete` | 删除指定产物 |
+
+## 附件管理
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/agents/attachments/capabilities` | 查询附件上传所支持的能力与限制 |
+| `POST` | `/studio/api/v1/agents/attachments` | 创建附件上传记录 |
+| `POST` | `/studio/api/v1/agents/attachments/{attachment_id}/parts/{part_number}` | 上传附件的一个分片 |
+| `POST` | `/studio/api/v1/agents/attachments/complete` | 完成附件上传并确认最终附件信息 |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}` | 获取指定附件的元数据 |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}/content` | 读取指定附件的原始内容 |
+| `POST` | `/studio/api/v1/agents/attachments/delete` | 删除指定附件 |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}/preview` | 获取附件的预览内容 |
+
+## Codex 智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/codex_agent/capabilities` | 查询该类型智能体支持的能力与配置选项 |
+| `GET` | `/studio/api/v1/codex_agent` | 查询当前可见的智能体列表 |
+| `GET` | `/studio/api/v1/codex_agent/questions` | 查询 Codex 当前需要用户回答的问题 |
+| `GET` | `/studio/api/v1/codex_agent/{agent_id}` | 读取指定智能体的详细信息 |
+| `POST` | `/studio/api/v1/codex_agent/create` | 创建智能体并保存其配置 |
+| `POST` | `/studio/api/v1/codex_agent/delete` | 删除指定智能体 |
+| `POST` | `/studio/api/v1/codex_agent/resume` | 恢复指定智能体的运行 |
+| `POST` | `/studio/api/v1/codex_agent/attachments` | 准备 Codex 运行所需的附件 |
+| `POST` | `/studio/api/v1/codex_agent/artifacts/sync` | 同步 Codex 运行生成的产物 |
+
+## DSH 智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/dsh_agent/capabilities` | 查询该类型智能体支持的能力与配置选项 |
+| `GET` | `/studio/api/v1/dsh_agent` | 查询当前可见的智能体列表 |
+| `GET` | `/studio/api/v1/dsh_agent/{agent_id}` | 读取指定智能体的详细信息 |
+| `POST` | `/studio/api/v1/dsh_agent/create` | 创建智能体并保存其配置 |
+| `POST` | `/studio/api/v1/dsh_agent/delete` | 删除指定智能体 |
+| `POST` | `/studio/api/v1/dsh_agent/resume` | 恢复指定智能体的运行 |
+
+## Hermes 智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/hermes_agent/capabilities` | 查询该类型智能体支持的能力与配置选项 |
+| `GET` | `/studio/api/v1/hermes_agent` | 查询当前可见的智能体列表 |
+| `GET` | `/studio/api/v1/hermes_agent/{agent_id}` | 读取指定智能体的详细信息 |
+| `POST` | `/studio/api/v1/hermes_agent/create` | 创建智能体并保存其配置 |
+| `POST` | `/studio/api/v1/hermes_agent/delete` | 删除指定智能体 |
+| `POST` | `/studio/api/v1/hermes_agent/resume` | 恢复指定智能体的运行 |
+
+## OpenClaw 智能体
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/openclaw_agent/capabilities` | 查询该类型智能体支持的能力与配置选项 |
+| `GET` | `/studio/api/v1/openclaw_agent` | 查询当前可见的智能体列表 |
+| `GET` | `/studio/api/v1/openclaw_agent/{agent_id}` | 读取指定智能体的详细信息 |
+| `POST` | `/studio/api/v1/openclaw_agent/create` | 创建智能体并保存其配置 |
+| `POST` | `/studio/api/v1/openclaw_agent/delete` | 删除指定智能体 |
+| `POST` | `/studio/api/v1/openclaw_agent/resume` | 恢复指定智能体的运行 |
+
+## 网站集成
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/website_integrations` | 查询已配置的网站集成 |
+| `POST` | `/studio/api/v1/website_integrations` | 创建智能体的网站集成配置 |
+| `POST` | `/studio/api/v1/website_integrations/delete` | 删除指定网站集成 |
+| `POST` | `/studio/api/v1/website-embed/sessions` | 为网站嵌入式对话创建会话 |
+| `POST` | `/studio/api/v1/website-embed/messages` | 从网站嵌入式对话发送消息并获取回复 |
+
+## 飞书集成
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/feishu/bots` | 发起飞书机器人的创建流程 |
+| `POST` | `/studio/api/v1/feishu/bots/poll` | 查询飞书机器人的创建进度 |

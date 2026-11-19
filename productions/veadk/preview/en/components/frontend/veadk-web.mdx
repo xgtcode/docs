@@ -86,7 +86,7 @@ veadk web ./agents \
   --oauth2-redirect-uri http://127.0.0.1:8000/oauth2/callback
 ```
 
-The command's OAuth2 adapter targets local HTTP debugging and permits non-HTTPS cookies. For production or public access, use [Frontend/Studio authentication](/productions/veadk/preview/en/components/frontend/veadk-frontend#authentication) or configure HTTPS middleware explicitly
+The command's OAuth2 adapter is for local HTTP debugging and permits non-HTTPS cookies. Do not expose the debug endpoint directly to the internet. Configure HTTPS and access controls for production.
 
 ## Automatic memory integration
 

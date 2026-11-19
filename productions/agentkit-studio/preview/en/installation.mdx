@@ -1,0 +1,48 @@
+---
+title: "Install and deploy Studio"
+zh_link: "/productions/agentkit-studio/preview/zh/installation"
+---
+
+If your team already hosts Studio, sign in at the URL it provides and follow [Create and debug an agent](/productions/agentkit-studio/preview/en/first-agent). Follow this guide to create a **new** workbench in your cloud account. Installing `aks` installs the deployment tool on your computer; it does not start Studio.
+
+## Install the deployment tool
+
+Use macOS or a glibc-based Linux distribution on ARM64 or x64. You need `curl` and either `sha256sum` or `shasum`. Run these commands from a writable directory:
+
+```bash
+curl -fsSLo aks.sh https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/aks.sh
+sh aks.sh
+export PATH="$HOME/.local/bin:$PATH"
+aks --version
+```
+
+You can inspect the downloaded script before running it. The installer selects a CLI for your platform and verifies its checksum. It does not require `sudo`. `aks --version` prints the local CLI version, not the version of a deployed Studio instance.
+
+## Deploy the preview
+
+Use a cloud account with permission to manage the target project, IAM roles, VeFaaS applications, TOS buckets, and Identity user pools. The example uses the `default` project in Volcengine's Beijing region. Check deployment permissions first:
+
+```bash
+aks deploy --check-permissions --provider volcengine --region cn-beijing --project default
+```
+
+If you have not configured cloud credentials, follow the browser authorization prompt from an interactive terminal. Ask your cloud administrator to grant any missing permissions. The permission check does not deploy Studio.
+
+<Warning>
+Deployment creates or reuses cloud resources and publishes an internet-accessible sign-in page. Charges may apply. Check the account, region, project, and proposed resources before confirming. Restrict sign-in to the intended users.
+</Warning>
+
+Replace `my-studio` with an unused application name:
+
+```bash
+aks deploy --preview --provider volcengine --region cn-beijing --project default \
+  --vefaas-app-name my-studio
+```
+
+For BytePlus, replace `--provider volcengine --region cn-beijing` with `--provider byteplus --region ap-southeast-1` and authorize the target BytePlus account. The CLI lists resources it needs to create or reuse. To supply an existing storage bucket or user pool, see `aks deploy --help` for the corresponding options.
+
+`--preview` selects the current preview for the target region; it does not pin a particular build. For a stable release, omit `--preview`. To pin a stable version, replace it with `--version 0.6.6`. The flags cannot be combined. `aks deploy` creates a new application rather than upgrading an existing instance.
+
+## Verify the deployment
+
+On success, the CLI prints the Studio URL, application ID, and function ID. Open the URL and sign in through the configured identity provider. Reaching the workbench confirms that the endpoint is accessible. To run agents, deploy or link a Harness runtime in Studio settings and make a model available. Workspace sandboxes and scheduled task infrastructure require separate configuration.

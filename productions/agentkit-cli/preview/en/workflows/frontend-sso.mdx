@@ -17,7 +17,7 @@ flowchart LR
 
 ## Prerequisites and version scope
 
-Prepare a deployed target Runtime that the frontend can discover and the signed-in user is authorized to invoke. The current frontend displays cloud Runtimes by default; this flow does not automatically add the local agent from the `basic` template. For local agent-directory development, use development mode in [VeADK Frontend](/productions/veadk/preview/en/components/frontend/veadk-frontend)
+Prepare a deployed target Runtime that the frontend can discover and the signed-in user is authorized to invoke. The current frontend displays cloud Runtimes by default; this flow does not automatically add the local agent from the `basic` template. To debug an agent from a local directory, use `veadk frontend --dev --agents-dir <directory>`.
 
 The CLI 0.54.0 frontend build uses the VeADK `main` branch, so behavior depends on the version available at build time rather than a fixed VeADK release. Verify target Runtime discovery, login, and invocation permissions before production use
 

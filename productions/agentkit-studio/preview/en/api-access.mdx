@@ -1,0 +1,51 @@
+---
+title: "Invocation protocols and integrations"
+zh_link: "/productions/agentkit-studio/preview/zh/api-access"
+---
+
+A saved general agent can serve callers outside Studio. Use the managed agent text API to maintain a conversation from your backend, or select a compatible endpoint for an existing protocol client. Website visitors and Feishu users use separate channels and do not need the agent's API key.
+
+## Identity and storage boundaries
+
+| Object | Responsibility and limits |
+| --- | --- |
+| Deployer and runtime role | The deployer authorizes `aks` to prepare cloud resources. Once deployed, Studio uses its assigned IAM role to access cloud services, not the deployer's browser session. If a cloud service denies a request, check the runtime role's permissions for the target project and region. |
+| Signed-in user and API caller | The signed-in identity determines which agents a user can see and which actions they can perform. An agent API key only authorizes calls to its agent. If the issuer loses access, the key can no longer invoke the agent. |
+| Agent configuration and conversations | The configuration stores the model, instructions, and resource references. The runtime manages sessions. Deleting the configuration does not delete the shared runtime or replace a retention policy for conversation history. |
+| Evaluation data | Datasets and run results are stored separately and scoped by cloud provider, project, and region. Editing a dataset affects future runs without rewriting past reports. |
+
+## Send a message from a backend
+
+In the agent's integration settings, open **API access**, choose the managed agent API, and copy its invocation URL and API key. The URL ends in `/api/v1/harness_agent/{agent_id}/invoke`. Use the full address shown in Studio, not the shared runtime's address.
+
+<Warning>
+The API key grants the issuer's invocation access to this agent. Inject it through a backend secret manager. Never embed it in browser JavaScript, chat messages, or a source repository.
+</Warning>
+
+In a backend terminal with `curl`, set `STUDIO_INVOKE_URL` to the copied HTTPS URL and supply `STUDIO_AGENT_KEY` securely. Send a text request:
+
+```bash
+curl --fail-with-body -sS -X POST "$STUDIO_INVOKE_URL" \
+  -H "Authorization: Bearer $STUDIO_AGENT_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"session_id":"e12d3b16-ae91-44be-a324-46da88776774","prompt":"Lin will send the quote by Thursday. Extract the action item."}'
+```
+
+On success, `data.text` contains the reply and `data.session_id` identifies the conversation. Reuse the UUID for subsequent turns under the same caller identity. Generate a different UUID for each new conversation; do not share the example value across users. If the request is denied, verify that the URL and key belong to the same agent and that the issuer still has permission to invoke it. A browser login cookie cannot replace the API key on this endpoint.
+
+## Choose another protocol or channel
+
+| Interface | When to use it and what to check |
+| --- | --- |
+| Messages | Use an Anthropic Messages client for messages or streaming replies. Include `anthropic-version: 2023-06-01`. Accurate `count_tokens` is not supported and returns HTTP 501. |
+| Responses and Chat Completions | Use the URL shown for the corresponding OpenAI-compatible protocol. The client supplies conversation history and client tool results; Studio's server-side tools are not automatically exposed. |
+| A2A | Discover the agent through its Agent Card, send or stream a message, and query a task by ID. |
+| MCP | Deploy a service from the agent's MCP integration so an MCP client can call the `invoke_agent` tool. Deployment creates a cloud service; check gateway permissions and costs first. |
+| Website | Register a website, configure allowed origins, and place the generated embed code on that site. Visitors use separate guest sessions; do not embed a backend API key. |
+| Feishu | Configure a dedicated gateway for the managed agent and bind a bot under its messaging channel integration. Send a test message in Feishu. Text replies can stream into the conversation. |
+
+## Feishu direct messages
+
+In the preview, sign in to Studio with an account linked to your Feishu identity. Your direct conversations with a bound bot appear under **Conversations** alongside regular sessions, ordered by their last update. Open a conversation and refresh to see new messages. The Studio view is read-only and does not list other people's direct messages.
+
+In a Feishu direct chat, send `/new` to start a new conversation, or `/rename Weekly report` to rename the current one. Send `/studio` in Feishu to open that part of the conversation in Studio. To reply, return to Feishu.

@@ -1,0 +1,60 @@
+---
+title: "BFF endpoints"
+zh_link: "/productions/agentkit-studio/preview/zh/api-references/bff"
+---
+
+Studio’s web app uses the backend-for-frontend (BFF) endpoints listed here. This reference covers user-facing operations, not host administration, credential management, or internal proxies. To call a published agent from your own backend, see [Invocation protocols and integrations](/productions/agentkit-studio/preview/en/api-access).
+
+## Browse by task
+
+- [Agent and chat endpoints](/productions/agentkit-studio/preview/en/api-references/agents-and-chat): create and debug agents or retrieve conversations and attachments.
+- [Workspace and extension endpoints](/productions/agentkit-studio/preview/en/api-references/workspaces-and-extensions): manage projects, extensions, knowledge bases, and skill libraries.
+- [Evaluation and automation endpoints](/productions/agentkit-studio/preview/en/api-references/evaluation-and-automation): manage datasets, view reports, run load tests, and schedule tasks.
+
+## Look up parameters and responses
+
+The tables cover preview build `20261119152320` and show paths for the default `/studio` mount. Sign in to your instance and open **Account menu → Developer documentation → AgentKit Studio API documentation**. Select a module and an operation to see its deployed path, parameters, request body, and response schemas.
+
+For example, `GET /studio/api/v1/harness_agent` under **Harness agents** requires `provider`, `project`, and `region` to select a cloud scope. To retrieve one agent, substitute its ID from the list for `{agent_id}` in the detail path. Other endpoints do not necessarily take these query parameters.
+
+To get the full OpenAPI catalog, request `GET /studio/api/v1/extensions/api-catalog` in a signed-in session. The response lists definitions by path and HTTP method under `data.schema_document.paths`. Its `/api/v1` paths omit the Studio mount prefix.
+
+An entry in the catalog does not grant permission to execute it. For a Studio extension, also check the operation’s `x-studio-extension` flag, the permissions declared by the extension, and the current user’s authorization. The extension’s JSON request interface cannot directly consume event streams or file downloads.
+
+## API catalog
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions/api-catalog` | Read the OpenAPI catalog for this instance |
+
+## Current user permissions and workspaces
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/permissions` | Get permissions |
+| `GET` | `/studio/api/v1/permissions/workspaces` | List workspaces |
+| `GET` | `/studio/api/v1/permissions/check` | Check permission |
+| `POST` | `/studio/api/v1/permissions/workspaces/select` | Select workspace |
+
+## Cloud projects
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/projects` | List cloud projects |
+
+## User settings
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/user-settings` | Read all settings for the authenticated user |
+| `POST` | `/studio/api/v1/user-settings/update` | Update general preferences or the default cloud resource scope |
+| `POST` | `/studio/api/v1/user-settings/delete` | Reset the authenticated user's preferences to defaults |
+
+## Statistics
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/statistics/agent-usage` | Get user agent usage |
+| `GET` | `/studio/api/v1/statistics/artifacts` | Get artifact statistics |
+| `GET` | `/studio/api/v1/statistics/agent-keywords` | Get agent keywords |
+| `GET` | `/studio/api/v1/statistics/question-keywords` | Get question keywords |

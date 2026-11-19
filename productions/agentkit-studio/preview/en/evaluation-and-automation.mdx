@@ -1,0 +1,30 @@
+---
+title: "Evaluation and automation"
+zh_link: "/productions/agentkit-studio/preview/zh/evaluation-and-automation"
+---
+
+A debug conversation shows how an agent handles one input. Use a fixed dataset to compare behavior before and after changing a prompt, model, or tool. To measure how the agent responds under concurrent use, run a load test rather than a quality evaluation.
+
+## Test a change against a dataset
+
+1. Save the agent and prepare a dataset in **Evaluation**. If Studio generated a default dataset when you created the agent, review each sample against your requirements before using it. Configure an evaluation model in Studio settings if your metrics use a model to score answers.
+2. Choose an input/output evaluation. Select the agent, dataset, and metrics. For the meeting agent, include notes that omit a deadline and require the answer to say “unspecified” rather than invent a date.
+3. Start the evaluation and wait for completion. Open the report and inspect the actual replies, scoring reasons, and evidence for failed samples, not just the overall pass rate. After modifying the agent, run the same dataset and metrics again.
+
+## Evaluate the execution steps
+
+An input/output evaluation checks only the final reply. To assess how the agent arrived at its answer, choose trajectory evaluation and select a dataset with execution traces. In the preview, you can describe the expected steps in plain language as the trajectory ground truth. For example: “Look up the product manual, then answer using the policy you found.” The evaluation model compares the recorded steps with that description. If you leave the expected trajectory empty, it judges the recorded steps against the user's request.
+
+## Check concurrent performance
+
+<Warning>
+A load test makes real calls to the target agent, its model, and its tools. Start with test resources, low concurrency, and a prompt that cannot modify production data.
+</Warning>
+
+In the load testing section of **Evaluation**, select a target and set the prompt, concurrent users, users added per second, run duration, and stop timeout. When the task finishes, download the Locust HTML or CSV report to review response times and failed requests. A completed task does not mean every request succeeded.
+
+## Schedule recurring work
+
+To have the same agent prepare a daily brief, configure the scheduling service in Studio first. Open **Automations → Scheduled tasks**, select the saved agent, enter its instructions, and check the time and time zone. After saving, inspect the execution history for the status and result of each run. A queued run has not necessarily finished or even started.
+
+For work triggered by code changes, **Automations** also offers GitHub PR reviews. Prepare a shared runner in the code integration settings and authorize the target repository, then create a review binding. Opening or updating a non-draft PR can trigger a review whose results appear on the PR. Before connecting a repository, confirm the integration is authorized to read it and post comments.

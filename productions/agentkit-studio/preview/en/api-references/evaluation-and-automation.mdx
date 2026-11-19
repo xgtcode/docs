@@ -1,0 +1,91 @@
+---
+title: "Evaluation and automation endpoints"
+zh_link: "/productions/agentkit-studio/preview/zh/api-references/evaluation-and-automation"
+---
+
+Use these endpoints to manage datasets, generate reports, run load tests, or schedule tasks. Evaluations, load tests, and scheduled runs execute real workloads and can incur charges.
+
+Paths assume the default `/studio` mount. For parameters, responses, and permissions, see [BFF endpoints](/productions/agentkit-studio/preview/en/api-references/bff).
+
+## Evaluation resources
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/evaluation/datasets` | List datasets |
+| `POST` | `/studio/api/v1/evaluation/datasets` | Create dataset |
+| `GET` | `/studio/api/v1/evaluation/datasets/{dataset_id}` | Get dataset |
+| `POST` | `/studio/api/v1/evaluation/datasets/update` | Update dataset |
+| `POST` | `/studio/api/v1/evaluation/datasets/delete` | Delete dataset |
+| `POST` | `/studio/api/v1/evaluation/datasets/generate` | Generate dataset |
+| `GET` | `/studio/api/v1/evaluation/metrics` | List metrics |
+| `POST` | `/studio/api/v1/evaluation/feedback/datasets` | Initialize datasets |
+| `POST` | `/studio/api/v1/evaluation/feedback/update` | Save feedback |
+| `POST` | `/studio/api/v1/evaluation/feedback/backfill` | Backfill feedback |
+| `GET` | `/studio/api/v1/evaluation/feedback` | List feedback |
+| `GET` | `/studio/api/v1/evaluation/custom_metrics` | List custom metrics |
+| `GET` | `/studio/api/v1/evaluation/custom_metrics/{custom_metric_id}` | Get custom metric |
+| `POST` | `/studio/api/v1/evaluation/defaults` | Initialize defaults |
+| `GET` | `/studio/api/v1/evaluation/templates` | List templates |
+| `POST` | `/studio/api/v1/evaluation/templates` | Create template |
+| `GET` | `/studio/api/v1/evaluation/templates/summaries` | List template summaries |
+| `GET` | `/studio/api/v1/evaluation/templates/{template_id}` | Get template |
+| `POST` | `/studio/api/v1/evaluation/templates/update` | Update template |
+| `POST` | `/studio/api/v1/evaluation/templates/delete` | Delete template |
+| `GET` | `/studio/api/v1/evaluation/tasks` | List tasks |
+| `POST` | `/studio/api/v1/evaluation/tasks` | Create task |
+| `GET` | `/studio/api/v1/evaluation/tasks/{task_id}` | Get task |
+| `GET` | `/studio/api/v1/evaluation/overview` | Get overview |
+| `POST` | `/studio/api/v1/evaluation/tasks/update` | Update task |
+| `POST` | `/studio/api/v1/evaluation/tasks/delete` | Delete task |
+| `GET` | `/studio/api/v1/evaluation/task_summaries` | List task summaries |
+| `GET` | `/studio/api/v1/evaluation/agents/{runtime_id}/summary` | Read agent evaluation summary |
+| `GET` | `/studio/api/v1/evaluation/reports` | List reports |
+| `POST` | `/studio/api/v1/evaluation/reports` | Create report |
+| `GET` | `/studio/api/v1/evaluation/reports/{report_id}` | Get report |
+| `POST` | `/studio/api/v1/evaluation/reports/update` | Update report |
+| `POST` | `/studio/api/v1/evaluation/reports/delete` | Delete report |
+| `POST` | `/studio/api/v1/evaluation/reports/retry` | Retry report |
+| `POST` | `/studio/api/v1/evaluation/optimizations/by-tasks` | Read task optimizations |
+| `GET` | `/studio/api/v1/evaluation/optimizations/{optimization_id}` | Get optimization |
+| `POST` | `/studio/api/v1/evaluation/optimizations/retry` | Retry optimization |
+| `POST` | `/studio/api/v1/evaluation/optimizations/prepare` | Prepare optimization |
+
+## Conversation scoring
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/chat_performance_judge` | Judge a completed conversation task |
+
+## Load testing
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/loadtests` | Create loadtest |
+| `GET` | `/studio/api/v1/loadtests` | List loadtests |
+| `GET` | `/studio/api/v1/loadtests/summaries` | List loadtest summaries |
+| `GET` | `/studio/api/v1/loadtests/{loadtest_id}` | Get loadtest |
+| `GET` | `/studio/api/v1/loadtests/{loadtest_id}/report` | Get loadtest report |
+| `POST` | `/studio/api/v1/loadtests/stop` | Stop loadtest |
+
+## Scheduled tasks
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/cronjobs` | List cronjobs in the supplied cloud scope |
+| `POST` | `/studio/api/v1/cronjobs` | Create a cronjob definition |
+| `GET` | `/studio/api/v1/cronjobs/{cronjob_id}` | Read a cronjob in the supplied cloud scope |
+| `POST` | `/studio/api/v1/cronjobs/update` | Update supplied fields, including enabled; replace schedule as a whole |
+| `POST` | `/studio/api/v1/cronjobs/delete` | Delete a cronjob after checking for active execution |
+| `POST` | `/studio/api/v1/cronjobs/run` | Queue one manual execution of an enabled cronjob |
+| `GET` | `/studio/api/v1/cronjob_runs` | List execution history for the supplied cronjob |
+| `POST` | `/studio/api/v1/cronjob_runs/cancel` | Request cancellation of one execution without disabling its cronjob |
+
+## Automations
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/automations/shared` | List shared review bindings |
+| `POST` | `/studio/api/v1/automations/shared` | Create shared review binding |
+| `GET` | `/studio/api/v1/automations/shared/{binding_id}` | Get shared review binding |
+| `POST` | `/studio/api/v1/automations/shared/configure` | Configure shared review binding |
+| `POST` | `/studio/api/v1/automations/shared/delete` | Delete shared review binding |

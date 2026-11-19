@@ -41,10 +41,6 @@ agent = Agent(
 
 At init, if the collection does not exist, VeADK creates it from `memory_type`.
 
-<Note>
-When you select the VikingDB Memory backend in Studio's custom creation flow, you can browse and pick an existing VikingDB memory collection from the current account. Selecting an existing collection uses its name as the collection index, and Studio automatically fills the project, region, and memory-type environment variables. If you do not select one, the collection name is auto-generated from the agent name, and the collection is created at runtime if it does not exist. See the [Studio agent workbench](/productions/veadk/preview/en/components/frontend/studio#configure-memory).
-</Note>
-
 You can also pass config explicitly via `backend_config`:
 
 ```python lines
