@@ -1,0 +1,91 @@
+---
+title: "评测与自动化接口"
+en_link: "/productions/agentkit-studio/preview/en/api-references/evaluation-and-automation"
+---
+
+使用这些接口管理数据集、生成评测报告、运行压测或调度任务。启动评测、压测或定时任务会执行实际工作负载，可能产生费用。
+
+路径以默认挂载位置 `/studio` 为例。参数、响应和权限见 [BFF 接口列表](/productions/agentkit-studio/preview/zh/api-references/bff)。
+
+## 评测资源
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/evaluation/datasets` | 查询可用的评测数据集 |
+| `POST` | `/studio/api/v1/evaluation/datasets` | 创建评测数据集 |
+| `GET` | `/studio/api/v1/evaluation/datasets/{dataset_id}` | 读取指定评测数据集的详细信息 |
+| `POST` | `/studio/api/v1/evaluation/datasets/update` | 更新指定评测数据集 |
+| `POST` | `/studio/api/v1/evaluation/datasets/delete` | 删除指定评测数据集 |
+| `POST` | `/studio/api/v1/evaluation/datasets/generate` | 根据输入生成评测数据集 |
+| `GET` | `/studio/api/v1/evaluation/metrics` | 查询可用的评测指标 |
+| `POST` | `/studio/api/v1/evaluation/feedback/datasets` | 初始化反馈数据使用的评测数据集 |
+| `POST` | `/studio/api/v1/evaluation/feedback/update` | 保存对智能体回复的反馈 |
+| `POST` | `/studio/api/v1/evaluation/feedback/backfill` | 将已有反馈补充到对应的评测数据集中 |
+| `GET` | `/studio/api/v1/evaluation/feedback` | 查询已收集的用户反馈 |
+| `GET` | `/studio/api/v1/evaluation/custom_metrics` | 查询自定义评测指标 |
+| `GET` | `/studio/api/v1/evaluation/custom_metrics/{custom_metric_id}` | 读取指定自定义评测指标的定义 |
+| `POST` | `/studio/api/v1/evaluation/defaults` | 初始化评测所需的默认配置 |
+| `GET` | `/studio/api/v1/evaluation/templates` | 查询可用的评测报告模板 |
+| `POST` | `/studio/api/v1/evaluation/templates` | 创建评测报告模板 |
+| `GET` | `/studio/api/v1/evaluation/templates/summaries` | 查询评测报告模板的摘要列表 |
+| `GET` | `/studio/api/v1/evaluation/templates/{template_id}` | 读取指定评测报告模板 |
+| `POST` | `/studio/api/v1/evaluation/templates/update` | 更新指定评测报告模板 |
+| `POST` | `/studio/api/v1/evaluation/templates/delete` | 删除指定评测报告模板 |
+| `GET` | `/studio/api/v1/evaluation/tasks` | 查询评测任务列表 |
+| `POST` | `/studio/api/v1/evaluation/tasks` | 创建评测任务 |
+| `GET` | `/studio/api/v1/evaluation/tasks/{task_id}` | 读取指定评测任务的详细信息 |
+| `GET` | `/studio/api/v1/evaluation/overview` | 获取评测资源与任务的概览信息 |
+| `POST` | `/studio/api/v1/evaluation/tasks/update` | 更新指定评测任务 |
+| `POST` | `/studio/api/v1/evaluation/tasks/delete` | 删除指定评测任务 |
+| `GET` | `/studio/api/v1/evaluation/task_summaries` | 查询评测任务的摘要列表 |
+| `GET` | `/studio/api/v1/evaluation/agents/{runtime_id}/summary` | 读取指定智能体的评测摘要 |
+| `GET` | `/studio/api/v1/evaluation/reports` | 查询评测报告列表 |
+| `POST` | `/studio/api/v1/evaluation/reports` | 创建评测报告 |
+| `GET` | `/studio/api/v1/evaluation/reports/{report_id}` | 读取指定评测报告的详细内容 |
+| `POST` | `/studio/api/v1/evaluation/reports/update` | 更新指定评测报告 |
+| `POST` | `/studio/api/v1/evaluation/reports/delete` | 删除指定评测报告 |
+| `POST` | `/studio/api/v1/evaluation/reports/retry` | 重新执行指定评测报告的生成任务 |
+| `POST` | `/studio/api/v1/evaluation/optimizations/by-tasks` | 读取指定评测任务对应的优化记录 |
+| `GET` | `/studio/api/v1/evaluation/optimizations/{optimization_id}` | 读取指定优化记录的详细内容 |
+| `POST` | `/studio/api/v1/evaluation/optimizations/retry` | 重试指定优化任务 |
+| `POST` | `/studio/api/v1/evaluation/optimizations/prepare` | 准备评测结果对应的优化任务 |
+
+## 对话任务评分
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/chat_performance_judge` | 对已完成的对话任务进行评价并返回评分结果 |
+
+## 压力测试
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/loadtests` | 创建压力测试任务记录 |
+| `GET` | `/studio/api/v1/loadtests` | 查询压力测试任务列表 |
+| `GET` | `/studio/api/v1/loadtests/summaries` | 查询压力测试任务的摘要列表 |
+| `GET` | `/studio/api/v1/loadtests/{loadtest_id}` | 读取指定压力测试任务的状态 |
+| `GET` | `/studio/api/v1/loadtests/{loadtest_id}/report` | 读取指定压力测试任务的报告 |
+| `POST` | `/studio/api/v1/loadtests/stop` | 停止指定压力测试任务 |
+
+## 定时任务
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/cronjobs` | 查询指定云资源范围内的定时任务 |
+| `POST` | `/studio/api/v1/cronjobs` | 创建定时任务定义 |
+| `GET` | `/studio/api/v1/cronjobs/{cronjob_id}` | 读取指定云资源范围内的定时任务详情 |
+| `POST` | `/studio/api/v1/cronjobs/update` | 更新定时任务的指定字段；调度配置按整体替换 |
+| `POST` | `/studio/api/v1/cronjobs/delete` | 检查是否存在活动执行后，删除指定定时任务 |
+| `POST` | `/studio/api/v1/cronjobs/run` | 为已启用的定时任务排队执行一次手动运行 |
+| `GET` | `/studio/api/v1/cronjob_runs` | 查询指定定时任务的执行历史 |
+| `POST` | `/studio/api/v1/cronjob_runs/cancel` | 请求取消一次任务执行，不停用该定时任务 |
+
+## 自动化
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/automations/shared` | 列出共用代码评审的集成绑定 |
+| `POST` | `/studio/api/v1/automations/shared` | 创建共用代码评审的集成绑定 |
+| `GET` | `/studio/api/v1/automations/shared/{binding_id}` | 读取指定代码评审绑定的信息 |
+| `POST` | `/studio/api/v1/automations/shared/configure` | 更新指定代码评审绑定的配置 |
+| `POST` | `/studio/api/v1/automations/shared/delete` | 删除指定代码评审绑定 |

@@ -1,0 +1,200 @@
+---
+title: "Agent and chat endpoints"
+zh_link: "/productions/agentkit-studio/preview/zh/api-references/agents-and-chat"
+---
+
+Harness agents use `agent_id`; runtime agents use `runtime_id`. Sessions, attachments, and memory can contain user data. Verify resource IDs before deletion. Sending messages to an agent can incur model charges.
+
+Paths assume the default `/studio` mount. For parameters, responses, and permissions, see [BFF endpoints](/productions/agentkit-studio/preview/en/api-references/bff).
+
+## Harness agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/harness_agent` | List agents |
+| `POST` | `/studio/api/v1/harness_agent/delete` | Delete agent |
+| `POST` | `/studio/api/v1/harness_agent/create` | Create agent |
+| `POST` | `/studio/api/v1/harness_agent/update` | Update agent |
+| `POST` | `/studio/api/v1/harness_agent/callbacks/discover` | Discover callbacks |
+| `GET` | `/studio/api/v1/harness_agent/builtin` | List builtin agents |
+| `POST` | `/studio/api/v1/harness_agent/builtin/prepare` | Prepare builtin agent |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/code` | Export agent code |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/statistics` | Get statistics |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/memory` | Get the agent’s memory for the current user |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}/traces` | List session traces |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}/traces/{trace_id}` | Get session trace |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/messages` | Create message |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/messages/count_tokens` | Count tokens |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/responses` | Create response |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/v1/chat/completions` | Create chat completion |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/a2a` | Invoke A2A |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/a2a/.well-known/agent-card.json` | Get A2A agent card |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/invoke` | Invoke agent |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/mcp-service` | Get MCP service |
+| `POST` | `/studio/api/v1/harness_agent/mcp-service` | Deploy MCP service |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-history` | List the current user’s private Feishu conversations with the agent |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-history/{session_id}` | Get one of the current user’s private Feishu conversations |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/im-channel` | Get IM channel |
+| `POST` | `/studio/api/v1/harness_agent/im-channel` | Bind IM channel |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/unbind` | Disconnect the messaging channel |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/rebind` | Reconnect the messaging channel |
+| `POST` | `/studio/api/v1/harness_agent/im-channel/update` | Update the messaging channel configuration |
+| `POST` | `/studio/api/v1/harness_agent/debug/run_sse` | Debug agent |
+| `POST` | `/studio/api/v1/harness_agent/debug/thinking-capabilities` | Debug thinking capabilities |
+| `POST` | `/studio/api/v1/harness_agent/debug/answer_sse` | Answer debug |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/tools` | List agent tools |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/thinking-capabilities` | Get thinking capabilities |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/cronjob-sessions` | List cronjob sessions |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/cronjob-sessions/{session_id}` | Get cronjob session |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions` | List sessions |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions` | Create session |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/sessions/{session_id}` | Get session |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions/update` | Update session |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/sessions/delete` | Delete session |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/run_sse` | Run agent |
+| `POST` | `/studio/api/v1/harness_agent/{agent_id}/answer_sse` | Answer agent |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/versions` | List agent versions |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/versions/{version}` | Get agent version |
+| `POST` | `/studio/api/v1/harness_agent/workflows/configuration` | Generate workflow configuration |
+| `POST` | `/studio/api/v1/harness_agent/workflows/restore` | Restore workflow configuration |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}` | Get agent |
+| `GET` | `/studio/api/v1/harness_agent/{agent_id}/default-dataset` | Get the agent’s default evaluation dataset |
+| `POST` | `/studio/api/v1/harness_agent/default-dataset/generate` | Generate a default evaluation dataset for the agent |
+
+## Runtime agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/runtime_agent` | List agents |
+| `POST` | `/studio/api/v1/runtime_agent` | Create a runtime agent from a code package |
+| `POST` | `/studio/api/v1/runtime_agent/uploads` | Get an upload URL for a runtime code package |
+| `POST` | `/studio/api/v1/runtime_agent/delete` | Delete agent |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}` | Get agent |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/connection` | Get connection |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions` | List sessions |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions` | Create session |
+| `GET` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions/{session_id}` | Get session |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/sessions/delete` | Delete session |
+| `POST` | `/studio/api/v1/runtime_agent/{runtime_id}/run_sse` | Run session |
+
+## Agent configuration
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/agents/harness/generate` | Generate harness agent |
+| `POST` | `/studio/api/v1/agents/configuration/prepare` | Prepare agent configuration |
+
+## Agent debugging
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/agents/debug/run_sse` | Run agent debug |
+| `GET` | `/studio/api/v1/models` | List models |
+| `GET` | `/studio/api/v1/plan_models` | List plan models |
+
+## Agent integrations
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/agents/mounts/a2a-spaces` | List A2A spaces |
+| `GET` | `/studio/api/v1/agents/mounts/mcp-toolsets` | List MCP toolsets |
+
+## Agent chat
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/chat/extensions/validate` | Validate a chat extension archive |
+| `POST` | `/studio/api/v1/chat/extensions/resolve` | Resolve a conversation card |
+| `GET` | `/studio/api/v1/studio_tools` | List Studio tools |
+| `GET` | `/studio/api/v1/agents/chat/runs/{run_id}/events` | Get chat run events |
+| `POST` | `/studio/api/v1/agents/chat/runs/cancel` | Cancel chat run |
+| `POST` | `/studio/api/v1/chat/suggestions` | Generate chat suggestions |
+| `POST` | `/studio/api/v1/chat/session_title` | Generate session title |
+
+## Conversation artifacts
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifacts` | List chat artifacts |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifacts/{artifact_path}` | Get chat artifact |
+| `GET` | `/studio/api/v1/artifacts` | List artifacts |
+| `GET` | `/studio/api/v1/chat/sessions/{session_id}/artifact-content/{artifact_path}` | Get chat artifact content |
+| `POST` | `/studio/api/v1/artifacts/downloads` | Record artifact download |
+| `POST` | `/studio/api/v1/artifacts/delete` | Delete artifact |
+
+## Attachments
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/agents/attachments/capabilities` | Get attachment capabilities |
+| `POST` | `/studio/api/v1/agents/attachments` | Create attachment |
+| `POST` | `/studio/api/v1/agents/attachments/{attachment_id}/parts/{part_number}` | Upload one part of an attachment |
+| `POST` | `/studio/api/v1/agents/attachments/complete` | Complete attachment |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}` | Get attachment |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}/content` | Get attachment content |
+| `POST` | `/studio/api/v1/agents/attachments/delete` | Delete attachment |
+| `GET` | `/studio/api/v1/agents/attachments/{attachment_id}/preview` | Get attachment preview |
+
+## Codex agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/codex_agent/capabilities` | Get capabilities |
+| `GET` | `/studio/api/v1/codex_agent` | List agents |
+| `GET` | `/studio/api/v1/codex_agent/questions` | List Codex questions |
+| `GET` | `/studio/api/v1/codex_agent/{agent_id}` | Get agent |
+| `POST` | `/studio/api/v1/codex_agent/create` | Create agent |
+| `POST` | `/studio/api/v1/codex_agent/delete` | Delete agent |
+| `POST` | `/studio/api/v1/codex_agent/resume` | Resume agent |
+| `POST` | `/studio/api/v1/codex_agent/attachments` | Prepare Codex attachments |
+| `POST` | `/studio/api/v1/codex_agent/artifacts/sync` | Sync Codex artifacts |
+
+## DSH agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/dsh_agent/capabilities` | Get capabilities |
+| `GET` | `/studio/api/v1/dsh_agent` | List agents |
+| `GET` | `/studio/api/v1/dsh_agent/{agent_id}` | Get agent |
+| `POST` | `/studio/api/v1/dsh_agent/create` | Create agent |
+| `POST` | `/studio/api/v1/dsh_agent/delete` | Delete agent |
+| `POST` | `/studio/api/v1/dsh_agent/resume` | Resume agent |
+
+## Hermes agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/hermes_agent/capabilities` | Get capabilities |
+| `GET` | `/studio/api/v1/hermes_agent` | List agents |
+| `GET` | `/studio/api/v1/hermes_agent/{agent_id}` | Get agent |
+| `POST` | `/studio/api/v1/hermes_agent/create` | Create agent |
+| `POST` | `/studio/api/v1/hermes_agent/delete` | Delete agent |
+| `POST` | `/studio/api/v1/hermes_agent/resume` | Resume agent |
+
+## OpenClaw agents
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/openclaw_agent/capabilities` | Get capabilities |
+| `GET` | `/studio/api/v1/openclaw_agent` | List agents |
+| `GET` | `/studio/api/v1/openclaw_agent/{agent_id}` | Get agent |
+| `POST` | `/studio/api/v1/openclaw_agent/create` | Create agent |
+| `POST` | `/studio/api/v1/openclaw_agent/delete` | Delete agent |
+| `POST` | `/studio/api/v1/openclaw_agent/resume` | Resume agent |
+
+## Website integration
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/website_integrations` | List website integrations |
+| `POST` | `/studio/api/v1/website_integrations` | Create website integration |
+| `POST` | `/studio/api/v1/website_integrations/delete` | Delete website integration |
+| `POST` | `/studio/api/v1/website-embed/sessions` | Create website session |
+| `POST` | `/studio/api/v1/website-embed/messages` | Send website message |
+
+## Feishu integration
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/feishu/bots` | Create bot |
+| `POST` | `/studio/api/v1/feishu/bots/poll` | Poll bot creation |

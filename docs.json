@@ -180,10 +180,7 @@
                     "pages": [
                       "productions/veadk/preview/zh/components/frontend/index",
                       "productions/veadk/preview/zh/components/frontend/veadk-web",
-                      "productions/veadk/preview/zh/components/frontend/veadk-frontend",
-                      "productions/veadk/preview/zh/components/frontend/a2ui",
-                      "productions/veadk/preview/zh/components/frontend/studio",
-                      "productions/veadk/preview/zh/components/frontend/deepseek-harness"
+                      "productions/veadk/preview/zh/components/frontend/agentkit-studio"
                     ]
                   },
                   {
@@ -5694,6 +5691,36 @@
             ]
           },
           {
+            "tab": "AgentKit Studio",
+            "groups": [
+              {
+                "group": "开始使用",
+                "pages": [
+                  "productions/agentkit-studio/preview/zh/index",
+                  "productions/agentkit-studio/preview/zh/installation",
+                  "productions/agentkit-studio/preview/zh/first-agent"
+                ]
+              },
+              {
+                "group": "开发与集成",
+                "pages": [
+                  "productions/agentkit-studio/preview/zh/workspaces-and-plugins",
+                  "productions/agentkit-studio/preview/zh/evaluation-and-automation",
+                  "productions/agentkit-studio/preview/zh/api-access"
+                ]
+              },
+              {
+                "group": "API References",
+                "pages": [
+                  "productions/agentkit-studio/preview/zh/api-references/bff",
+                  "productions/agentkit-studio/preview/zh/api-references/agents-and-chat",
+                  "productions/agentkit-studio/preview/zh/api-references/workspaces-and-extensions",
+                  "productions/agentkit-studio/preview/zh/api-references/evaluation-and-automation"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "API 参考",
             "groups": [
               {
@@ -6054,10 +6081,7 @@
                     "pages": [
                       "productions/veadk/preview/en/components/frontend/index",
                       "productions/veadk/preview/en/components/frontend/veadk-web",
-                      "productions/veadk/preview/en/components/frontend/veadk-frontend",
-                      "productions/veadk/preview/en/components/frontend/a2ui",
-                      "productions/veadk/preview/en/components/frontend/studio",
-                      "productions/veadk/preview/en/components/frontend/deepseek-harness"
+                      "productions/veadk/preview/en/components/frontend/agentkit-studio"
                     ]
                   },
                   {
@@ -11568,6 +11592,36 @@
             ]
           },
           {
+            "tab": "AgentKit Studio",
+            "groups": [
+              {
+                "group": "Get started",
+                "pages": [
+                  "productions/agentkit-studio/preview/en/index",
+                  "productions/agentkit-studio/preview/en/installation",
+                  "productions/agentkit-studio/preview/en/first-agent"
+                ]
+              },
+              {
+                "group": "Development and integrations",
+                "pages": [
+                  "productions/agentkit-studio/preview/en/workspaces-and-plugins",
+                  "productions/agentkit-studio/preview/en/evaluation-and-automation",
+                  "productions/agentkit-studio/preview/en/api-access"
+                ]
+              },
+              {
+                "group": "API References",
+                "pages": [
+                  "productions/agentkit-studio/preview/en/api-references/bff",
+                  "productions/agentkit-studio/preview/en/api-references/agents-and-chat",
+                  "productions/agentkit-studio/preview/en/api-references/workspaces-and-extensions",
+                  "productions/agentkit-studio/preview/en/api-references/evaluation-and-automation"
+                ]
+              }
+            ]
+          },
+          {
             "tab": "API Reference",
             "groups": [
               {
@@ -11777,6 +11831,38 @@
     ]
   },
   "redirects": [
+    {
+      "source": "/productions/veadk/preview/zh/components/frontend/studio",
+      "destination": "/productions/agentkit-studio/preview/zh/index"
+    },
+    {
+      "source": "/productions/veadk/preview/en/components/frontend/studio",
+      "destination": "/productions/agentkit-studio/preview/en/index"
+    },
+    {
+      "source": "/productions/veadk/preview/zh/components/frontend/deepseek-harness",
+      "destination": "/productions/veadk/archives/1.1.28/zh/components/frontend/deepseek-harness"
+    },
+    {
+      "source": "/productions/veadk/preview/en/components/frontend/deepseek-harness",
+      "destination": "/productions/veadk/archives/1.1.28/en/components/frontend/deepseek-harness"
+    },
+    {
+      "source": "/productions/veadk/preview/zh/components/frontend/veadk-frontend",
+      "destination": "/productions/veadk/archives/1.1.28/zh/components/frontend/veadk-frontend"
+    },
+    {
+      "source": "/productions/veadk/preview/en/components/frontend/veadk-frontend",
+      "destination": "/productions/veadk/archives/1.1.28/en/components/frontend/veadk-frontend"
+    },
+    {
+      "source": "/productions/veadk/preview/zh/components/frontend/a2ui",
+      "destination": "/productions/veadk/archives/1.1.28/zh/components/frontend/a2ui"
+    },
+    {
+      "source": "/productions/veadk/preview/en/components/frontend/a2ui",
+      "destination": "/productions/veadk/archives/1.1.28/en/components/frontend/a2ui"
+    },
     {
       "source": "/zh/veadk/1.0.0",
       "destination": "/productions/veadk/archives/1.0.0/zh"

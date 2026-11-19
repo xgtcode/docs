@@ -41,7 +41,7 @@ productions/veadk/preview/
 - `components/observability/`：日志、链路、APMPlus、Cozeloop、TLS、内存导出。
 - `components/security/`：入站认证、出站认证、可信 MCP、内容安全。
 - `components/extensions/`：飞书等扩展集成。
-- `components/frontend/`：VeADK Web、VeADK Frontend、A2UI、Studio。
+- `components/frontend/`：正文仅保留概述与 VeADK Web；侧栏的 AgentKit Studio 直接链接到独立产品文档。VeADK Frontend、A2UI、SDK 内置工作台和 DeepSeek Harness 创建与部署指南仅保留在已发布归档。独立 AgentKit Studio 的安装、使用和协议文档位于 `productions/agentkit-studio/preview/`，不随 VeADK SDK 更新。
 - `deploy/`：部署到 AgentKit 等部署说明。
 
 新增、删除或移动页面时，必须同步更新 `docs.json` 中 VeADK Preview 导航和中英文页面。
@@ -122,7 +122,7 @@ productions/veadk/preview/
 
 ### 前端与部署页面
 
-前端、Studio、A2UI 和部署页面应采用操作指南结构：
+VeADK Web 和部署页面应采用操作指南结构：
 
 - 写清前置条件、账号权限、运行环境和必要环境变量。
 - 给出可复制命令和配置。
@@ -156,9 +156,7 @@ productions/veadk/preview/
 
 创建版本归档前，比较目标 tag 与 Preview：属于目标 tag 的缺失说明先补齐，晚于目标 tag 的内容留在 Preview。归档创建后，检查其中所有 Changelog 链接均指向该版本归档，而不是 Preview。
 
-Studio 和其他 CLI 页面必须分别列全本地启动、部署与更新命令的公开选项。新增选项时，同步更新使用示例、参数表、环境变量、默认行为和限制；不能只在 Changelog 中出现。
-
-Studio 新增或调整资源选择器时，正文必须覆盖 Studio 默认值、地域与项目范围、刷新方式、空状态、错误状态、所需权限、凭据来源，以及最终保存或生成的公开配置；不能只写“支持下拉选择”。
+CLI 页面必须列全对应命令的公开选项。新增选项时，同步更新使用示例、参数表、环境变量、默认行为和限制；不能只在 Changelog 中出现。
 
 必须区分 Studio 界面与 VeADK SDK 的能力边界。Studio 的默认值、隐藏项和筛选范围不等于 SDK 的构造默认值与完整支持范围；Studio 未展示某个后端或选项时，不得写成 SDK 不支持。
 

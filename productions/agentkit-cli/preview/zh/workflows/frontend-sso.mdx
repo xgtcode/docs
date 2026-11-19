@@ -17,7 +17,7 @@ flowchart LR
 
 ## 部署前提与版本范围
 
-先准备已经部署、可被前端发现且允许登录用户调用的目标 Runtime。当前前端默认展示云端 Runtime；本流程不会自动将 `basic` 模板中的本地智能体加入列表。需要本地智能体目录调试时，使用 [VeADK Frontend](/productions/veadk/preview/zh/components/frontend/veadk-frontend) 的开发模式
+先准备已经部署、可被前端发现且允许登录用户调用的目标 Runtime。当前前端默认展示云端 Runtime；本流程不会自动将 `basic` 模板中的本地智能体加入列表。如需调试本地智能体目录，请使用 `veadk frontend --dev --agents-dir <目录>`。
 
 CLI 0.54.0 的前端构建使用 VeADK `main` 分支，实际行为随构建时的版本变化，不是固定的 VeADK 发布版本。上线前验证目标 Runtime 的发现、登录和调用权限
 

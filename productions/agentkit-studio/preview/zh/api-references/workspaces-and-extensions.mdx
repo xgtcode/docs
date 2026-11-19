@@ -1,0 +1,158 @@
+---
+title: "工作区与扩展接口"
+en_link: "/productions/agentkit-studio/preview/en/api-references/workspaces-and-extensions"
+---
+
+使用这些接口导入和运行代码项目、安装扩展或维护知识库与技能库。启动开发环境或部署项目可能产生云资源费用；删除前请核对项目或资源标识。
+
+路径以默认挂载位置 `/studio` 为例。参数、响应和权限见 [BFF 接口列表](/productions/agentkit-studio/preview/zh/api-references/bff)。
+
+## 云工作区
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/codex/{name}` | 读取工作区中的 Codex 配置 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/codex/update` | 更新工作区中的 Codex 配置 |
+| `GET` | `/studio/api/v1/cloud_workspaces/current` | 读取当前云工作区的信息 |
+| `POST` | `/studio/api/v1/cloud_workspaces/prepare` | 准备当前用户的云工作区 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects` | 列出云工作区中的项目 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects` | 在云工作区中创建项目 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/{name}` | 读取指定工作区项目的信息 |
+| `POST` | `/studio/api/v1/cloud_workspaces/project_archives` | 为工作区项目创建归档包 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/delete` | 删除指定云工作区项目 |
+| `GET` | `/studio/api/v1/cloud_workspaces/project_summaries` | 查询云工作区项目的摘要列表 |
+| `GET` | `/studio/api/v1/cloud_workspaces/project_summaries/{name}` | 读取指定工作区项目的摘要 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations` | 启动项目迁移任务 |
+| `GET` | `/studio/api/v1/cloud_workspaces/migrations/{name}` | 查询指定项目迁移任务的状态 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/finish` | 完成指定项目迁移流程 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/stop` | 停止指定项目迁移任务 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/development` | 准备迁移项目的开发环境 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/models` | 处理迁移项目的模型配置 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/evaluations` | 启动迁移项目的评测 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/runtime` | 处理迁移项目的运行时配置 |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/debug` | 执行迁移项目的调试操作 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/workbench/{name}` | 查询工作区项目的开发状态 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench` | 准备项目开发工作区 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/development` | 准备项目的开发会话 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/runtime` | 查询、启动或重启项目运行时 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/debug` | 向项目调试会话发送消息 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/evaluations` | 启动项目评测 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/{name}` | 查询工作区项目的开发状态 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/development` | 启动工作区项目的开发服务 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/development/stop` | 停止工作区项目的开发服务 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/archive/{name}` | 下载工作区项目的开发归档包 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/package/{name}` | 获取工作区项目的打包产物 |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/github/{name}` | 查询工作区项目与 GitHub 的同步状态 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/github` | 同步工作区项目与关联的 GitHub 仓库 |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/github/bind` | 将工作区项目绑定到 GitHub 仓库 |
+
+## GitHub 集成
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/github/connection` | 读取当前 GitHub 连接状态 |
+| `GET` | `/studio/api/v1/github/repositories/{repository_id}/branches` | 列出指定 GitHub 仓库的分支 |
+
+## Studio 扩展
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions` | 查询当前可见的扩展列表 |
+| `POST` | `/studio/api/v1/extensions` | 创建扩展并保存其基础配置 |
+| `POST` | `/studio/api/v1/extensions/import` | 导入扩展包，生成可在 Studio 中使用的扩展 |
+| `POST` | `/studio/api/v1/extensions/publish` | 发布指定扩展，使其可用于对应的使用场景 |
+| `POST` | `/studio/api/v1/extensions/unpublish` | 取消指定扩展的发布状态 |
+| `GET` | `/studio/api/v1/extensions/developer-kit` | 下载 Studio 扩展开发工具包 |
+| `POST` | `/studio/api/v1/extensions/installation/update` | 更新扩展的安装配置 |
+| `GET` | `/studio/api/v1/extensions/{extension_id}/document` | 获取扩展的文档内容 |
+| `GET` | `/studio/api/v1/extensions/{extension_id}/archive` | 下载指定扩展的归档包 |
+| `GET` | `/studio/api/v1/extensions/{extension_id}` | 查询指定扩展的详细信息 |
+| `POST` | `/studio/api/v1/extensions/delete` | 删除指定扩展 |
+| `POST` | `/studio/api/v1/extensions/workspace` | 准备扩展的开发工作区 |
+
+## 环境管理
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions/environments/builtins` | 列出内置环境 |
+| `GET` | `/studio/api/v1/extensions/environments/application-skills` | 查询环境可使用的应用技能 |
+| `GET` | `/studio/api/v1/extensions/environments/builtins/{builtin_id}` | 查看内置环境详情 |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/description` | 读取指定环境的描述信息 |
+| `POST` | `/studio/api/v1/extensions/environments/repositories/inspect` | 检查仓库内容，供环境配置与构建使用 |
+| `POST` | `/studio/api/v1/extensions/environments/preview` | 根据当前配置生成环境预览 |
+| `GET` | `/studio/api/v1/extensions/environments/resources` | 查询环境构建所需的云资源候选项 |
+| `POST` | `/studio/api/v1/extensions/environments/resources` | 创建环境所需的云资源 |
+| `GET` | `/studio/api/v1/extensions/environments` | 查询当前可见的环境列表 |
+| `POST` | `/studio/api/v1/extensions/environments` | 创建新的环境配置 |
+| `POST` | `/studio/api/v1/extensions/environments/skills/inspect` | 检查环境中声明的技能 |
+| `POST` | `/studio/api/v1/extensions/environments/skills/validate` | 校验指定技能是否符合环境使用要求 |
+| `GET` | `/studio/api/v1/extensions/environments/skills/search` | 搜索环境可添加的技能目录 |
+| `GET` | `/studio/api/v1/extensions/environments/available-tools` | 列出环境可使用的工具 |
+| `POST` | `/studio/api/v1/extensions/environments/builds` | 启动指定环境的构建任务 |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/builds/{version_id}` | 查询指定环境版本的构建结果 |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/share-code` | 获取环境的分享码信息 |
+| `POST` | `/studio/api/v1/extensions/environments/share-code/inspect` | 检查分享码所对应的环境信息 |
+| `POST` | `/studio/api/v1/extensions/environments/share-code/import` | 通过分享码导入环境 |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/upgrade` | 检查环境是否可升级 |
+| `POST` | `/studio/api/v1/extensions/environments/upgrade` | 升级指定环境 |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}` | 获取指定环境的详细配置 |
+| `POST` | `/studio/api/v1/extensions/environments/update` | 更新指定环境的配置 |
+| `POST` | `/studio/api/v1/extensions/environments/delete` | 删除指定环境 |
+
+## 对话卡片
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/a2ui_extensions` | 查询当前可见的扩展列表 |
+| `POST` | `/studio/api/v1/a2ui_extensions` | 创建扩展并保存其基础配置 |
+| `POST` | `/studio/api/v1/a2ui_extensions/import` | 导入扩展包，生成可在 Studio 中使用的扩展 |
+| `POST` | `/studio/api/v1/a2ui_extensions/simple` | 保存通过简易编辑方式创建的对话卡片扩展 |
+| `POST` | `/studio/api/v1/a2ui_extensions/publish` | 发布指定扩展，使其可用于对应的使用场景 |
+| `POST` | `/studio/api/v1/a2ui_extensions/unpublish` | 取消指定扩展的发布状态 |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins` | 列出内置对话卡片 |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins/{builtin_id}/document` | 读取内置对话卡片文档 |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins/{builtin_id}/runtime-archive` | 下载内置对话卡片的运行包 |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/document` | 获取扩展的文档内容 |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/archive` | 下载指定扩展的归档包 |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/runtime-archive` | 下载扩展运行时使用的归档包 |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}` | 查询指定扩展的详细信息 |
+| `POST` | `/studio/api/v1/a2ui_extensions/delete` | 删除指定扩展 |
+| `POST` | `/studio/api/v1/a2ui_extensions/workspace` | 准备扩展的开发工作区 |
+
+## 知识库
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/knowledgebases` | 查询当前可见的知识库 |
+| `POST` | `/studio/api/v1/knowledgebases` | 创建知识库 |
+| `GET` | `/studio/api/v1/knowledgebases/{knowledgebase_id}` | 获取指定知识库的详细信息 |
+| `POST` | `/studio/api/v1/knowledgebases/update` | 更新指定知识库的配置 |
+| `POST` | `/studio/api/v1/knowledgebases/delete` | 删除指定知识库 |
+| `GET` | `/studio/api/v1/knowledgebases/{knowledgebase_id}/documents` | 查询指定知识库中的文档 |
+| `POST` | `/studio/api/v1/knowledgebases/documents` | 向指定知识库添加文档 |
+
+## 技能库
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/skillspaces` | 查询当前可见的技能库 |
+| `POST` | `/studio/api/v1/skillspaces` | 创建技能库 |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}` | 读取指定技能库的信息 |
+| `POST` | `/studio/api/v1/skillspaces/update` | 更新指定技能库的配置 |
+| `POST` | `/studio/api/v1/skillspaces/delete` | 删除指定技能库 |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills` | 查询指定技能库中的技能 |
+| `POST` | `/studio/api/v1/skillspaces/skills` | 向技能库添加技能 |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}` | 读取指定技能的详细信息 |
+| `POST` | `/studio/api/v1/skillspaces/skills/publish` | 发布指定技能版本 |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}/versions` | 查询指定技能的版本列表 |
+| `POST` | `/studio/api/v1/skillspaces/skills/delete` | 删除指定技能 |
+| `POST` | `/studio/api/v1/skillspaces/skills/parse-git` | 解析 Git 仓库中的技能信息 |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}/files` | 列出指定技能包含的文件 |
+
+## 技能工作台
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/workbench_skills/debug/run_sse` | 在技能工作台调试技能并返回事件流 |
+| `POST` | `/studio/api/v1/workbench_skills` | 向技能工作台添加技能 |
+| `POST` | `/studio/api/v1/workbench_instances/prepare` | 准备技能工作台实例 |

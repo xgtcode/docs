@@ -1,0 +1,60 @@
+---
+title: "BFF 接口列表"
+en_link: "/productions/agentkit-studio/preview/en/api-references/bff"
+---
+
+BFF 是 Studio 网页使用的后端接口。本文按功能列出工作台面向使用者的 HTTP 方法、请求路径和用途，不列出宿主运维、凭据管理或内部代理接口。如果要从自己的后端调用已发布的智能体，请参阅[调用协议与集成](/productions/agentkit-studio/preview/zh/api-access)。
+
+## 按功能查找
+
+- [智能体与对话接口](/productions/agentkit-studio/preview/zh/api-references/agents-and-chat)：创建和调试智能体，查看会话和附件。
+- [工作区与扩展接口](/productions/agentkit-studio/preview/zh/api-references/workspaces-and-extensions)：管理项目、扩展、知识库和技能库。
+- [评测与自动化接口](/productions/agentkit-studio/preview/zh/api-references/evaluation-and-automation)：管理数据集、查看报告、运行压测和定时任务。
+
+## 查看参数和响应
+
+清单对应预览构建 `20261119152320`，按默认挂载路径 `/studio` 展示请求地址。登录自己的 Studio，打开**头像 → 开发者文档 → AgentKit Studio 接口文档**，选择模块和接口，即可查看该实例的请求路径、参数、请求体和响应模型。
+
+例如，「通用智能体」下的 `GET /studio/api/v1/harness_agent` 需要 `provider`、`project` 和 `region`，分别指定云服务商、项目和地域。要查询其中一个智能体，将列表返回的 ID 代入详情路径的 `{agent_id}`。其他接口不一定需要这三个查询参数。
+
+要读取完整的 OpenAPI 目录，在已登录的实例上请求 `GET /studio/api/v1/extensions/api-catalog`。响应中的 `data.schema_document.paths` 按路径和 HTTP 方法列出接口定义；其中的 `/api/v1` 路径不含 Studio 挂载前缀。
+
+接口出现在目录中，不代表当前用户有权调用。开发 Studio 扩展时，还要检查接口的 `x-studio-extension` 标记、扩展声明的权限以及当前用户的授权。扩展的 JSON 请求不能直接读取事件流或下载文件。
+
+## 接口目录
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions/api-catalog` | 读取实例的 OpenAPI 接口目录 |
+
+## 当前用户的权限与工作空间
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/permissions` | 查询当前用户的角色、工作空间及各类资源的访问权限 |
+| `GET` | `/studio/api/v1/permissions/workspaces` | 列出当前用户可以访问的工作空间 |
+| `GET` | `/studio/api/v1/permissions/check` | 检查当前用户是否有权对指定资源执行指定操作 |
+| `POST` | `/studio/api/v1/permissions/workspaces/select` | 切换当前用户使用的工作空间 |
+
+## 云项目
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/projects` | 列出云项目 |
+
+## 个人设置
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/user-settings` | 读取当前登录用户的全部个人设置 |
+| `POST` | `/studio/api/v1/user-settings/update` | 更新当前用户的通用偏好或默认云资源范围 |
+| `POST` | `/studio/api/v1/user-settings/delete` | 将当前用户的个人偏好恢复为默认值 |
+
+## 统计看板
+
+| 方法 | 请求路径 | 用途 |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/statistics/agent-usage` | 查询用户使用智能体的统计信息 |
+| `GET` | `/studio/api/v1/statistics/artifacts` | 查询 Studio 产物的统计信息 |
+| `GET` | `/studio/api/v1/statistics/agent-keywords` | 查询智能体相关的关键词统计 |
+| `GET` | `/studio/api/v1/statistics/question-keywords` | 查询用户提问中的关键词统计 |

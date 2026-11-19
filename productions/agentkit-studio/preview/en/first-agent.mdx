@@ -1,0 +1,44 @@
+---
+title: "Create and debug an agent"
+zh_link: "/productions/agentkit-studio/preview/zh/first-agent"
+---
+
+Create a general agent that extracts action items from meeting notes. This example requires no source upload, company data, or dedicated runtime.
+
+## Prepare a runtime and model
+
+Sign in with permission to create agents. General agents execute on a shared Harness runtime. For a new instance, ask a user with configuration access to deploy or link a runtime under **Harness Agent Runtime** in settings. Check that the runtime is ready and that you have a model and credentials authorized to call it. Reaching the Studio home page alone does not verify model access.
+
+## Verify the first reply
+
+1. On the home page, choose **Create agent**, then the option to start from scratch. Open the single-agent configuration for a general agent. Alternatively, describe the task and review the configuration Studio generates.
+2. Name the agent `Meeting actions`, select an available model, and enter this system instruction: `Extract action items from meeting notes. List an owner and a deadline for each. Write “unspecified” when either is missing; do not guess.` Leave tools and knowledge sources unconfigured for this example.
+3. In the debug conversation, enter: `Lin will send the quote by Thursday. We also need to book a meeting room; no one was assigned.` Check the owner and deadline for the quote, and the missing fields for the room booking. If the agent invents an owner, edit the instruction and test with the same notes.
+4. Save the configuration. If prompted, have Studio generate a default evaluation dataset or skip it for now. Reopen the saved agent in the agent list and start a regular conversation. Closing the editor without saving discards configuration changes, even after a successful debug run.
+
+## Add capabilities as needed
+
+| Requirement | Configuration |
+| --- | --- |
+| Answer questions about internal documents | Prepare a knowledge base in Plugins. Check that the documents are searchable, then select the knowledge base in the agent configuration. |
+| Call an external service | Add the tool or MCP service in the agent configuration. Test with a question that requires the tool and inspect its result. |
+| Remember a preference across sessions | In runtime settings, choose **Configure current Runtime**, bind a Viking memory collection, and save. In the single agent's memory settings, enable user profiling and define a field, such as recording a response language only when the user explicitly requests it. Save, then state the preference in a regular conversation. Profile updates are asynchronous. Memory stores preferences; session storage retains conversations. You can configure them separately. |
+| Split work between agents | Choose multi-agent mode and connect agent nodes on the workflow canvas. For example, extract action items first, then pass them to a reviewer to check for omissions. Use a parallel node for branches that should run concurrently. |
+
+Saving a general agent does not provision a new cloud runtime. To install dependencies, edit project files, or deploy code as a separate service, use a [workspace](/productions/agentkit-studio/preview/en/workspaces-and-plugins).
+
+## Export source code
+
+To hand the configuration over to developers, choose **Export code** in the saved agent's details. The VeADK project includes the instructions, tools, and resource references, but not cloud credentials or Studio conversation history. Resource references still point to the original cloud project. Before running elsewhere, supply authorized credentials or replace the references.
+
+## Deploy a Runtime agent from a code package
+
+If you have a runnable service, skip the general-agent configuration and deploy its code package to a dedicated runtime. This feature is available to Studio administrators in the November 19 preview.
+
+<Warning>
+Deployment uploads code to the TOS bucket configured for Studio and creates a potentially billable runtime in the selected cloud project and region. Remove credentials from the package and confirm the bucket allows cross-origin PUT requests from your Studio origin.
+</Warning>
+
+1. In **Agents → New → Runtime agent**, enter a name and select the code package.
+2. Specify the executable startup script inside the package and the service port. The defaults are `run.sh` and `8000`. Your service must listen on `0.0.0.0` at the configured port; the port field does not change the application's listening address.
+3. Submit and check the deployment status. A Runtime ID means the request was accepted. Closing the dialog does not stop the deployment. Once it is ready, use **Start chat** on the details page to test a service that implements the ADK chat protocol. Deploying a generic HTTP service does not make it compatible with Studio chat.

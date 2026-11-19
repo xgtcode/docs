@@ -1,0 +1,25 @@
+---
+title: "AgentKit Studio overview"
+zh_link: "/productions/agentkit-studio/preview/zh"
+---
+
+AgentKit Studio is a browser-based workbench for building, running, and evaluating agents. If you are starting without code, describe a task to create an agent, then refine its configuration in a debug conversation. If you already have a project, import it into a cloud workspace to edit and test it in a sandbox before deploying to an AgentKit runtime.
+
+Use `aks deploy --preview` to deploy the standalone Studio preview. These guides were verified against the Volcengine Beijing [preview release manifest](https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/channels/main.json) on November 19, 2026, at build `20261119152320`. Omitting `--preview` deploys the stable channel, which was [version 0.6.6](https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/versions/0.6.6.json) on that date. Preview builds can differ by region.
+
+## Choose a guide
+
+| Task | Guide |
+| --- | --- |
+| Deploy Studio in your cloud account and let your team sign in | [Install and deploy Studio](/productions/agentkit-studio/preview/en/installation) |
+| Create an agent, verify its replies, and configure tools or memory | [Create and debug an agent](/productions/agentkit-studio/preview/en/first-agent) |
+| Import a project, connect knowledge or skills, and display interactive cards in chat | [Workspaces and plugins](/productions/agentkit-studio/preview/en/workspaces-and-plugins) |
+| Test a change against a dataset or run an agent on a schedule | [Evaluation and automation](/productions/agentkit-studio/preview/en/evaluation-and-automation) |
+| Call an agent from your backend or connect it to Feishu, a website, or MCP | [Invocation protocols and integrations](/productions/agentkit-studio/preview/en/api-access) |
+| Find the HTTP method, path, and purpose of a Studio operation | [BFF endpoints](/productions/agentkit-studio/preview/en/api-references/bff) |
+
+## What you can do in the preview
+
+- **Deploy an existing service as an agent.** An administrator can upload a code package under Agents and set its startup script and port to create a dedicated runtime without creating a workspace. See [Deploy a Runtime agent from a code package](/productions/agentkit-studio/preview/en/first-agent#deploy-a-runtime-agent-from-a-code-package).
+- **Inspect the steps an agent took.** In addition to scoring the final answer, you can describe expected steps in plain language and have the evaluation model compare them with the execution trace. See [Evaluation and automation](/productions/agentkit-studio/preview/en/evaluation-and-automation).
+- **Review your Feishu direct messages.** Link your Feishu identity to read your direct bot conversations in Studio. Reply or start a new conversation from Feishu. See [Feishu direct messages](/productions/agentkit-studio/preview/en/api-access#feishu-direct-messages).

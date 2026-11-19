@@ -1,0 +1,48 @@
+---
+title: "安装与部署"
+en_link: "/productions/agentkit-studio/preview/en/installation"
+---
+
+如果团队已经部署 Studio，请直接用团队提供的地址登录，按[创建并调试智能体](/productions/agentkit-studio/preview/zh/first-agent)开始使用。下面的步骤适用于要在自己的云账号中**新建**工作台的人。安装 `aks` 只会在本机安装部署工具，不会启动工作台。
+
+## 安装部署工具
+
+准备一台 macOS 或使用 glibc 的 Linux 计算机，支持 ARM64 和 x64。需要 `curl`，以及 `sha256sum` 或 `shasum`。在自己的可写目录中执行：
+
+```bash
+curl -fsSLo aks.sh https://agentkit-studio.tos-cn-beijing.volces.com/agentkit-studio/aks.sh
+sh aks.sh
+export PATH="$HOME/.local/bin:$PATH"
+aks --version
+```
+
+可以在运行前查看下载的脚本。安装器按平台下载并校验 CLI，无需 `sudo`。`aks --version` 显示的是本机 CLI 版本，不是云端 Studio 版本。
+
+## 部署预览版
+
+准备可以管理目标项目、IAM 角色、VeFaaS 应用、TOS 存储桶和 Identity 用户池的云账号。以下示例使用火山引擎北京地域和 `default` 项目。先检查部署权限：
+
+```bash
+aks deploy --check-permissions --provider volcengine --region cn-beijing --project default
+```
+
+没有配置云凭据时，在交互式终端按提示打开浏览器授权。若显示权限缺失，请先让云账号管理员补齐对应权限；权限检查本身不会部署 Studio。
+
+<Warning>
+部署会创建或复用云资源，发布可从公网访问的登录入口，并可能产生费用。核对云账号、地域、项目和资源创建计划后再确认。不要向不应访问工作台的用户开放登录权限。
+</Warning>
+
+将 `my-studio` 换成尚未使用的应用名，再执行：
+
+```bash
+aks deploy --preview --provider volcengine --region cn-beijing --project default \
+  --vefaas-app-name my-studio
+```
+
+部署到 BytePlus 时，将 `--provider volcengine --region cn-beijing` 替换为 `--provider byteplus --region ap-southeast-1`，使用目标 BytePlus 账号授权。CLI 会列出需要创建或复用的资源。要复用已有存储桶或用户池，可用 `aks deploy --help` 查看所需参数。
+
+`--preview` 选择目标地域当前发布的预览版，不固定到某次构建。如果需要正式版，去掉 `--preview`；要固定正式版本，将它替换为 `--version 0.6.6`。两种参数不能同用。`aks deploy` 创建新应用，不会升级已有实例。
+
+## 验证部署
+
+部署成功后，终端会显示 Studio URL、应用 ID 和函数 ID。打开 URL，使用部署所配置的身份源登录；进入工作台表示访问入口可用。要验证智能体也能运行，还需要在 Studio 设置中部署或关联 Harness 运行时，并准备可用模型。工作区沙箱和定时调度器按需配置，不会随工作台部署自动就绪。

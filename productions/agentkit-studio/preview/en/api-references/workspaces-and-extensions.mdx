@@ -1,0 +1,158 @@
+---
+title: "Workspace and extension endpoints"
+zh_link: "/productions/agentkit-studio/preview/zh/api-references/workspaces-and-extensions"
+---
+
+Use these endpoints to import and run projects, install extensions, or manage knowledge bases and skill libraries. Starting an environment or deploying a project can incur cloud charges. Check resource IDs before deletion.
+
+Paths assume the default `/studio` mount. For parameters, responses, and permissions, see [BFF endpoints](/productions/agentkit-studio/preview/en/api-references/bff).
+
+## Cloud workspaces
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/codex/{name}` | Get workspace Codex |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/codex/update` | Update workspace Codex |
+| `GET` | `/studio/api/v1/cloud_workspaces/current` | Get cloud workspace |
+| `POST` | `/studio/api/v1/cloud_workspaces/prepare` | Prepare cloud workspace |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects` | List cloud workspace projects |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects` | Create cloud workspace project |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/{name}` | Get cloud workspace project |
+| `POST` | `/studio/api/v1/cloud_workspaces/project_archives` | Create cloud workspace archive |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/delete` | Delete cloud workspace project |
+| `GET` | `/studio/api/v1/cloud_workspaces/project_summaries` | List cloud workspace project summaries |
+| `GET` | `/studio/api/v1/cloud_workspaces/project_summaries/{name}` | Get cloud workspace project summary |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations` | Start migration |
+| `GET` | `/studio/api/v1/cloud_workspaces/migrations/{name}` | Get migration |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/finish` | Finish migration |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/stop` | Stop migration |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/development` | Prepare migration development |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/models` | Migration models |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/evaluations` | Start migration evaluation |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/runtime` | Migration runtime |
+| `POST` | `/studio/api/v1/cloud_workspaces/migrations/debug` | Migration debug |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/workbench/{name}` | Get workspace development |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench` | Prepare the project development workspace |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/development` | Prepare a project development conversation |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/runtime` | Check, start, or restart the project runtime |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/debug` | Send a message to a project debug session |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/workbench/evaluations` | Start a project evaluation |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/{name}` | Get workspace development |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/development` | Start workspace development |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/development/stop` | Stop workspace development |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/archive/{name}` | Get workspace development archive |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/development/package/{name}` | Get workspace package |
+| `GET` | `/studio/api/v1/cloud_workspaces/projects/github/{name}` | Get workspace GitHub status |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/github` | Sync workspace GitHub |
+| `POST` | `/studio/api/v1/cloud_workspaces/projects/github/bind` | Bind workspace GitHub |
+
+## GitHub integration
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/github/connection` | Get GitHub connection |
+| `GET` | `/studio/api/v1/github/repositories/{repository_id}/branches` | List GitHub repository branches |
+
+## Studio extensions
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions` | List extensions |
+| `POST` | `/studio/api/v1/extensions` | Create extension |
+| `POST` | `/studio/api/v1/extensions/import` | Import extension |
+| `POST` | `/studio/api/v1/extensions/publish` | Publish extension |
+| `POST` | `/studio/api/v1/extensions/unpublish` | Unpublish extension |
+| `GET` | `/studio/api/v1/extensions/developer-kit` | Get extension developer kit |
+| `POST` | `/studio/api/v1/extensions/installation/update` | Update extension installation |
+| `GET` | `/studio/api/v1/extensions/{extension_id}/document` | Get extension document |
+| `GET` | `/studio/api/v1/extensions/{extension_id}/archive` | Get extension archive |
+| `GET` | `/studio/api/v1/extensions/{extension_id}` | Get extension |
+| `POST` | `/studio/api/v1/extensions/delete` | Delete extension |
+| `POST` | `/studio/api/v1/extensions/workspace` | Prepare extension workspace |
+
+## Environments
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/extensions/environments/builtins` | List built-in environments |
+| `GET` | `/studio/api/v1/extensions/environments/application-skills` | List environment application skills |
+| `GET` | `/studio/api/v1/extensions/environments/builtins/{builtin_id}` | Get a built-in environment |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/description` | Get environment description |
+| `POST` | `/studio/api/v1/extensions/environments/repositories/inspect` | Inspect repository |
+| `POST` | `/studio/api/v1/extensions/environments/preview` | Preview environment |
+| `GET` | `/studio/api/v1/extensions/environments/resources` | List environment resources |
+| `POST` | `/studio/api/v1/extensions/environments/resources` | Create environment resource |
+| `GET` | `/studio/api/v1/extensions/environments` | List environments |
+| `POST` | `/studio/api/v1/extensions/environments` | Create environment |
+| `POST` | `/studio/api/v1/extensions/environments/skills/inspect` | Inspect environment skills |
+| `POST` | `/studio/api/v1/extensions/environments/skills/validate` | Validate environment skill |
+| `GET` | `/studio/api/v1/extensions/environments/skills/search` | List environment skill catalog |
+| `GET` | `/studio/api/v1/extensions/environments/available-tools` | List available environment tools |
+| `POST` | `/studio/api/v1/extensions/environments/builds` | Start environment build |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/builds/{version_id}` | Get environment build |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/share-code` | Get environment share |
+| `POST` | `/studio/api/v1/extensions/environments/share-code/inspect` | Inspect environment share |
+| `POST` | `/studio/api/v1/extensions/environments/share-code/import` | Import environment share |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}/upgrade` | Check for an environment update |
+| `POST` | `/studio/api/v1/extensions/environments/upgrade` | Upgrade an environment |
+| `GET` | `/studio/api/v1/extensions/environments/{environment_id}` | Get environment |
+| `POST` | `/studio/api/v1/extensions/environments/update` | Update environment |
+| `POST` | `/studio/api/v1/extensions/environments/delete` | Delete environment |
+
+## Chat cards
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/a2ui_extensions` | List extensions |
+| `POST` | `/studio/api/v1/a2ui_extensions` | Create extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/import` | Import extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/simple` | Save simple extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/publish` | Publish extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/unpublish` | Unpublish extension |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins` | List built-in chat cards |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins/{builtin_id}/document` | Get the documentation for a built-in card |
+| `GET` | `/studio/api/v1/a2ui_extensions/builtins/{builtin_id}/runtime-archive` | Download the runtime archive for a built-in card |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/document` | Get extension document |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/archive` | Get extension archive |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}/runtime-archive` | Get extension runtime archive |
+| `GET` | `/studio/api/v1/a2ui_extensions/{extension_id}` | Get extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/delete` | Delete extension |
+| `POST` | `/studio/api/v1/a2ui_extensions/workspace` | Prepare extension workspace |
+
+## Knowledge bases
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/knowledgebases` | List knowledgebases |
+| `POST` | `/studio/api/v1/knowledgebases` | Create knowledgebase |
+| `GET` | `/studio/api/v1/knowledgebases/{knowledgebase_id}` | Get knowledgebase |
+| `POST` | `/studio/api/v1/knowledgebases/update` | Update knowledgebase |
+| `POST` | `/studio/api/v1/knowledgebases/delete` | Delete knowledgebase |
+| `GET` | `/studio/api/v1/knowledgebases/{knowledgebase_id}/documents` | List knowledgebase documents |
+| `POST` | `/studio/api/v1/knowledgebases/documents` | Add knowledgebase document |
+
+## Skill libraries
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `GET` | `/studio/api/v1/skillspaces` | List skillspaces |
+| `POST` | `/studio/api/v1/skillspaces` | Create skillspace |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}` | Get skillspace |
+| `POST` | `/studio/api/v1/skillspaces/update` | Update skillspace |
+| `POST` | `/studio/api/v1/skillspaces/delete` | Delete skillspace |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills` | List skills |
+| `POST` | `/studio/api/v1/skillspaces/skills` | Add skill |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}` | Get skill |
+| `POST` | `/studio/api/v1/skillspaces/skills/publish` | Publish skill |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}/versions` | List skill versions |
+| `POST` | `/studio/api/v1/skillspaces/skills/delete` | Delete skill |
+| `POST` | `/studio/api/v1/skillspaces/skills/parse-git` | Parse Git skills |
+| `GET` | `/studio/api/v1/skillspaces/{skillspace_id}/skills/{skill_id}/files` | List skill files |
+
+## Skill workbench
+
+| Method | Request path | Purpose |
+| --- | --- | --- |
+| `POST` | `/studio/api/v1/workbench_skills/debug/run_sse` | Run workbench skill debug |
+| `POST` | `/studio/api/v1/workbench_skills` | Add workbench skill |
+| `POST` | `/studio/api/v1/workbench_instances/prepare` | Prepare workbench instance |
