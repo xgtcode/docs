@@ -1,0 +1,86 @@
+---
+title: "计算器"
+en_link: "/productions/veadk/preview/en/components/tools/calculator"
+---
+
+## 功能说明
+
+对应工具标识 `calculator`。
+
+`calculator` 在智能体内完成安全的算术表达式求值，适用于四则运算、百分比换算、幂与开方、对数和常用三角函数等计算。表达式经语法解析后只允许数字、算术运算符、常量与白名单函数，不能引用变量、访问属性或执行任意 Python 代码。
+
+导入路径：`from veadk.tools.builtin_tools.calculator import calculator`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`calculator` 工具本身无需额外凭证，也不访问外部服务）
+
+## 使用方法
+
+```python title="examples/tools/calculator/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.calculator import calculator
+
+agent = Agent(
+    name="calculator_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that evaluates arithmetic expressions.",
+    instruction="用户提出计算问题时，调用 calculator 工具求值，不要自行心算复杂表达式。",
+    tools=[calculator],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("计算 (1 + 2) * 3 等于多少")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+也可以在普通 Python 代码中直接调用：
+
+```python lines
+from veadk.tools.builtin_tools.calculator import calculator
+
+result = calculator("(1 + 2) * 3")
+if "error" in result:
+    print("计算失败:", result["error"])
+else:
+    print(result)  # {'expression': '(1 + 2) * 3', 'result': 9}
+
+calculator("sqrt(16) + pi", precision=4)  # 浮点结果保留 4 位小数
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `expression` | `str` | 必填 | 算术表达式，最长 1000 个字符 |
+| `precision` | `int` | `10` | 浮点结果保留的小数位数，取 0–15 的整数 |
+
+表达式支持的语法：
+
+- 运算符：`+`、`-`、`*`、`/`、`//`、`%`、`**`，以及一元正负号
+- 常量：`pi`、`e`
+- 函数：`abs`、`round`、`min`、`max`、`sqrt`、`log`、`log10`、`exp`、`sin`、`cos`、`tan`、`floor`、`ceil`
+
+成功返回 `{"expression": ..., "result": ...}`：整数结果保持整数，浮点结果按 `precision` 四舍五入。表达式非法或超出限制时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+安全与限制：
+
+- 幂运算指数的绝对值不超过 100；中间值与最终结果必须为有限实数，且绝对值不超过 1×10¹⁰⁰，除以零也会返回错误。
+- `log` 为自然对数；函数只接受位置参数，不支持关键字参数。
+- 字符串、布尔值、复数、名称引用、属性访问、下标与推导式均会被拒绝；工具不读写文件，也不发起网络请求。
+</Note>

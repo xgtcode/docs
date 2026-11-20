@@ -1,0 +1,191 @@
+---
+title: "Computer use"
+zh_link: "/productions/veadk/preview/zh/components/tools/computer-use"
+---
+
+## Overview
+
+`create_computer_use_toolset` (`from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset`) creates a CUA (Computer Use Agent) toolset that lets an agent operate a desktop inside an [AgentKit](https://console.volcengine.com/agentkit) sandbox: taking screenshots, clicking, typing, running batch actions, and more. The toolset connects to a standalone CUA MCP service over stdio; the service owns sandbox instance provisioning, routing, and cleanup.
+
+Available tools are discovered dynamically from the MCP service on first use (e.g. `cua_screenshot`, `cua_click`, `cua_actions_batch`, `cua_accessibility_nodes`, `ensure_sandbox`); the exact list depends on the sandbox template configuration. Screenshot and other image results are returned to the model as image content, not base64 text.
+
+<Note>
+The CUA MCP service is an independently maintained package and is not included in the VeADK installation. Running it requires `uvx` (installed with `uv`) to launch the service from a specified wheel URL.
+</Note>
+
+## When to use
+
+- You need an agent to perform GUI tasks in a remote desktop environment (e.g. operating a browser or desktop application).
+- You need the model to understand screen contents through screenshots and decide the next action autonomously.
+- You need desktop operations executed in an isolated cloud sandbox without affecting the local environment.
+
+## Environment & prerequisites
+
+<Warning>
+Requirements:
+
+1. Create a CUA-authorized tool in the AgentKit console and set `ENABLE_COMPUTER=true` on the sandbox template. Grant the tool's execution identity `GetTool`, `ListSessions`, `GetSession`, and `CreateSession` permissions.
+2. Configure Volcengine AK / SK (or provide credentials via the Runtime IAM file).
+3. Configure the API key for the agent's reasoning model; the model must support images and tool calls.
+4. Install `uv` (including `uvx`).
+5. Set `CUA_MCP_WHEEL_URL` to a verified, explicitly versioned CUA MCP wheel URL.
+</Warning>
+
+Environment variables:
+
+| Environment variable | Default | Description |
+| :--- | :--- | :--- |
+| `CUA_MCP_WHEEL_URL` | — | CUA MCP wheel URL. Required when using the default `uvx` launcher. Use an explicitly versioned wheel URL. |
+| `AGENTKIT_TOOL_ID_CUA` | — | CUA-specific Tool ID. Falls back to `AGENTKIT_TOOL_ID` when unset. |
+| `AGENTKIT_TOOL_ID` | — | Default AgentKit Tool ID, used as the CUA fallback. |
+| `AGENTKIT_TOOL_REGION` | `cn-beijing` | AgentKit tool region. |
+| `VOLCENGINE_ACCESS_KEY` | — | Volcengine AK, forwarded to the MCP service. |
+| `VOLCENGINE_SECRET_KEY` | — | Volcengine SK, forwarded to the MCP service. |
+| `VOLCENGINE_SESSION_TOKEN` | — | Volcengine temporary token for STS. When both AK and SK are absent, the MCP service uses the Runtime IAM file. |
+| `AGENTKIT_TOOL_TTL` | — | Sandbox instance time-to-live in seconds, forwarded to the MCP service. |
+| `CUA_ALLOW_CREATE` | — | Whether to allow creating sandbox instances, forwarded to the MCP service. |
+| `UV_CACHE_DIR` | — | uv cache directory, forwarded to `uvx`. |
+| `UV_INDEX_URL` | — | uv package index URL, forwarded to `uvx`. |
+| `UV_OFFLINE` | — | uv offline mode, forwarded to `uvx`. |
+
+```bash lines
+export AGENTKIT_TOOL_ID_CUA='t-your-cua-tool'
+export CUA_MCP_WHEEL_URL='https://your-trusted-host/cua-mcp/1.0.0/agentkit_cua_mcp-1.0.0-py3-none-any.whl'
+export ARK_API_KEY='your-model-api-key'
+export VOLCENGINE_ACCESS_KEY='your-access-key'
+export VOLCENGINE_SECRET_KEY='your-secret-key'
+```
+
+<Note>
+Model credentials and AgentKit credentials are separate. For temporary credentials, also set `VOLCENGINE_SESSION_TOKEN`.
+</Note>
+
+## Usage
+
+```python title="cua_agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset
+
+cua = create_computer_use_toolset(
+    tool_id="t-your-cua-tool",
+    region="cn-beijing",
+)
+
+agent = Agent(
+    name="cua_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    instruction=(
+        "Use the desktop tools to complete the user's desktop tasks. "
+        "Submit only one tool call per response. Observe screenshots before "
+        "choosing coordinates. Do not call tools for ordinary chat."
+    ),
+    tools=[cua],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    try:
+        response = await runner.run("Take a screenshot and describe what is on the desktop")
+        print(response)
+    finally:
+        await cua.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+<Warning>
+Agent desktop operations act on a real remote sandbox environment and may incur costs. Specify the allowed operation scope in the instruction; do not let the agent perform irreversible actions such as deleting files or changing account settings.
+</Warning>
+
+## Using a preinstalled or local MCP service
+
+If the runtime already has the CUA MCP service preinstalled, or you need a custom launch command, pass `connection_params` instead of the default `uvx` launcher:
+
+```python title="cua_preinstalled.py" lines
+from mcp import StdioServerParameters
+from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset
+
+cua = create_computer_use_toolset(
+    connection_params=StdioServerParameters(
+        command="agentkit-cua-mcp",
+        args=["--transport", "stdio"],
+        env={},
+    ),
+    tool_id="t-your-cua-tool",
+)
+```
+
+When `connection_params` is provided, `CUA_MCP_WHEEL_URL` is not required. The `env` in `connection_params` is merged with the Tool ID and region before being passed to the MCP subprocess; the caller's original configuration is not mutated.
+
+## Parameters
+
+### Constructor parameters
+
+Full signature of `create_computer_use_toolset`:
+
+```python lines
+def create_computer_use_toolset(
+    *,
+    connection_params: StdioServerParameters | None = None,
+    tool_id: str | None = None,
+    region: str | None = None,
+    tool_filter: list[str] | None = None,
+) -> ComputerUseToolset:
+    ...
+```
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `connection_params` | `StdioServerParameters \| None` | `None` | MCP connection parameters. When `None`, the service is launched via `uvx` from `CUA_MCP_WHEEL_URL`. |
+| `tool_id` | `str \| None` | `None` | AgentKit Tool ID, must match `t-[A-Za-z0-9_-]+`. When `None`, reads `AGENTKIT_TOOL_ID_CUA` then `AGENTKIT_TOOL_ID`. |
+| `region` | `str \| None` | `None` | Region. When `None`, reads `AGENTKIT_TOOL_REGION`, then defaults to `cn-beijing`. |
+| `tool_filter` | `list[str] \| None` | `None` | Tool-name filter list; only tools with matching names are kept. `ensure_sandbox` is always retained. |
+
+`ComputerUseToolset` constructor parameters:
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `connection_params` | `StdioServerParameters` | — | MCP connection parameters, required. |
+| `tool_id` | `str` | — | AgentKit Tool ID, required, must match `t-[A-Za-z0-9_-]+`. |
+| `region` | `str` | `cn-beijing` | Region. |
+| `tool_filter` | `list[str] \| None` | `None` | Tool-name filter list. `ensure_sandbox` is always retained. |
+| `timeout` | `float` | `120` | Per-request timeout in seconds, must be between 1 and 300. |
+
+<Note>
+If `connection_params.env` already sets `AGENTKIT_TOOL_ID_CUA` or `AGENTKIT_TOOL_ID`, its value must match `tool_id`; `AGENTKIT_TOOL_REGION` must match `region`, otherwise initialization raises an error.
+</Note>
+
+## Behavior
+
+### Sandbox instance creation
+
+Tool discovery (listing tools) only reads template and instance capabilities and does not create a sandbox instance. The first valid desktop action (or an explicit `ensure_sandbox` call) creates or reuses a sandbox instance. Pure chat does not create a billable sandbox through this toolset.
+
+### Session binding
+
+The sandbox instance's physical binding is persisted through ADK session state, keyed by agent name and user session identity. Different sub-agents in the same session maintain their own distinct bindings. After a process restart, a saved binding can continue to reuse the same sandbox instance.
+
+The `UserSessionId` is composed from the agent name, user identity, and session identity, and must match `[A-Za-z0-9_-]{1,200}`.
+
+### Serial calls
+
+Each model response may contain only one CUA tool call. If the model issues multiple CUA tool calls in a single response, all CUA calls are rejected. For a known ordered sequence of desktop input actions, use `cua_actions_batch` to submit multiple actions in one call; however, `run_code`, browser lifecycle, app/process, recording, and script tools must not be placed inside a batch. If the next step depends on a screenshot or action result, use separate turns.
+
+### No retry on failure
+
+Desktop operations may produce real changes, and a transport failure may leave the outcome unknown. The toolset does not automatically retry failed desktop operations, to avoid repeating irreversible changes.
+
+### Discovery failure aborts model invocation
+
+If tool discovery fails during the current invocation, subsequent model calls are aborted rather than continuing without the requested CUA tools.
+
+### Screenshot handling
+
+Screenshot and other image results are returned to the model as image content. When using a Volcengine Ark model, the toolset automatically extracts screenshots nested inside tool responses into standalone image content so the model can see them.

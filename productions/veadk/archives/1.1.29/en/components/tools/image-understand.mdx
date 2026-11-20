@@ -1,0 +1,98 @@
+---
+title: "Image understanding"
+zh_link: "/productions/veadk/preview/zh/components/tools/image-understand"
+---
+
+## Function
+
+Tool identifier `image_understand`.
+
+`image_understand` uses the configured vision model to understand one or more images: describing the scene, reading the text in an image, or answering questions about it. Up to 8 images are accepted per call, from local paths or publicly accessible `http(s)` URLs.
+
+The tool is an async function (`async def`) and reuses the agent model's API key, model name, and endpoint configuration.
+
+Import path: `from veadk.tools.builtin_tools.image_understand import image_understand`
+
+## Prerequisites
+
+<Warning>
+Requirement: configure the API key for the agent's reasoning model; the selected model must support vision understanding.
+</Warning>
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key used for the vision request; falls back to `model.api_key` in the configuration file when unset
+- `MODEL_VISION_NAME`: optional vision model name; the agent model name is used when unset
+- The endpoint is taken from `model.api_base` in the configuration file
+
+Model-name resolution order is the `model_name` argument, then the `MODEL_VISION_NAME` environment variable, then the agent model name.
+
+## Usage
+
+```python title="examples/tools/image_understand/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.image_understand import image_understand
+
+agent = Agent(
+    name="vision_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that understands images.",
+    instruction="When the user provides an image and asks a question, call the image_understand tool.",
+    tools=[image_understand],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Describe what is written in /tmp/whiteboard.jpg")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.image_understand import image_understand
+
+
+async def main():
+    result = await image_understand(
+        images=["/tmp/a.jpg", "https://example.com/b.png"],
+        prompt="Describe the differences between these two images",
+    )
+    if "error" in result:
+        print("Understanding failed:", result["error"])
+    else:
+        print(result["model"])
+        print(result["text"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `images` | `list[str]` | Required | Local image paths or public `http(s)` URLs, 1 to 8 items |
+| `prompt` | `str` | `"Describe the image in detail."` | Question or instruction for the vision model |
+| `model_name` | `str \| None` | — | Overrides the vision model for this call; otherwise the resolution order applies |
+
+Success returns `{"text": ..., "model": ...}`, where `model` is the model actually used. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- Local images are capped at 20 MB per image and 40 MB in total; remote URLs pass an SSRF check before being forwarded to the model, so private and loopback addresses are blocked.
+- Remote URLs are fetched by the model service, so they must be publicly reachable from that service; download images requiring authentication or internal access locally and pass their paths instead.
+- When only verbatim text extraction is needed, [`ocr`](/productions/veadk/preview/en/components/tools/ocr) returns a more focused transcription.
+</Note>
