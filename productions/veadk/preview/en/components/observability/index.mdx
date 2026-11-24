@@ -173,3 +173,11 @@ Failed model requests set native Span Status to `ERROR` and `error.type` to `llm
 <Note>
 This instrumentation replaces the previous custom timing fields. It no longer exports custom `veadk.request.*` or `veadk.model.*` attributes or a custom first-token event, without compatibility aliases. Client-render timing remains outside this feature.
 </Note>
+
+## Response ID
+
+When tracing is enabled and the model returns a response ID, VeADK records its original value as `gen_ai.response.id` on the corresponding `call_llm` span. This covers streaming and non-streaming Chat, Ark Responses, and native Gemini text calls. Use this ID to correlate a model response with the provider's logs. The ID remains available when content collection is disabled, and an ID obtained early in a stream is preserved if that stream fails or is cancelled.
+
+For Volcengine Ark endpoints, the response ID is taken from the `x-request-id` response header. Other providers use the response ID returned by the SDK as-is.
+
+If no provider response ID is available, the attribute is omitted. VeADK does not substitute HTTP request IDs, SDK-generated IDs, tool call IDs, or previous response IDs. Failed attempts retain their IDs on their own `model_request` spans; retries and fallbacks report the ID of the delivered response on `call_llm`.
