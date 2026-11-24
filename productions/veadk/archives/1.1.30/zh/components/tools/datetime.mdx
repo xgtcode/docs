@@ -1,0 +1,99 @@
+---
+title: "日期时间"
+en_link: "/productions/veadk/preview/en/components/tools/datetime"
+---
+
+## 功能说明
+
+对应工具标识 `datetime`。
+
+`datetime` 提供时区感知的日期时间能力：获取当前时间、解析常见时间字符串、按格式输出、在时区之间转换、计算两个时间的差值以及时间加减。工具在本地完成计算，不访问外部服务。
+
+导入路径：`from veadk.tools.builtin_tools.datetime_tool import datetime`
+
+## 环境变量与前提
+
+环境变量：
+
+- `MODEL_AGENT_API_KEY`：智能体推理模型的 API Key（`datetime` 工具本身无需额外凭证，也不访问外部服务）
+
+## 使用方法
+
+```python title="examples/tools/datetime/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.datetime_tool import datetime
+
+agent = Agent(
+    name="datetime_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that answers date and time questions.",
+    instruction="涉及当前时间、时区转换、时间差或日期加减时，调用 datetime 工具。",
+    tools=[datetime],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("北京时间 2026-11-16 上午 9 点整，UTC 是几点？")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+各动作的直接调用示例：
+
+```python lines
+from veadk.tools.builtin_tools.datetime_tool import datetime
+
+datetime("now", timezone="Asia/Shanghai")
+datetime("parse", value="2026-11-16 09:30:00", timezone="Asia/Shanghai")
+datetime("format", value="2026-11-16T09:30:00+08:00", format="%Y/%m/%d")
+datetime(
+    "convert",
+    value="2026-11-16 09:00:00",
+    timezone="Asia/Shanghai",
+    target_timezone="UTC",
+)
+datetime("diff", value="2026-01-01", value2="2026-01-08")
+datetime("add", value="2026-01-01 00:00:00", amount=90, unit="minutes")
+```
+
+## 参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `action` | `str` | 必填 | `now`、`parse`、`format`、`convert`、`diff`、`add` 之一 |
+| `value` | `str` | — | 主要时间字符串，除 `now` 外的动作均需提供 |
+| `value2` | `str` | — | `diff` 的第二个时间；差值按 `value2 - value` 计算 |
+| `timezone` | `str` | `"UTC"` | IANA 时区名，如 `Asia/Shanghai`；当 `value` 不带时区偏移时按该时区解释 |
+| `target_timezone` | `str` | — | `convert` 必填，目标 IANA 时区名 |
+| `format` | `str` | `"%Y-%m-%d %H:%M:%S"` | `format` 动作使用的 `strftime` 格式字符串 |
+| `amount` | `int \| float` | — | `add` 必填，要增加的时间数量 |
+| `unit` | `str` | — | `add` 必填，`seconds`、`minutes`、`hours`、`days`、`weeks` 之一 |
+
+`action` 的行为与返回字段：
+
+| 动作 | 作用 | 返回字段 |
+| :--- | :--- | :--- |
+| `now` | 返回指定时区的当前时间 | `iso`、`timestamp`、`timezone`、`weekday` |
+| `parse` | 解析时间字符串并拆分年月日等分量 | `iso`、`timestamp`、`timezone`、`year`、`month`、`day`、`hour`、`minute`、`second`、`weekday` |
+| `format` | 按 `strftime` 格式输出时间 | `formatted`、`iso` |
+| `convert` | 转换到 `target_timezone` | `iso`、`timestamp`、`timezone` |
+| `diff` | 计算两个时间的差值 | `seconds`、`days`、`human` |
+| `add` | 在时间上增加一段时间 | `iso`、`timestamp` |
+
+成功返回包含上述字段的字典，参数非法时返回 `{"error": ...}`。
+
+## 额外说明
+
+<Note>
+- 支持 ISO 8601 字符串（含以 `Z` 或 `z` 结尾的 UTC 写法），并兼容 `YYYY-MM-DD`、`YYYY-MM-DD HH:MM:SS`、`YYYY/MM/DD`、`YYYY/MM/DD HH:MM:SS` 四种格式。
+- `timestamp` 为 Unix 秒数；`weekday` 取 `monday` 至 `sunday`；`diff` 的 `human` 字段给出天与 `HH:MM:SS` 形式的可读差值，`value2` 早于 `value` 时带负号。
+- 时区使用 IANA 名称，运行环境需提供时区数据库；容器或精简系统如缺少时区数据，应安装系统 `tzdata` 包。
+</Note>
