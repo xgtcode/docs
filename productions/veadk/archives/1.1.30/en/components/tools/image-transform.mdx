@@ -1,0 +1,110 @@
+---
+title: "Image transform"
+zh_link: "/productions/veadk/preview/zh/components/tools/image-transform"
+---
+
+## Function
+
+Tool identifier `image_transform`.
+
+`image_transform` applies an ordered sequence of resize, crop, rotate, flip, thumbnail, grayscale, and format-conversion operations to an image and saves the result. The source can be a local path or a publicly accessible `http(s)` URL. For agent calls the result is saved as a conversation artifact; direct calls write it to the system temporary directory and return the path.
+
+The tool is an async function (`async def`) built on Pillow and runs locally.
+
+Import path: `from veadk.tools.builtin_tools.image_transform import image_transform`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `image_transform` tool itself needs no extra credentials)
+
+## Usage
+
+```python title="examples/tools/image_transform/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.image_transform import image_transform
+
+agent = Agent(
+    name="image_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that transforms images.",
+    instruction="Use image_transform when the user needs to resize, crop, rotate, or convert an image.",
+    tools=[image_transform],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Resize https://example.com/photo.jpg to 800 pixels wide and convert it to WebP")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+For direct calls, list the operations in the order they should run:
+
+```python lines
+import asyncio
+
+from veadk.tools.builtin_tools.image_transform import image_transform
+
+
+async def main():
+    result = await image_transform(
+        source="photo.jpg",
+        operations=[
+            {"type": "resize", "width": 800, "height": 800, "keep_aspect": True},
+            {"type": "grayscale"},
+            {"type": "convert", "format": "webp"},
+        ],
+        quality=85,
+        filename="photo-gray.webp",
+    )
+    if "error" in result:
+        print("Transform failed:", result["error"])
+    else:
+        print(result["width"], result["height"], result["format"], result["path"])
+
+
+asyncio.run(main())
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `source` | `str` | Required | Local image path or publicly accessible `http(s)` URL |
+| `operations` | `list[dict]` | Required | Ordered, non-empty list of operations; at most 20 |
+| `output_format` | `str \| None` | — | Output format: `png`, `jpeg`, or `webp`; defaults to the source format, or `png` when the source format is unsupported |
+| `quality` | `int` | `90` | Encoding quality, from 1 to 100; applies to JPEG and WebP only |
+| `filename` | `str \| None` | — | Output filename; the extension is forced; a name is generated when omitted |
+| `tool_context` | `ToolContext` | Injected | Injected automatically for agent calls; optional for direct calls |
+
+Each dict in `operations` uses `type` to select the operation:
+
+| Type | Fields | Behavior |
+| :--- | :--- | :--- |
+| `resize` | `width`, `height` (positive ints, at least one), `keep_aspect` | One side only scales proportionally; with both and `keep_aspect` true (default) the image fits inside the box, while false stretches it to the exact size |
+| `crop` | `left`, `top`, `right`, `bottom` | Crops to pixel coordinates; the box must lie entirely inside the image |
+| `rotate` | `degrees` (number) | Rotates by an angle and expands the canvas; RGB images are filled with white, RGBA images with transparency |
+| `flip` | `direction` | `horizontal` for left-right flip or `vertical` for top-bottom flip |
+| `thumbnail` | `max_size` (positive int) | Scales proportionally so neither edge exceeds `max_size` |
+| `grayscale` | — | Converts the image to grayscale |
+| `convert` | `format` (`png`, `jpeg`, `webp`) | Sets the output format after all operations |
+
+Success returns `{"filename", "format", "width", "height", "size_bytes", "mime_type", "artifact_saved", "path"}`. On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+- Remote images are capped at 20 MB with a 30-second timeout and at most 3 redirects, and use the same SSRF protection as [`http_request`](/productions/veadk/preview/en/components/tools/http-request), blocking private and loopback addresses.
+- The output canvas must not exceed 40,000,000 pixels, including the expanded size after rotation; larger results return an error.
+- Output-format precedence is the `output_format` parameter, then the `convert` operation, then the source format; sources other than PNG/JPEG/WebP default to PNG. Saving to JPEG composites transparent areas onto a white background.
+</Note>

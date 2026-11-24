@@ -14,7 +14,6 @@ en_link: "/productions/veadk/preview/en/changelog"
 | 运行时 | 修复外部运行时中长时工具调用挂起后智能体可能重复启动模型循环的问题，以及会话持久化后事件顺序不正确的问题：当长时工具调用尚未返回结果时，智能体现在正确等待而非重新启动模型；模型响应事件的时间戳改为反映实际完成时间，确保数据库会话存储重载后事件顺序正确；Codex 运行时恢复线程时包含当前批次中全部工具结果；PiAgent 运行时跨调用保留完整对话历史与工具调用结果配对。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
 | 短期记忆 | PostgreSQL 后端 `host` 配置项支持 `host:port` 格式：在 `host` 中嵌入端口时，嵌入端口优先于单独的 `port` 配置项，端口必须在 1–65535 范围内。 | [使用 PostgreSQL 存储](/productions/veadk/preview/zh/components/session/postgresql) |
 | 可观测 | 新增请求 Span 与流式 TTFT 遥测：VeADK 在 ASGI 入口和 Runner 执行时创建 `http_request` / `runner_request` Span，在每次 LiteLLM Chat 或 Ark Responses SDK 请求下创建 `model_request` Span。首个非空文本、推理或工具调用增量触发一次 TTFT 记录，属性为 `gen_ai.chat_completions.streaming_time_to_first_token`（浮点秒数），并通过全局 MeterProvider 在同名 Histogram 记录一次。失败请求设置原生 Span Status 为 `ERROR` 并标注 `error.type`。此埋点替代此前的自定义计时字段，不保留兼容别名。 | [可观测概述](/productions/veadk/preview/zh/components/observability#请求-span-与流式-ttft) |
-| 可观测 | `call_llm` span 新增 `gen_ai.response.id` 属性：启用追踪且模型返回响应 ID 时，VeADK 将其原值记录到对应 `call_llm` span，覆盖 Chat、Ark Responses 和原生 Gemini 文本调用的流式与非流式模式。火山引擎 Ark 端点取响应头 `x-request-id` 作为响应 ID；其他 provider 使用 SDK 返回的响应 ID。提供方未返回可取得的响应 ID 时该属性省略，不以 HTTP request ID、SDK 生成 ID、tool call ID 或历史响应 ID 替代。失败尝试的 ID 保留在其 `model_request` span 上，重试或 fallback 后的 `call_llm` 记录实际交付响应的 ID。 | [可观测概述](/productions/veadk/preview/zh/components/observability#响应-id) |
 | 运行时 | Codex 运行时新增进程复用与并发控制：`direct` + `resume` 下默认复用同线程 Codex 进程，每轮校验 SDK 确认的 thread/turn 身份。新增 `mcp_process_reuse` 配置项与 `VEADK_CODEX_MCP_PROCESS_REUSE` 环境变量控制 MCP 进程复用；新增 `VEADK_CODEX_PROCESS_POOL_SIZE`、`VEADK_CODEX_PROCESS_IDLE_TTL_SECONDS`、`VEADK_CODEX_MAX_CONCURRENT_TURNS` 和 `VEADK_CODEX_DENY_READ_PATHS` 环境变量控制进程池容量、空闲超时、并发上限和沙箱读取限制。提供 `veadk.runtime.codex.release_codex_session` 和 `veadk.runtime.codex.shutdown_codex_runtime` 用于手动释放常驻进程。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime#codex-进程复用与并发) |
 | 运行时 | Codex 运行时新增 Session 隔离：`workspace_write` 和 `read_only` 下使用 VeADK 生成的自定义权限配置，一个 Session 的命令无法读写其他 Session 的工作区、rollout 和配置。`turn_timeout_seconds` 现覆盖准入、setup 和运行轮次。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime#codex-安全配置) |
 | 运行时 | 修复 Codex 和 PiAgent 运行时中工具调用挂起后无法恢复的问题：此前外部运行时在特定条件下挂起工具调用后无法继续执行，现已修复。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
@@ -30,7 +29,6 @@ en_link: "/productions/veadk/preview/en/changelog"
 | 内容安全 | 新增 `Agent.content_safety` 参数和 `agent.content_safety_plugins` 属性：支持以 `None`、`False`、`True`、`dict` 或 `ContentSafetyConfig` 方式配置内容安全；`Runner` 在构造时自动解析并挂载对应插件，手动创建 ADK `App` 时可使用 `content_safety_plugins` 获取已解析的插件列表。 | [内容安全护栏](/productions/veadk/preview/zh/components/security/content-safety#配置方式) |
 | 内容安全 | Decision 后端支持多模态审计：图片、音频和视频分片与文本分片按原始顺序排列在 `state` 中，内联媒体转成 base64 data URL 或使用 HTTP(S) URL；审计前对敏感字段和自由文本中的凭证模式做 best-effort 脱敏，`<untrusted>` 标签转义防止内容伪造包裹。 | [内容安全护栏](/productions/veadk/preview/zh/components/security/content-safety#多模态审计) |
 | SSE | 修复 SSE 流式输出中事件 ID 重复或缺失的问题：生成 SSE 负载时为 partial 事件、空 ID 事件和已发送 ID 事件生成唯一事件 ID，避免客户端因 ID 重复丢失事件。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
-| 可观测 | APMPlus 指标新增技能下载与加载计数：`gen_ai_skill_download_count` 统计技能包下载次数（含缓存命中与失败），`gen_ai_skill_load_count` 统计技能指令成功加载次数；两者为 OTEL 计数器，单位 `1`，维度包括 `skill_source`、`skill_id`、`skill_name`、`skill_version` 和 `skill_space_id`。技能下载过程生成 `download_skill {skill_name}` span，标注技能来源、ID、名称、版本、空间、消费者、结果与缓存命中等属性；结果仅记录在 Span 上，不作为计数器维度。技能指令加载成功时创建独立的 `load_skill {skill_name}` 子 Span 并添加对应身份属性，原有工具执行 Span 保持不变。 | [APMPlus](/productions/veadk/preview/zh/components/observability/apmplus) |
 | Studio 代码包部署 | 代码包上传新增部署可行性校验：拒绝 `__pycache__/`、`*.pyc` 及二进制文件；不含 `Dockerfile` 时要求根目录存在 `app.py` 和 `requirements.txt`，缺失上传失败；未检测到 `0.0.0.0:8000` 或 `PORT` 服务监听时显示警告。 | [Studio 智能体工作台](/productions/veadk/archives/1.1.28/zh/components/frontend/studio#从代码包添加和部署) |
 | 运行时 | 新增 `runtime="dsh"`：通过 DeepSeek Harness SDK 驱动智能体内层循环。`dsh` 二进制随 `veadk-python[dsh]` 安装，运行时懒启动子进程，不依赖首次运行下载。同一有效配置复用 SDK 对象和子进程；VeADK 会话历史作为短期记忆来源。ADK 函数工具、MCP 工具、`sub_agents` 转交和 `SkillToolset` 通过 DSH 原生插件和技能加载器桥接；根会话流式输出映射为 ADK partial 事件。支持 `provider` 别名（`openai`、`volcengine`、`volcengine-ark`、`ark`、`openai-compatible`、`third-party`）映射到 `deepseek-official` adapter；未配置 `dsh_home` 时生成进程隔离目录。可通过 `deepseek_harness_runtime_config` 或 `VEADK_DEEPSEEK_HARNESS_*` 环境变量配置。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime#使用-deepseek-harness-运行时) |
 | 依赖 | 新增可选依赖组 `dsh`（别名 `deepseek-harness`）：安装 `deepseek-harness-sdk==0.1.5rc1` 及其传递依赖 `deepseek-harness-runtime-bin`，提供 `dsh` 可执行文件。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime#使用-deepseek-harness-运行时) |
@@ -93,6 +91,16 @@ en_link: "/productions/veadk/preview/en/changelog"
 | 依赖 | `jsonschema` 版本约束从 `>=4.23,<5` 收窄为 `>=4.23,<4.24`：litellm 固定 jsonschema 4.23.0。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `fastmcp` 版本约束新增 `<4` 上限：fastmcp 4.x 要求 mcp>=2，与当前 mcp 版本不兼容。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
 | 依赖 | `harness-sidecar` 可选依赖组中 `agentkit-sdk-python` 约束从 `>=0.8.1,<0.9.0` 调整为 `>=0.8.5`，移除版本上限。 | [安装](/productions/veadk/preview/zh/get-started/installation) |
+
+## 1.1.30
+
+VeADK 1.1.30 发布于 2026 年 11 月 24 日。下表列出该版本的公开用户能力变化；完整提交记录见 [GitHub Release](https://github.com/volcengine/veadk-python/releases/tag/1.1.30)。
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| 可观测 | `gen_ai.response.id` 追踪扩展至 Ark Responses 和原生 Gemini 文本调用：此前仅 Chat 调用记录响应 ID，现覆盖 Ark Responses 和 Gemini 的流式与非流式模式。火山引擎 Ark Chat 调用现优先取响应头 `x-request-id` 作为响应 ID。失败尝试的 ID 保留在其 `model_request` span 上，重试或 fallback 后的 `call_llm` 记录实际交付响应的 ID。 | [可观测概述](/productions/veadk/preview/zh/components/observability#响应-id) |
+| 可观测 | 技能指令加载追踪改为创建独立子 Span：成功加载技能指令时创建独立的 `load_skill {skill_name}` 子 Span 并添加身份属性，不再重命名当前工具执行 Span，原有工具执行 Span 保持不变。 | [APMPlus](/productions/veadk/preview/zh/components/observability/apmplus) |
+| 兼容性 | 生成的智能体应用和 VeADK 运行时改用公开模块路径导入 `StreamingMode`，替代此前引用的私有路径，确保与较新版本的 Google ADK 兼容；DeepSeek Harness 运行时的 `call_llm` Span 改为从当前 TracerProvider 创建，确保追踪数据通过 VeADK 配置的导出器上报。 | [运行时](/productions/veadk/preview/zh/components/agent/runtime) |
 
 ## 1.1.29
 
