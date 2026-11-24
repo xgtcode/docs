@@ -90,6 +90,34 @@ api := apps.DefaultApiConfig().
 	SetApiPathPrefix("/api")
 ```
 
+## 删除 Artifact 版本
+
+当 `RunConfig` 配置了 `ArtifactService` 时，AgentKit Server App 提供删除单个 artifact 版本的接口：
+
+```http
+DELETE /apps/{app_name}/users/{user_id}/sessions/{session_id}/artifacts/{artifact_name}/versions/{version}
+```
+
+路径前需添加配置的 `ApiPathPrefix`，例如 `/api`。
+
+| 参数 | 说明 |
+| --- | --- |
+| `app_name` | 应用名。 |
+| `user_id` | 用户标识。 |
+| `session_id` | 会话标识。 |
+| `artifact_name` | artifact 文件名。 |
+| `version` | 版本号，必须为大于 0 的正整数。 |
+
+- 成功返回 HTTP 200，响应体为空。
+- `version` 为非法值、0 或负数时返回 HTTP 400。
+- 底层服务失败返回 HTTP 500 及错误文本。
+- 未配置 `ArtifactService` 时返回 HTTP 500。
+- 其他版本不受影响，原有的 `DELETE .../artifacts/{artifact_name}` 接口仍删除该 artifact 的全部版本。
+
+<Note>
+  该接口由 VeADK `AgentkitServerApp` 提供，不包含在原生 ADK `full.NewLauncher()` 的上游 REST 路由中。
+</Note>
+
 ## 配置 `RunConfig`
 
 `apps.RunConfig` 把智能体、会话、记忆、artifact、插件和 telemetry 交给 App 服务。
