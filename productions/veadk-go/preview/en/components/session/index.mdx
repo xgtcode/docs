@@ -99,6 +99,123 @@ err := app.Run(ctx, &apps.RunConfig{
 
 Simple app, A2A app, and AgentKit server app all use the configured session service in the runtime path. The app owns the HTTP or protocol entry point; Runner is better when you call the agent directly inside your Go process.
 
+## Update Session State
+
+`Runner.UpdateSession` appends one external update event to an existing session without executing the agent. Use it to adjust session state, append a message, or record artifact version references before the next run.
+
+### Usage Example
+
+```go
+package main
+
+import (
+	"context"
+
+	verunner "github.com/volcengine/veadk-go/v2/runner"
+	"google.golang.org/adk/v2/session"
+)
+
+func updateSession(ctx context.Context, r *verunner.Runner) error {
+	// Ensure the session exists; UpdateSession does not create one.
+	if _, err := r.SessionService().Create(ctx, &session.CreateRequest{
+		AppName: r.AppName(), UserID: "user", SessionID: "session",
+		State: map[string]any{"phase": "created"},
+	}); err != nil {
+		return err
+	}
+
+	if err := r.UpdateSession(ctx, verunner.SessionUpdateRequest{
+		UserID:     "user",
+		SessionID:  "session",
+		StateDelta: map[string]any{"phase": "approved"},
+		Author:     "external_tool",
+	}); err != nil {
+		return err
+	}
+
+	// Read the committed state from the same service.
+	resp, err := r.SessionService().Get(ctx, &session.GetRequest{
+		AppName: r.AppName(), UserID: "user", SessionID: "session",
+	})
+	if err != nil {
+		return err
+	}
+	phase, _ := resp.Session.State().Get("phase") // "approved"
+	_ = phase
+	return nil
+}
+```
+
+<Note>
+  `UpdateSession` does not create a session, execute the agent, or save long-term memory. Even when `AutoCreateSession` is enabled, a missing session returns an error.
+</Note>
+
+### Request Parameters
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `UserID` | `string` | — | Required. Target user identifier. |
+| `SessionID` | `string` | — | Required. Target session identifier. |
+| `StateDelta` | `map[string]any` | `nil` | Merged into session state at the top-level key. A supplied object replaces the entire previous value; no deep merge. |
+| `Content` | `*genai.Content` | `nil` | Message content appended to session history. `Author` must be set when `Content` is present. |
+| `ArtifactDelta` | `map[string]int64` | `nil` | Records artifact filename and version references. Does not save artifact contents; save them through `ArtifactService` first. |
+| `Author` | `string` | `system` | Event author label. Required when `Content` is set. |
+| `InvocationID` | `string` | Auto-generated | Optional. Groups the event with a caller-provided invocation. |
+| `AppName` | `string` | Runner method uses `r.AppName()` | Only needed for the package-level `runner.UpdateSession`. |
+
+### State Merge Rules
+
+- Ordinary keys belong to the target session.
+- ADK `user:` prefixed keys are shared across sessions of the same app/user.
+- ADK `app:` prefixed keys are shared across the same app.
+- `temp:` prefixed keys are filtered before validation and never enter stored state or event history.
+- `nil` stores JSON null rather than deleting the key.
+- Persistent values must be JSON serializable; invalid values fail before appending.
+- If `StateDelta`, `Content`, and `ArtifactDelta` are all empty or contain only `temp:` keys, the call verifies the session exists and appends no event.
+
+<Warning>
+  Serialize updates and agent runs for the same session. The method provides no compare-and-swap or cross-request deduplication. Database conflict or lock errors are returned without retrying.
+</Warning>
+
+### Package-Level Function
+
+For custom runtimes or non-Runner integrations, use the package-level `runner.UpdateSession` with the same session service used by the runtime:
+
+```go
+err := verunner.UpdateSession(ctx, svc, verunner.SessionUpdateRequest{
+	AppName:    "app",
+	UserID:     "user",
+	SessionID:  "session",
+	StateDelta: map[string]any{"phase": "approved"},
+})
+```
+
+### Update via Simple App HTTP Endpoint
+
+Simple App exposes a `POST /sessions/{session_id}:update` endpoint. The request body matches the `SessionUpdateRequest` structure:
+
+```http
+POST /sessions/{session_id}:update
+Content-Type: application/json
+
+{
+  "user_id": "user",
+  "state_delta": {
+    "phase": "approved"
+  },
+  "author": "external_tool",
+  "content": {
+    "role": "user",
+    "parts": [{"text": "approval granted"}]
+  },
+  "artifact_delta": {
+    "approval.pdf": 3
+  }
+}
+```
+
+`session_id` comes from the path. `user_id` is optional and defaults to the app's configured user. On success, the endpoint returns HTTP 200 with `{"code": 200, "message": "success", "session_id": "..."}`. Malformed request payloads or parameter errors return HTTP 400.
+
 ## Multi-Turn Rules
 
 | Parameter | Purpose |

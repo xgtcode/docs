@@ -90,6 +90,34 @@ api := apps.DefaultApiConfig().
 	SetApiPathPrefix("/api")
 ```
 
+## Delete an Artifact Version
+
+When `RunConfig` includes an `ArtifactService`, AgentKit Server App provides an endpoint to delete a single artifact version:
+
+```http
+DELETE /apps/{app_name}/users/{user_id}/sessions/{session_id}/artifacts/{artifact_name}/versions/{version}
+```
+
+Prepend the configured `ApiPathPrefix` (for example, `/api`) to this path.
+
+| Parameter | Description |
+| --- | --- |
+| `app_name` | Application name. |
+| `user_id` | User identifier. |
+| `session_id` | Session identifier. |
+| `artifact_name` | Artifact filename. |
+| `version` | Version number; must be a positive integer greater than 0. |
+
+- Success returns HTTP 200 with an empty body.
+- An invalid, zero, or negative `version` returns HTTP 400.
+- Backend failures return HTTP 500 with the backend error text.
+- A missing `ArtifactService` returns HTTP 500.
+- Other versions remain available. The existing `DELETE .../artifacts/{artifact_name}` endpoint still deletes all versions of the artifact.
+
+<Note>
+  This endpoint is provided by VeADK `AgentkitServerApp`. The native ADK `full.NewLauncher()` uses upstream REST routes and does not include this VeADK endpoint.
+</Note>
+
 ## Configure `RunConfig`
 
 `apps.RunConfig` passes the agent, sessions, memory, artifacts, plugins, and telemetry into the app server.

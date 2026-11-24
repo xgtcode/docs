@@ -99,6 +99,123 @@ err := app.Run(ctx, &apps.RunConfig{
 
 simple app、A2A app 和 AgentKit server app 都会把这个 session service 用到运行时链路里。区别在于 app 负责 HTTP / 协议入口，而 Runner 适合在自己的 Go 流程中直接调用智能体。
 
+## 更新会话状态
+
+`Runner.UpdateSession` 在不执行智能体的前提下，向已有会话追加一条外部更新事件，用于在下一轮运行前调整会话状态、写入消息或登记 artifact 版本引用。
+
+### 使用示例
+
+```go
+package main
+
+import (
+	"context"
+
+	verunner "github.com/volcengine/veadk-go/v2/runner"
+	"google.golang.org/adk/v2/session"
+)
+
+func updateSession(ctx context.Context, r *verunner.Runner) error {
+	// 确保会话已存在；UpdateSession 不会自动创建会话。
+	if _, err := r.SessionService().Create(ctx, &session.CreateRequest{
+		AppName: r.AppName(), UserID: "user", SessionID: "session",
+		State: map[string]any{"phase": "created"},
+	}); err != nil {
+		return err
+	}
+
+	if err := r.UpdateSession(ctx, verunner.SessionUpdateRequest{
+		UserID:     "user",
+		SessionID:  "session",
+		StateDelta: map[string]any{"phase": "approved"},
+		Author:     "external_tool",
+	}); err != nil {
+		return err
+	}
+
+	// 从同一服务读取已提交的状态。
+	resp, err := r.SessionService().Get(ctx, &session.GetRequest{
+		AppName: r.AppName(), UserID: "user", SessionID: "session",
+	})
+	if err != nil {
+		return err
+	}
+	phase, _ := resp.Session.State().Get("phase") // "approved"
+	_ = phase
+	return nil
+}
+```
+
+<Note>
+  `UpdateSession` 不会创建会话、执行智能体或保存长期记忆。即使开启 `AutoCreateSession`，目标会话不存在时仍返回错误。
+</Note>
+
+### 请求参数
+
+| 参数 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `UserID` | `string` | — | 必填。目标用户标识。 |
+| `SessionID` | `string` | — | 必填。目标会话标识。 |
+| `StateDelta` | `map[string]any` | `nil` | 按顶层 key 合并到会话状态；传入对象整体替换旧值，不做深度合并。 |
+| `Content` | `*genai.Content` | `nil` | 追加到会话历史的消息内容；设置时必须同时提供 `Author`。 |
+| `ArtifactDelta` | `map[string]int64` | `nil` | 登记 artifact 文件名和版本引用；不保存 artifact 内容，需先通过 `ArtifactService` 保存。 |
+| `Author` | `string` | `system` | 事件作者标签。带 `Content` 时必须显式提供。 |
+| `InvocationID` | `string` | 自动生成 | 可选，用于将事件关联到指定调用。 |
+| `AppName` | `string` | Runner 方法使用 `r.AppName()` | 仅包级 `runner.UpdateSession` 需要提供。 |
+
+### 状态合并规则
+
+- 普通键属于目标会话。
+- ADK `user:` 前缀键在同一 app/user 的会话间共享。
+- ADK `app:` 前缀键在同一 app 下共享。
+- `temp:` 前缀键在校验前被过滤，不会进入持久状态或事件历史。
+- `nil` 值写入 JSON null，不删除已有键。
+- 持久值必须可 JSON 序列化；不可序列化的值在追加前报错。
+- 如果 `StateDelta`、`Content` 和 `ArtifactDelta` 均为空或仅含 `temp:` 键，调用仅检查会话是否存在，不追加事件。
+
+<Warning>
+  同一会话的更新与智能体运行应由调用方串行化。该方法不提供 compare-and-swap 或跨请求去重；数据库冲突或锁错误会直接返回，不自动重试。
+</Warning>
+
+### 包级函数
+
+自定义运行时或非 Runner 集成场景可使用包级 `runner.UpdateSession`，传入与运行时相同的 session service：
+
+```go
+err := verunner.UpdateSession(ctx, svc, verunner.SessionUpdateRequest{
+	AppName:    "app",
+	UserID:     "user",
+	SessionID:  "session",
+	StateDelta: map[string]any{"phase": "approved"},
+})
+```
+
+### 通过 Simple App HTTP 接口更新
+
+Simple App 暴露了 `POST /sessions/{session_id}:update` 接口，请求体与 `SessionUpdateRequest` 结构一致：
+
+```http
+POST /sessions/{session_id}:update
+Content-Type: application/json
+
+{
+  "user_id": "user",
+  "state_delta": {
+    "phase": "approved"
+  },
+  "author": "external_tool",
+  "content": {
+    "role": "user",
+    "parts": [{"text": "approval granted"}]
+  },
+  "artifact_delta": {
+    "approval.pdf": 3
+  }
+}
+```
+
+`session_id` 来自路径。`user_id` 可省略，默认使用应用配置的用户。成功返回 HTTP 200 和 `{"code": 200, "message": "success", "session_id": "..."}`；请求格式或参数错误返回 HTTP 400。
+
 ## 多轮会话规则
 
 | 参数 | 作用 |

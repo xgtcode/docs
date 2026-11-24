@@ -5,6 +5,13 @@ en_link: "/productions/veadk-go/preview/en/changelog"
 
 本更新日志记录 VeADK Go Preview 文档覆盖的公开用户能力变化。当前 Preview 面向 V2 模块；V1 已发布版本仍保留在 V1 维护线。
 
+## 未发布
+
+| 模块 | 变更细节 | 链接 |
+| --- | --- | --- |
+| 会话 | 新增 `Runner.UpdateSession` 和包级 `runner.UpdateSession`，支持在不执行智能体的情况下向已有会话追加状态、消息或 artifact 版本引用。Simple App 同步暴露 `POST /sessions/{session_id}:update` HTTP 接口。 | [短期会话](/productions/veadk-go/preview/zh/components/session) |
+| 应用 | AgentKit Server App 新增 `DELETE .../artifacts/{artifact_name}/versions/{version}` 接口，支持删除单个 artifact 版本。 | [部署到 AgentKit](/productions/veadk-go/preview/zh/deploy/agentkit) |
+
 ## 当前版本
 
 | 模块 | 变更细节 | 链接 |

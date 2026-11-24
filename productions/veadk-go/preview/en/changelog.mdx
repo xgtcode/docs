@@ -5,6 +5,13 @@ zh_link: "/productions/veadk-go/preview/zh/changelog"
 
 This changelog records public user-facing changes covered by the VeADK Go Preview documentation. The current Preview targets the V2 module. Published V1 releases remain on the V1 maintenance line.
 
+## Unreleased
+
+| Module | Change | Link |
+| --- | --- | --- |
+| Session | Added `Runner.UpdateSession` and package-level `runner.UpdateSession` to append state, content, or artifact-version references to an existing session without executing the agent. Simple App now exposes a `POST /sessions/{session_id}:update` HTTP endpoint. | [Short-Term Sessions](/productions/veadk-go/preview/en/components/session) |
+| App | AgentKit Server App now provides a `DELETE .../artifacts/{artifact_name}/versions/{version}` endpoint to delete a single artifact version. | [Deploy to AgentKit](/productions/veadk-go/preview/en/deploy/agentkit) |
+
 ## Current
 
 | Module | Change | Link |
