@@ -61,7 +61,7 @@ print("Trace ID:", tracer.trace_id)
 | :--- | :--- | :--- | :--- |
 | `config` | `TLSExporterConfig` | Read from environment variables | TLS connection and authentication config. |
 | `resource_attributes` | `dict` | `{}` | Resource attributes attached to spans. |
-| `headers` | `dict` | `{}` | TLS authentication headers come from the connection configuration. Additional custom headers are not sent to the export endpoint. |
+| `headers` | `dict` | `{}` | Extra request headers. The exporter merges in the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) and the TLS signature authentication headers; same-named headers passed here override the defaults, but the auth headers always follow the platform configuration. |
 
 ### TLS connection config
 

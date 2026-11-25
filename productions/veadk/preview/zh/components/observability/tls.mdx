@@ -61,7 +61,7 @@ print("Trace ID:", tracer.trace_id)
 | :--- | :--- | :--- | :--- |
 | `config` | `TLSExporterConfig` | 自动从环境变量读取 | TLS 连接与认证配置。 |
 | `resource_attributes` | `dict` | `{}` | 附加到 span 的资源属性。 |
-| `headers` | `dict` | `{}` | TLS 认证头由连接配置生成；当前实现不会把额外自定义请求头发送到上报端点。 |
+| `headers` | `dict` | `{}` | 附加的请求头。导出器会并入 VeADK 默认请求头（`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id`、`x-is-encrypted`）与 TLS 签名认证头；传入的同名头覆盖默认值，认证头始终以平台配置为准。 |
 
 ### TLS 连接配置
 

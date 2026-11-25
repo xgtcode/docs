@@ -31,6 +31,10 @@ An exporter sends span data to a specific backend platform. Each exporter target
 | In-memory | `InMemoryExporter` | In-process memory, local debugging and dumping | [In-memory exporter](/productions/veadk/preview/en/components/observability/inmemory) |
 
 
+<Note>
+VeADK-managed Cozeloop, APMPlus, and TLS exporters send the following default headers on trace export requests: `veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, and `x-is-encrypted`. APMPlus metric export requests carry the same headers. Use the `MODEL_AGENT_CLIENT_REQ_ID` and `MODEL_AGENT_ENCRYPTED` environment variables to set the last two. Each exporter's `headers` parameter can override defaults or add headers, but platform authentication and routing fields (such as APMPlus's `x-byteapm-appkey`, Cozeloop's `authorization`, and TLS's signature headers) always take precedence. Custom model request headers apply only to model calls and do not affect trace exports.
+</Note>
+
 <Warning>
 Traces may contain user input, model responses, and tool data. Before enabling external exporters, confirm the destination, access controls, and retention policy. `force_export()` requests a flush; it does not prove that the backend received the data
 </Warning>

@@ -77,7 +77,7 @@ exporter = CozeloopExporter(
 | :--- | :--- | :--- | :--- |
 | `config` | `CozeloopExporterConfig` | Read from environment variables | Cozeloop connection and authentication config. |
 | `resource_attributes` | `dict` | `{}` | Resource attributes attached to spans. |
-| `headers` | `dict` | `{}` | Extra request headers; the exporter merges in `cozeloop-workspace-id` and `authorization` automatically. |
+| `headers` | `dict` | `{}` | Extra request headers. The exporter merges in the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) and `cozeloop-workspace-id`, `authorization`; same-named headers passed here override the defaults, but the auth headers always follow the platform configuration. |
 
 ### Cozeloop connection config
 
