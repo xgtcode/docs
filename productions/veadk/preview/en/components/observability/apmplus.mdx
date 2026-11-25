@@ -89,7 +89,7 @@ exporter = APMPlusExporter(
 | :--- | :--- | :--- | :--- |
 | `config` | `APMPlusExporterConfig` | Read from environment variables | APMPlus connection and authentication config. |
 | `resource_attributes` | `dict` | `{}` | Resource attributes attached to spans; the exporter merges in `service.name` automatically. |
-| `headers` | `dict` | `{}` | Extra request headers; the exporter merges in the auth header `x-byteapm-appkey` automatically. |
+| `headers` | `dict` | `{}` | Extra request headers. The exporter merges in the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) and the auth header `x-byteapm-appkey`; same-named headers passed here override the defaults, but the auth header always follows the platform configuration. |
 
 ### APMPlus connection config
 

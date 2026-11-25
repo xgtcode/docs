@@ -31,6 +31,10 @@ span 是一次可被追踪的执行单元，记录名称、起止时间、属性
 | 内存 | `InMemoryExporter` | 进程内存，本地调试与落盘 | [内存导出器](/productions/veadk/preview/zh/components/observability/inmemory) |
 
 
+<Note>
+VeADK 创建的 Cozeloop、APMPlus 和 TLS 导出器在上报链路请求时默认携带以下请求头：`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id` 和 `x-is-encrypted`。APMPlus 的指标上报请求同样携带这组请求头。通过环境变量 `MODEL_AGENT_CLIENT_REQ_ID` 和 `MODEL_AGENT_ENCRYPTED` 可分别设置后两项的值。每个导出器的 `headers` 参数可以覆盖默认值或追加请求头，但平台鉴权与路由字段（如 APMPlus 的 `x-byteapm-appkey`、Cozeloop 的 `authorization`、TLS 的签名头）始终优先。模型请求的自定义头仅用于模型调用，不影响链路上报。
+</Note>
+
 <Warning>
 追踪数据可能包含用户输入、模型回答和工具数据。启用外部导出器前，确认数据发送目标、访问权限与保留周期；调用 `force_export()` 只会触发刷新，不代表远端已成功接收
 </Warning>

@@ -77,7 +77,7 @@ exporter = CozeloopExporter(
 | :--- | :--- | :--- | :--- |
 | `config` | `CozeloopExporterConfig` | 自动从环境变量读取 | Cozeloop连接与认证配置。 |
 | `resource_attributes` | `dict` | `{}` | 附加到 span 的资源属性。 |
-| `headers` | `dict` | `{}` | 附加的请求头；导出器会自动并入 `cozeloop-workspace-id` 与 `authorization`。 |
+| `headers` | `dict` | `{}` | 附加的请求头。导出器会并入 VeADK 默认请求头（`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id`、`x-is-encrypted`）与 `cozeloop-workspace-id`、`authorization`；传入的同名头覆盖默认值，鉴权头始终以平台配置为准。 |
 
 ### Cozeloop 连接配置
 
