@@ -53,6 +53,21 @@ app_logger.info("Agent initialized")
 
 The VeADK handler does not propagate to the Python root logger, which prevents duplicate output when the root logger is configured separately. To send VeADK records to a custom backend, attach a standard `logging` handler to `logging.getLogger("veadk")`.
 
+## Dispatch boundary logs
+
+VeADK emits structured dispatch boundary logs at the INFO level to help locate request latency and call-chain issues. Each log line carries a bracketed prefix identifying the stage, along with fields such as session ID, model name, and elapsed time. Durations are expressed in milliseconds using a monotonic clock.
+
+| Prefix | Source | What is logged |
+| :--- | :--- | :--- |
+| `[turn-dispatch]` | `Runner` | Start and end of each run turn, plus start and end of trace data saving — includes session ID, message count, output length, and total elapsed time. |
+| `[tool-dispatch]` | Tool dispatch layer | Entry and exit of function-tool calls, tool name, thread-pool configuration, parallel-call count; for `run_code` and `bash_tool` — entry, remote-call or subprocess start and end, timeout, and cancellation. |
+| `[llm-dispatch]` | Model clients | Preparation, dispatch, first-delta arrival, and completion of model requests — includes model name, streaming mode, input item count, tool count, response count, and total elapsed time; records TTFT when the first output arrives. |
+| `[http-dispatch]` | Volcengine signed requests | HTTP request send start and end — includes action, host, status code, request body size, and elapsed time. |
+
+<Note>
+Dispatch boundary logs are emitted at the INFO level. Set `LOGGING_LEVEL` to `INFO` to see them; `DEBUG` is not required. Logging failures do not affect agent execution.
+</Note>
+
 ## Streaming output logs
 
 During streaming execution, `Runner` does not log each partial chunk. Reasoning is logged once when a complete section finishes, while final answers, tool calls, and tool results are recorded as complete events. Events are still streamed unchanged to the caller; this behavior only reduces token-by-token log noise.
