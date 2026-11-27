@@ -1,0 +1,84 @@
+---
+title: "Document parsing"
+zh_link: "/productions/veadk/preview/zh/components/tools/document-parse"
+---
+
+## Function
+
+Tool identifier `document_parse`.
+
+`document_parse` parses a local or public document into bounded plain text for the agent to read and summarize. It supports PDF, Word, Excel, CSV, TXT, Markdown, JSON, and HTML; the format can be supplied explicitly or detected from the extension, response headers, and file content.
+
+Import path: `from veadk.tools.builtin_tools.document_parse import document_parse`
+
+## Prerequisites
+
+Environment variables:
+
+- `MODEL_AGENT_API_KEY`: API key for the agent's reasoning model (the `document_parse` tool itself needs no extra credentials; reading local files requires none)
+
+## Usage
+
+```python title="examples/tools/document_parse/agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.document_parse import document_parse
+
+agent = Agent(
+    name="document_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    description="An agent that reads documents and answers questions.",
+    instruction="First call document_parse on the user's file or link, then answer from the extracted text.",
+    tools=[document_parse],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    response = await runner.run("Parse https://example.com/report.pdf and summarize the key points")
+    print(response)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Direct calls:
+
+```python lines
+from veadk.tools.builtin_tools.document_parse import document_parse
+
+result = document_parse("quarterly.xlsx", max_chars=50000)
+if "error" in result:
+    print("Parsing failed:", result["error"])
+else:
+    print(result["format"], result["metadata"])
+    print(result["truncated"])
+    print(result["text"][:500])
+```
+
+## Parameters
+
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `source` | `str` | Required | Local file path or a publicly accessible `http(s)` URL |
+| `format` | `str \| None` | — | Explicit format: `pdf`, `docx`, `xlsx`, `csv`, `txt`, `md`, `json`, or `html`; `markdown` and `htm` are treated as `md` and `html` |
+| `max_chars` | `int` | `200000` | Character cap for the returned text, from 1,000 to 1,000,000 |
+
+When `format` is omitted, detection falls through the file extension, the URL response `Content-Type`, magic-byte signatures, an HTML sniff, and finally UTF-8 plain text.
+
+Success returns `{"format", "text", "truncated", "metadata"}`. `metadata` always contains `source_kind` (`file` or `url`), `size_bytes`, `download_truncated`, and the detected `format`; local files add `path`, URLs add `url`, `requested_url`, and `content_type`, and parsers add `pages`/`needs_ocr` (PDF), `paragraphs`/`tables` (Word), `sheets`/`total_rows` (Excel), or `delimiter`/`rows` (CSV). On failure it returns `{"error": ...}`.
+
+## Notes
+
+<Note>
+Limits and boundaries:
+
+- A local file larger than 20,000,000 bytes returns an error; a remote body is truncated at 20,000,000 bytes with `download_truncated: true` in `metadata`. Downloads time out after 30 seconds and follow at most 3 redirects.
+- Excel parses at most the first 50 sheets and the first 1,000 rows per sheet; CSV parses at most the first 5,000 rows; text beyond `max_chars` is cut off and `truncated` is `true`.
+- PDF extraction reads embedded text only and does not run OCR on scans. A scanned PDF may come back with empty text and `needs_ocr` set to `true` in `metadata`; convert its pages to images and use [`ocr`](/productions/veadk/preview/en/components/tools/ocr) instead.
+- URL downloads use the same SSRF protection as [`http_request`](/productions/veadk/preview/en/components/tools/http-request), blocking private and loopback addresses; downloads do not support custom headers, so links behind login cannot be parsed.
+</Note>

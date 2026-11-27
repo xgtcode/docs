@@ -1,0 +1,190 @@
+---
+title: "桌面操作"
+en_link: "/productions/veadk/preview/en/components/tools/computer-use"
+---
+
+## 功能说明
+
+`create_computer_use_toolset`（`from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset`）创建一个 CUA（Computer Use Agent）工具集，让智能体在 [AgentKit](https://console.volcengine.com/agentkit) 沙箱中操作桌面：截图、点击、输入、执行批量操作等。该工具集通过 stdio MCP 协议连接独立的 CUA MCP 服务，由服务负责沙箱实例的创建、路由和清理。
+
+工具集在首次使用时从 MCP 服务动态发现可用工具（如 `cua_screenshot`、`cua_click`、`cua_actions_batch`、`cua_accessibility_nodes`、`ensure_sandbox` 等），具体工具列表由沙箱模板配置决定。截图等图片结果以图像形式返回给模型，而非 base64 文本。
+
+<Note>
+CUA MCP 服务是独立维护的包，不包含在 VeADK 安装中。运行时需要 `uvx`（随 `uv` 安装）从指定 wheel 地址启动该服务。
+</Note>
+
+## 何时使用
+
+- 需要智能体在远程桌面环境中完成图形界面操作任务（如操作浏览器、桌面应用）。
+- 需要模型通过截图理解屏幕内容并自主决定下一步操作。
+- 需要在云沙箱中隔离执行桌面操作，避免影响本地环境。
+
+## 环境变量与前提
+
+<Warning>
+附加要求：
+
+1. 在 AgentKit 控制台创建 CUA 授权工具，并在沙箱模板上设置 `ENABLE_COMPUTER=true`；为该工具的执行身份授予 `GetTool`、`ListSessions`、`GetSession`、`CreateSession` 权限。
+2. 配置火山引擎 AK / SK（或通过 Runtime IAM 文件提供凭证）。
+3. 配置用于智能体推理模型的 API Key，模型须支持图片与工具调用。
+4. 安装 `uv`（包含 `uvx`）。
+5. 设置 `CUA_MCP_WHEEL_URL` 指向已验证版本的 CUA MCP wheel 地址。
+</Warning>
+
+环境变量：
+
+| 环境变量 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `CUA_MCP_WHEEL_URL` | — | CUA MCP wheel 地址，使用默认 `uvx` 启动方式时必填。应使用显式版本号的 wheel URL。 |
+| `AGENTKIT_TOOL_ID_CUA` | — | CUA 专用 Tool ID。未设置时回退到 `AGENTKIT_TOOL_ID`。 |
+| `AGENTKIT_TOOL_ID` | — | 默认 AgentKit Tool ID，作为 CUA 的回退配置。 |
+| `AGENTKIT_TOOL_REGION` | `cn-beijing` | AgentKit 工具地域。 |
+| `VOLCENGINE_ACCESS_KEY` | — | 火山引擎 AK，转发给 MCP 服务。 |
+| `VOLCENGINE_SECRET_KEY` | — | 火山引擎 SK，转发给 MCP 服务。 |
+| `VOLCENGINE_SESSION_TOKEN` | — | 火山引擎临时令牌，STS 场景使用。AK/SK 均未设置时，MCP 使用 Runtime IAM 文件。 |
+| `AGENTKIT_TOOL_TTL` | — | 沙箱实例存活时间（秒），转发给 MCP 服务。 |
+| `CUA_ALLOW_CREATE` | — | 是否允许创建沙箱实例，转发给 MCP 服务。 |
+| `UV_CACHE_DIR` | — | uv 缓存目录，转发给 `uvx`。 |
+| `UV_INDEX_URL` | — | uv 包索引地址，转发给 `uvx`。 |
+| `UV_OFFLINE` | — | uv 离线模式，转发给 `uvx`。 |
+
+```bash lines
+export AGENTKIT_TOOL_ID_CUA='t-your-cua-tool'
+export CUA_MCP_WHEEL_URL='https://your-trusted-host/cua-mcp/1.0.0/agentkit_cua_mcp-1.0.0-py3-none-any.whl'
+export ARK_API_KEY='your-model-api-key'
+export VOLCENGINE_ACCESS_KEY='your-access-key'
+export VOLCENGINE_SECRET_KEY='your-secret-key'
+```
+
+<Note>
+模型凭证与 AgentKit 凭证相互独立。临时凭证场景还需设置 `VOLCENGINE_SESSION_TOKEN`。
+</Note>
+
+## 使用方法
+
+```python title="cua_agent.py" lines
+import asyncio
+
+from veadk import Agent, Runner
+from veadk.memory.short_term_memory import ShortTermMemory
+from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset
+
+cua = create_computer_use_toolset(
+    tool_id="t-your-cua-tool",
+    region="cn-beijing",
+)
+
+agent = Agent(
+    name="cua_agent",
+    model_name="doubao-seed-2-1-pro-260628",
+    instruction=(
+        "使用桌面工具完成用户的桌面任务。每次只发起一个工具调用。"
+        "观察截图后再选择操作坐标。不要对普通对话调用工具。"
+    ),
+    tools=[cua],
+)
+
+runner = Runner(agent=agent, short_term_memory=ShortTermMemory())
+
+
+async def main():
+    try:
+        response = await runner.run("截图并描述桌面上显示的内容")
+        print(response)
+    finally:
+        await cua.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+<Warning>
+智能体的桌面操作会作用于真实的远程沙箱环境，可能产生费用。应在指令中写明允许的操作范围，不要让智能体执行删除文件、修改账户设置等不可恢复操作。
+</Warning>
+
+## 使用预装或本地 MCP 服务
+
+如果运行环境已预装 CUA MCP 服务，或需要使用自定义启动命令，可以通过 `connection_params` 替代默认的 `uvx` 方式：
+
+```python title="cua_preinstalled.py" lines
+from mcp import StdioServerParameters
+from veadk.tools.builtin_tools.computer_use import create_computer_use_toolset
+
+cua = create_computer_use_toolset(
+    connection_params=StdioServerParameters(
+        command="agentkit-cua-mcp",
+        args=["--transport", "stdio"],
+        env={},
+    ),
+    tool_id="t-your-cua-tool",
+)
+```
+
+传入 `connection_params` 时不需要设置 `CUA_MCP_WHEEL_URL`。`connection_params` 中的 `env` 会与 Tool ID 和地域合并后传给 MCP 子进程，不会修改调用方传入的原始配置。
+
+## 参数
+
+### 构造参数
+
+`create_computer_use_toolset` 的完整签名：
+
+```python lines
+def create_computer_use_toolset(
+    *,
+    connection_params: StdioServerParameters | None = None,
+    tool_id: str | None = None,
+    region: str | None = None,
+    tool_filter: list[str] | None = None,
+) -> ComputerUseToolset:
+    ...
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `connection_params` | `StdioServerParameters \| None` | `None` | MCP 连接参数。为 `None` 时使用 `uvx` 从 `CUA_MCP_WHEEL_URL` 启动。 |
+| `tool_id` | `str \| None` | `None` | AgentKit Tool ID，须匹配 `t-[A-Za-z0-9_-]+`。为 `None` 时依次读取 `AGENTKIT_TOOL_ID_CUA` 和 `AGENTKIT_TOOL_ID`。 |
+| `region` | `str \| None` | `None` | 地域。为 `None` 时读取 `AGENTKIT_TOOL_REGION`，仍为空时默认 `cn-beijing`。 |
+| `tool_filter` | `list[str] \| None` | `None` | 工具名称过滤列表，仅保留指定名称的工具。`ensure_sandbox` 始终保留。 |
+
+`ComputerUseToolset` 的构造参数：
+
+| 参数 | 类型 | 默认值 | 说明 |
+| :--- | :--- | :--- | :--- |
+| `connection_params` | `StdioServerParameters` | — | MCP 连接参数，必填。 |
+| `tool_id` | `str` | — | AgentKit Tool ID，必填，须匹配 `t-[A-Za-z0-9_-]+`。 |
+| `region` | `str` | `cn-beijing` | 地域。 |
+| `tool_filter` | `list[str] \| None` | `None` | 工具名称过滤列表。`ensure_sandbox` 始终保留。 |
+| `timeout` | `float` | `120` | 单次工具请求超时时间，单位为秒，取值范围为 1–300。 |
+
+<Note>
+`connection_params` 中的 `env` 若已设置 `AGENTKIT_TOOL_ID_CUA` 或 `AGENTKIT_TOOL_ID`，其值必须与 `tool_id` 一致；`AGENTKIT_TOOL_REGION` 必须与 `region` 一一致，否则初始化会报错。
+</Note>
+
+## 行为说明
+
+### 沙箱实例创建
+
+工具发现（列出工具）只读取模板与实例能力，不会创建沙箱实例。首次有效的桌面操作（或显式调用 `ensure_sandbox`）才会创建或复用沙箱实例。纯对话不会通过该工具集创建计费沙箱。
+
+### 会话绑定
+
+沙箱实例的物理绑定信息通过 ADK 会话状态持久化，以智能体名称和用户会话标识为键区分。同一会话中的不同子智能体保持各自独立的绑定。进程重启后，已保存的绑定可继续复用同一沙箱实例。
+
+`UserSessionId` 由智能体名称、用户标识和会话标识组合生成，须匹配 `[A-Za-z0-9_-]{1,200}`。
+
+### 串行调用
+
+模型每次响应中只能包含一个 CUA 工具调用。如果模型在一次响应中发起多个 CUA 工具调用，所有 CUA 调用会被拒绝执行。对于已知顺序的桌面操作序列，可使用 `cua_actions_batch` 在一次调用中提交多个操作，但不能将 `run_code`、浏览器生命周期、应用/进程、录制或脚本工具放入批量调用。如果下一步依赖截图或操作结果，应分多轮调用。
+
+### 失败不重试
+
+桌面操作可能产生实际变更，传输失败时操作结果可能未知。该工具集不会自动重试失败的桌面操作，以避免重复执行不可恢复的变更。
+
+### 发现失败中止模型调用
+
+如果工具发现在当前调用中失败，后续的模型调用会被中止，而非在没有 CUA 工具的情况下继续执行。
+
+### 截图处理
+
+截图等图片结果以图像形式返回给模型。使用火山方舟模型时，工具集会自动将嵌套在工具响应中的截图提取为独立的图片内容，使模型能够看到截图。
