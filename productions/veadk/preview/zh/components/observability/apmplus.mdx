@@ -17,6 +17,10 @@ token 用量指标按 `input`、`output` 和 `cache_read` 三个维度分别记�
 技能下载与加载次数通过 `gen_ai_skill_download_count` 和 `gen_ai_skill_load_count` 两个 OTEL 计数器记录，单位为 `1`。`gen_ai_skill_download_count` 统计技能包下载次数（含缓存命中与失败），维度包括 `skill_source`、`skill_id`、`skill_name`、`skill_version` 和 `skill_space_id`。`gen_ai_skill_load_count` 统计技能指令成功加载次数，维度与下载计数器一致。技能下载过程同时生成 `download_skill {skill_name}` span，标注技能来源、ID、名称、版本、空间、消费者、结果与缓存命中等属性；结果（`success` 或 `error`）仅记录在 Span 上，不作为计数器维度。技能指令加载成功时创建独立的 `load_skill {skill_name}` 子 Span，并添加技能来源、ID、名称、版本、空间与消费者属性；原有的工具执行 Span 保持不变。
 </Note>
 
+<Note>
+APMPlus exporter 会将 VeADK 默认请求头（`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id`、`x-is-encrypted`）的有效值写入每条 span 的同名标签，便于在 APMPlus 中按标签检索。设置 `MODEL_AGENT_CLIENT_REQ_ID` 后，可按 `X-Client-Request-Id` 标签检索 span；标签名称区分大小写。
+</Note>
+
 ## 何时使用
 
 - 需要在火山引擎 APMPlus 平台上统一观测智能体的调用链路；
@@ -89,7 +93,7 @@ exporter = APMPlusExporter(
 | :--- | :--- | :--- | :--- |
 | `config` | `APMPlusExporterConfig` | 自动从环境变量读取 | APMPlus 连接与认证配置。 |
 | `resource_attributes` | `dict` | `{}` | 附加到 span 的资源属性；导出器会自动并入 `service.name`。 |
-| `headers` | `dict` | `{}` | 附加的请求头。导出器会并入 VeADK 默认请求头（`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id`、`x-is-encrypted`）与认证头 `x-byteapm-appkey`；传入的同名头覆盖默认值，认证头始终以平台配置为准。 |
+| `headers` | `dict` | `{}` | 附加的请求头。导出器会并入 VeADK 默认请求头（`veadk-source`、`veadk-version`、`User-Agent`、`X-Client-Request-Id`、`x-is-encrypted`）与认证头 `x-byteapm-appkey`；传入的同名头覆盖默认值，认证头始终以平台配置为准。这五个 VeADK 默认请求头的有效值还会写入每条 span 的同名标签。 |
 
 ### APMPlus 连接配置
 

@@ -17,6 +17,10 @@ Token usage metrics are recorded in three dimensions: `input`, `output`, and `ca
 Skill download and load counts are recorded through the `gen_ai_skill_download_count` and `gen_ai_skill_load_count` OTEL counters, with a unit of `1`. `gen_ai_skill_download_count` counts skill package acquisitions (including cache hits and failures), with dimensions `skill_source`, `skill_id`, `skill_name`, `skill_version`, and `skill_space_id`. `gen_ai_skill_load_count` counts successful skill instruction loads, with the same identity dimensions. The skill download process also produces a `download_skill {skill_name}` span annotating skill source, ID, name, version, space, consumer, outcome, and cache-hit attributes; the outcome (`success` or `error`) is recorded only on the span, not as a counter dimension. On successful skill instruction load, a separate `load_skill {skill_name}` child span is created and annotated with skill source, ID, name, version, space, and consumer attributes; the original tool execution span is preserved unchanged.
 </Note>
 
+<Note>
+The APMPlus exporter writes the effective values of the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) as identically named tags on every span, enabling tag-based search in APMPlus. Set `MODEL_AGENT_CLIENT_REQ_ID` to search spans by the `X-Client-Request-Id` tag; tag names are case-sensitive.
+</Note>
+
 ## When to use
 
 - You want unified trace observation for your agent on Volcengine APMPlus;
@@ -89,7 +93,7 @@ exporter = APMPlusExporter(
 | :--- | :--- | :--- | :--- |
 | `config` | `APMPlusExporterConfig` | Read from environment variables | APMPlus connection and authentication config. |
 | `resource_attributes` | `dict` | `{}` | Resource attributes attached to spans; the exporter merges in `service.name` automatically. |
-| `headers` | `dict` | `{}` | Extra request headers. The exporter merges in the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) and the auth header `x-byteapm-appkey`; same-named headers passed here override the defaults, but the auth header always follows the platform configuration. |
+| `headers` | `dict` | `{}` | Extra request headers. The exporter merges in the VeADK default headers (`veadk-source`, `veadk-version`, `User-Agent`, `X-Client-Request-Id`, `x-is-encrypted`) and the auth header `x-byteapm-appkey`; same-named headers passed here override the defaults, but the auth header always follows the platform configuration. The effective values of these five VeADK default headers are also written as identically named tags on every span. |
 
 ### APMPlus connection config
 
